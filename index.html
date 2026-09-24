@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Words Online</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>" />
+  </head>
+  <body>
+    <header class="topbar">
+      <input id="doc-title" class="doc-title" placeholder="Untitled document" aria-label="Document title" />
+      <div class="actions">
+        <span id="presence" class="presence" title="Connected people"></span>
+        <span id="peer-status" class="status offline">Offline</span>
+        <button id="btn-invite" class="primary">Invite</button>
+        <button id="btn-join">Join</button>
+        <details class="menu">
+          <summary>File</summary>
+          <div class="menu-items">
+            <button id="btn-new">New document</button>
+            <button id="btn-docs">Open…</button>
+            <button id="btn-import">Import file…</button>
+            <button id="btn-export-html">Export HTML</button>
+            <button id="btn-export-txt">Export text</button>
+            <button id="btn-print">Print / PDF</button>
+            <button id="btn-disconnect">Disconnect peers</button>
+          </div>
+        </details>
+        <input id="user-name" class="user-name" aria-label="Your name" />
+      </div>
+    </header>
+
+    <main class="page-wrap">
+      <div id="editor"></div>
+    </main>
+
+    <input id="file-input" type="file" accept=".txt,.html,.htm,.md,text/plain,text/html" hidden />
+
+    <!-- Invite: create an offer and paste back the guest's answer -->
+    <dialog id="dlg-invite">
+      <form method="dialog" class="dlg">
+        <h2>Invite someone on your network</h2>
+        <ol class="steps">
+          <li>
+            Send this link to the other person (or let them scan the QR code).
+            <div class="code-row">
+              <input id="invite-link" readonly />
+              <button type="button" id="btn-copy-invite">Copy</button>
+            </div>
+            <canvas id="invite-qr"></canvas>
+          </li>
+          <li>
+            Paste the answer code they send back:
+            <textarea id="answer-code" rows="3" placeholder="Answer code"></textarea>
+          </li>
+        </ol>
+        <p id="invite-status" class="hint"></p>
+        <div class="dlg-actions">
+          <button value="cancel">Cancel</button>
+          <button type="button" id="btn-accept-answer" class="primary">Connect</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Join: paste an invitation and send back the answer -->
+    <dialog id="dlg-join">
+      <form method="dialog" class="dlg">
+        <h2>Join a document</h2>
+        <div id="join-input-step">
+          <p>Paste the invitation link or code you received:</p>
+          <textarea id="invite-code" rows="3" placeholder="Invitation link or code"></textarea>
+          <div class="dlg-actions">
+            <button value="cancel">Cancel</button>
+            <button type="button" id="btn-create-answer" class="primary">Continue</button>
+          </div>
+        </div>
+        <div id="join-answer-step" hidden>
+          <p>Send this answer code back to the person who invited you:</p>
+          <div class="code-row">
+            <input id="answer-output" readonly />
+            <button type="button" id="btn-copy-answer">Copy</button>
+          </div>
+          <p id="join-status" class="hint">Waiting for the other person to connect…</p>
+          <div class="dlg-actions">
+            <button value="cancel">Close</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Local documents stored in this browser -->
+    <dialog id="dlg-docs">
+      <form method="dialog" class="dlg">
+        <h2>Documents in this browser</h2>
+        <ul id="doc-list" class="doc-list"></ul>
+        <div class="dlg-actions">
+          <button value="cancel">Close</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" hidden></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
