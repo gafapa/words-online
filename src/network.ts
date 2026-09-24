@@ -1,4 +1,4 @@
-// Yjs provider over WebRTC data channels. Every peer relays updates it
+// Yjs provider over WebRTC data channels (serverless fallback). Every peer relays updates it
 // receives to its other peers, so any participant can invite new ones and
 // the connections form a tree that keeps everybody in sync.
 
@@ -7,9 +7,8 @@ import * as syncProtocol from 'y-protocols/sync'
 import * as awarenessProtocol from 'y-protocols/awareness'
 import * as encoding from 'lib0/encoding'
 import * as decoding from 'lib0/decoding'
+import { MSG_AWARENESS, MSG_SYNC } from './protocol'
 
-const MSG_SYNC = 0
-const MSG_AWARENESS = 1
 
 // Data channels have per-message size limits (~256 KiB in Chromium),
 // so large payloads (e.g. the initial sync) are split into chunks.
@@ -71,16 +70,14 @@ type NetworkEvents = { peers: (count: number) => void }
 
 export class PeerNetwork {
   readonly peers = new Set<Peer>()
-  readonly awareness: awarenessProtocol.Awareness
   private listeners: NetworkEvents['peers'][] = []
 
-  constructor(readonly doc: Y.Doc) {
-    this.awareness = new awarenessProtocol.Awareness(doc)
+  constructor(
+    readonly doc: Y.Doc,
+    readonly awareness: awarenessProtocol.Awareness,
+  ) {
     doc.on('update', this.onDocUpdate)
-    this.awareness.on('update', this.onAwarenessUpdate)
-    window.addEventListener('beforeunload', () => {
-      awarenessProtocol.removeAwarenessStates(this.awareness, [doc.clientID], 'unload')
-    })
+    awareness.on('update', this.onAwarenessUpdate)
   }
 
   onPeersChange(listener: NetworkEvents['peers']): void {
@@ -120,7 +117,6 @@ export class PeerNetwork {
     this.disconnectAll()
     this.doc.off('update', this.onDocUpdate)
     this.awareness.off('update', this.onAwarenessUpdate)
-    this.awareness.destroy()
   }
 
   private startSync(peer: Peer): void {

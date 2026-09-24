@@ -83,6 +83,7 @@ textarea { width: 100%; resize: vertical; font-family: ui-monospace, monospace; 
 .status { font-size: 13px; padding: 2px 8px; border-radius: 10px; }
 .status.offline { color: var(--muted); background: var(--bg); }
 .status.online { color: #fff; background: var(--ok); }
+.status.warn { color: #fff; background: #e37400; }
 
 .menu { position: relative; }
 .menu summary {
@@ -156,7 +157,7 @@ dialog::backdrop { background: rgb(0 0 0 / 0.35); }
 .steps li { margin-bottom: 16px; }
 .code-row { display: flex; gap: 8px; margin: 8px 0; }
 .code-row input { flex: 1; min-width: 0; font-family: ui-monospace, monospace; font-size: 12px; }
-#invite-qr { display: block; margin: 8px auto 0; }
+.qr { display: block; margin: 8px auto 0; }
 .hint { color: var(--muted); font-size: 14px; min-height: 1em; }
 .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 
@@ -171,6 +172,8 @@ dialog::backdrop { background: rgb(0 0 0 / 0.35); }
 .doc-list a { flex: 1; color: var(--accent); text-decoration: none; }
 .doc-list a.current { font-weight: 600; }
 .doc-list small { color: var(--muted); }
+.badge { font-size: 11px; padding: 1px 6px; border-radius: 8px; background: var(--bg); color: var(--muted); }
+button.link { border: 0; background: none; color: var(--accent); margin-right: auto; }
 
 .toast {
   position: fixed;

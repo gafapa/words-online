@@ -3,10 +3,12 @@ import Quill from 'quill'
 import QuillCursors from 'quill-cursors'
 import { QuillBinding } from 'y-quill'
 import { IndexeddbPersistence } from 'y-indexeddb'
+import { Awareness, removeAwarenessStates } from 'y-protocols/awareness'
 import QRCode from 'qrcode'
 import 'quill/dist/quill.snow.css'
 import './style.css'
 import { PeerNetwork } from './network'
+import { WebSocketProvider } from './ws-provider'
 import { acceptAnswer, createAnswer, createOffer } from './signaling'
 import * as store from './store'
 
@@ -25,7 +27,11 @@ window.addEventListener('hashchange', () => location.reload())
 
 const doc = new Y.Doc()
 const persistence = new IndexeddbPersistence(store.dbName(docId), doc)
-const network = new PeerNetwork(doc)
+const awareness = new Awareness(doc)
+const network = new PeerNetwork(doc, awareness)
+const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}${location.pathname.replace(/[^/]*$/, '')}ws/${docId}`
+let server: WebSocketProvider | null = null
+window.addEventListener('beforeunload', () => removeAwarenessStates(awareness, [doc.clientID], 'unload'))
 const meta = doc.getMap<string>('meta')
 
 const quill = new Quill('#editor', {
@@ -48,8 +54,10 @@ const quill = new Quill('#editor', {
 quill.disable()
 
 persistence.whenSynced.then(() => {
-  new QuillBinding(doc.getText('content'), quill, network.awareness)
+  new QuillBinding(doc.getText('content'), quill, awareness)
   quill.enable()
+  server = new WebSocketProvider(wsUrl, doc, awareness)
+  server.onStatus(renderStatus)
   syncTitle()
   store.touchDoc(docId, meta.get('title') || '')
   if (pendingInvite) joinWithInvite(pendingInvite)
@@ -77,18 +85,18 @@ const user = store.loadUser()
 const nameInput = $<HTMLInputElement>('user-name')
 nameInput.value = user.name
 nameInput.style.borderColor = user.color
-network.awareness.setLocalStateField('user', user)
+awareness.setLocalStateField('user', user)
 nameInput.addEventListener('change', () => {
   user.name = nameInput.value.trim() || user.name
   nameInput.value = user.name
   store.saveUser(user)
-  network.awareness.setLocalStateField('user', user)
+  awareness.setLocalStateField('user', user)
 })
 
 const presenceEl = $('presence')
-network.awareness.on('change', () => {
+awareness.on('change', () => {
   presenceEl.replaceChildren(
-    ...[...network.awareness.getStates().values()]
+    ...[...awareness.getStates().values()]
       .filter((s) => s.user)
       .map((s) => {
         const dot = document.createElement('span')
@@ -102,9 +110,46 @@ network.awareness.on('change', () => {
 })
 
 const statusEl = $('peer-status')
-network.onPeersChange((count) => {
-  statusEl.textContent = count === 0 ? 'Offline' : `${count} connection${count > 1 ? 's' : ''}`
-  statusEl.className = `status ${count === 0 ? 'offline' : 'online'}`
+// Tells apart "server temporarily lost" from "app served without a server".
+let serverSeen = false
+
+function renderStatus() {
+  const peers = network.peers.size
+  const direct = peers > 0 ? ` · ${peers} direct` : ''
+  if (server?.status === 'connected') serverSeen = true
+  if (server?.status === 'connected') {
+    statusEl.textContent = `Connected${direct}`
+    statusEl.className = 'status online'
+  } else if (serverSeen) {
+    statusEl.textContent = `Reconnecting…${direct}`
+    statusEl.className = 'status warn'
+  } else {
+    statusEl.textContent = peers > 0 ? `${peers} direct` : 'Local only'
+    statusEl.className = `status ${peers > 0 ? 'online' : 'offline'}`
+  }
+  statusEl.title =
+    server?.status === 'connected'
+      ? 'Synced through the network server'
+      : 'No server reachable: changes are saved in this browser and synced on reconnect'
+}
+network.onPeersChange(renderStatus)
+renderStatus()
+
+// ---------- Share (server mode) ----------
+
+const dlgShare = $<HTMLDialogElement>('dlg-share')
+const shareLink = $<HTMLInputElement>('share-link')
+
+$('btn-invite').addEventListener('click', async () => {
+  if (server?.status !== 'connected') return openDirectInvite()
+  shareLink.value = `${location.origin}${location.pathname}#doc=${docId}`
+  dlgShare.showModal()
+  await QRCode.toCanvas($<HTMLCanvasElement>('share-qr'), shareLink.value, { width: 220, margin: 1 })
+})
+$('btn-copy-share').addEventListener('click', () => copy(shareLink))
+$('btn-direct-invite').addEventListener('click', () => {
+  dlgShare.close()
+  openDirectInvite()
 })
 
 // ---------- Invite (offer side) ----------
@@ -116,7 +161,7 @@ const inviteStatus = $('invite-status')
 let pendingOffer: RTCPeerConnection | null = null
 let pendingChannel: RTCDataChannel | null = null
 
-$('btn-invite').addEventListener('click', async () => {
+async function openDirectInvite() {
   pendingOffer?.close()
   answerCode.value = ''
   inviteLink.value = 'Generating…'
@@ -132,7 +177,7 @@ $('btn-invite').addEventListener('click', async () => {
   } catch (err) {
     inviteStatus.textContent = `Could not create the invitation: ${(err as Error).message}`
   }
-})
+}
 
 dlgInvite.addEventListener('close', () => {
   // An unanswered offer is useless once the dialog is gone.
@@ -253,10 +298,15 @@ fileInput.addEventListener('change', async () => {
 })
 
 const dlgDocs = $<HTMLDialogElement>('dlg-docs')
-$('btn-docs').addEventListener('click', () => {
+$('btn-docs').addEventListener('click', async () => {
   const list = $('doc-list')
+  const local = store.listDocs()
+  const localIds = new Set(local.map((d) => d.id))
+  const remote = await fetchServerDocs()
+  const remoteIds = new Set(remote.map((d) => d.id))
+  const docs = [...local, ...remote.filter((d) => !localIds.has(d.id))].sort((a, b) => b.updated - a.updated)
   list.replaceChildren(
-    ...store.listDocs().map((d) => {
+    ...docs.map((d) => {
       const li = document.createElement('li')
       const open = document.createElement('a')
       open.href = `#doc=${d.id}`
@@ -264,16 +314,23 @@ $('btn-docs').addEventListener('click', () => {
       if (d.id === docId) open.classList.add('current')
       const date = document.createElement('small')
       date.textContent = new Date(d.updated).toLocaleString()
-      const del = document.createElement('button')
-      del.type = 'button'
-      del.textContent = 'Delete'
-      del.disabled = d.id === docId
-      del.addEventListener('click', async () => {
-        if (!confirm(`Delete "${open.textContent}" from this browser?`)) return
-        await store.deleteDoc(d.id)
-        li.remove()
-      })
-      li.append(open, date, del)
+      const where = document.createElement('span')
+      where.className = 'badge'
+      where.textContent = remoteIds.has(d.id) ? 'network' : 'this browser'
+      li.append(open, where, date)
+      if (localIds.has(d.id)) {
+        const del = document.createElement('button')
+        del.type = 'button'
+        del.textContent = 'Remove local copy'
+        del.disabled = d.id === docId
+        del.addEventListener('click', async () => {
+          if (!confirm(`Remove "${open.textContent}" from this browser?`)) return
+          await store.deleteDoc(d.id)
+          if (remoteIds.has(d.id)) del.remove()
+          else li.remove()
+        })
+        li.append(del)
+      }
       return li
     }),
   )
@@ -281,6 +338,16 @@ $('btn-docs').addEventListener('click', () => {
 })
 
 // ---------- Helpers ----------
+
+async function fetchServerDocs(): Promise<store.DocEntry[]> {
+  if (server?.status !== 'connected') return []
+  try {
+    const res = await fetch(new URL('api/docs', location.href.replace(/#.*$/, '')))
+    return res.ok ? await res.json() : []
+  } catch {
+    return []
+  }
+}
 
 function download(content: string, mime: string, ext: string) {
   const name = (meta.get('title') || 'document').replace(/[\\/:*?"<>|]+/g, '_')
