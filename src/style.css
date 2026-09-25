@@ -192,3 +192,33 @@ dialog::backdrop { background: rgb(0 0 0 / 0.35); }
   .page-wrap .ql-container.ql-snow { border: 0; box-shadow: none; min-height: 0; }
   .ql-editor { padding: 0; }
 }
+
+/* ---------- Tables ---------- */
+
+.ql-editor table { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 8px 0; }
+.ql-editor td { border: 1px solid #b0b4b8; padding: 4px 8px; vertical-align: top; }
+
+.ql-formats { position: relative; }
+.table-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  padding: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+  width: max-content;
+}
+.table-size { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.table-grid { display: grid; grid-template-columns: repeat(8, 18px); gap: 2px; margin-bottom: 8px; }
+.ql-snow.ql-toolbar .table-grid button {
+  float: none;
+  width: 18px; height: 18px; padding: 0;
+  border: 1px solid var(--border); border-radius: 2px; background: var(--surface);
+}
+.ql-snow.ql-toolbar .table-grid button.on { background: #d2e3fc; border-color: var(--accent); }
+.table-actions { display: flex; flex-direction: column; }
+.ql-snow.ql-toolbar .table-actions button { float: none; width: auto; height: auto; border: 0; text-align: left; padding: 4px 8px; font-size: 14px; }
+.table-grid[hidden], .table-size[hidden], .table-actions[hidden] { display: none; }

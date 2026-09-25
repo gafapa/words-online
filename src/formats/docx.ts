@@ -11,12 +11,16 @@ import {
   Packer,
   Paragraph,
   ShadingType,
+  Table,
+  TableCell,
+  TableRow,
   TextRun,
+  WidthType,
   type IRunOptions,
   type ParagraphChild,
 } from 'docx'
 import type { Op } from 'quill'
-import { deltaToLines, FONT_SIZE_PT, HEADING_SIZE_PT, loadImage, type InlineAttrs, type Line } from './model'
+import { deltaToLines, FONT_SIZE_PT, groupBlocks, HEADING_SIZE_PT, loadImage, type InlineAttrs, type Line } from './model'
 
 const TWIPS_PER_INDENT = 720 // 0.5 inch per indent level
 
@@ -33,17 +37,26 @@ const ALIGN = { center: AlignmentType.CENTER, right: AlignmentType.RIGHT, justif
 
 export async function exportDocx(ops: Op[], title: string): Promise<Blob> {
   const lines = deltaToLines(ops)
-  const paragraphs: Paragraph[] = []
+  const paragraphs: (Paragraph | Table)[] = []
   // Each separate ordered list restarts numbering through a new instance.
   let listInstance = 0
   let previousOrdered = false
 
-  for (const line of lines) {
+  for (const block of groupBlocks(lines)) {
+    if (block.kind === 'table') {
+      previousOrdered = false
+      paragraphs.push(await buildTable(block.rows))
+      continue
+    }
+    const { line } = block
     const ordered = line.attrs.list === 'ordered'
     if (ordered && !previousOrdered) listInstance++
     previousOrdered = ordered
     paragraphs.push(await buildParagraph(line, listInstance))
   }
+
+  // Word expects the body to end with a paragraph, not a table.
+  if (!(paragraphs[paragraphs.length - 1] instanceof Paragraph)) paragraphs.push(new Paragraph(''))
 
   const doc = new Document({
     title,
@@ -77,9 +90,37 @@ export async function exportDocx(ops: Op[], title: string): Promise<Blob> {
         },
       ],
     },
-    sections: [{ children: paragraphs.length ? paragraphs : [new Paragraph('')] }],
+    sections: [{ children: paragraphs }],
   })
   return Packer.toBlob(doc)
+}
+
+// Usable page width (A4/Letter minus default margins), in twips.
+const TABLE_WIDTH_TWIPS = 9000
+
+async function buildTable(rows: Line[][]): Promise<Table> {
+  const columns = Math.max(...rows.map((r) => r.length))
+  const width = Math.floor(TABLE_WIDTH_TWIPS / columns)
+  return new Table({
+    width: { size: width * columns, type: WidthType.DXA },
+    columnWidths: Array(columns).fill(width),
+    rows: await Promise.all(
+      rows.map(
+        async (cells) =>
+          new TableRow({
+            children: await Promise.all(
+              Array.from({ length: columns }, async (_, i) => {
+                const line = cells[i] ?? { runs: [], attrs: {} }
+                return new TableCell({
+                  width: { size: width, type: WidthType.DXA },
+                  children: [await buildParagraph({ runs: line.runs, attrs: {} }, 0)],
+                })
+              }),
+            ),
+          }),
+      ),
+    ),
+  })
 }
 
 async function buildParagraph(line: Line, listInstance: number): Promise<Paragraph> {

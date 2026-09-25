@@ -15,6 +15,7 @@ import {
   type InlineAttrs,
   type Line,
   type Run,
+  tableLines,
 } from './model'
 
 const TWIPS_PER_INDENT = 720
@@ -73,14 +74,35 @@ async function walkBlocks(parent: Element, ctx: Context, lines: Line[]): Promise
         lines.push(...(await paragraph(el, ctx)))
         break
       case 'tbl':
-        // Tables are flattened: each cell's paragraphs become lines.
-        for (const row of children(el, 'tr')) for (const cell of children(row, 'tc')) await walkBlocks(cell, ctx, lines)
+        lines.push(...(await table(el, ctx)))
         break
       case 'sdt':
         await walkBlocks(child(el, 'sdtContent') ?? el, ctx, lines)
         break
     }
   }
+}
+
+// Tables map to Quill tables. Merged cells are expanded into empty cells so
+// the grid stays rectangular; cells with several paragraphs are joined.
+async function table(tbl: Element, ctx: Context): Promise<Line[]> {
+  const rows: Line[][][] = []
+  for (const tr of children(tbl, 'tr')) {
+    const cells: Line[][] = []
+    for (const tc of children(tr, 'tc')) {
+      const tcPr = child(tc, 'tcPr')
+      const span = Number(attr(child(tcPr, 'gridSpan'), 'val') ?? 1)
+      const vMerge = child(tcPr, 'vMerge')
+      // A "continue" vertical merge cell repeats the cell above: keep it empty.
+      const content: Line[] = []
+      if (!vMerge || attr(vMerge, 'val') === 'restart') await walkBlocks(tc, ctx, content)
+      // Nested tables are flattened into the cell text.
+      cells.push(content.map((l) => ({ ...l, attrs: {} })))
+      for (let i = 1; i < span; i++) cells.push([])
+    }
+    rows.push(cells)
+  }
+  return tableLines(rows)
 }
 
 async function paragraph(p: Element, ctx: Context): Promise<Line[]> {

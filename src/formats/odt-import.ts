@@ -14,6 +14,7 @@ import {
   type BlockAttrs,
   type InlineAttrs,
   type Line,
+  tableLines,
 } from './model'
 
 const INDENT_CM = 1.27
@@ -66,11 +67,8 @@ async function walkBlocks(parent: Element, ctx: Context, depth: number, listStyl
         await list(el, ctx, depth + 1, attr(el, 'style-name') ?? listStyle)
         break
       case 'table':
-      case 'table-header-rows':
-      case 'table-rows':
-      case 'table-row-group':
-      case 'table-row':
-      case 'table-cell':
+        ctx.lines.push(...(await table(el, ctx)))
+        break
       case 'section':
       case 'index-body':
       case 'table-of-content':
@@ -80,6 +78,44 @@ async function walkBlocks(parent: Element, ctx: Context, depth: number, listStyl
         break
     }
   }
+}
+
+// Upper bound for repeated rows/columns (spreadsheet-like tables can repeat thousands).
+const MAX_REPEAT = 50
+
+async function table(el: Element, ctx: Context): Promise<Line[]> {
+  const rows: Line[][][] = []
+  const addRows = async (parent: Element) => {
+    for (const node of children(parent)) {
+      if (node.localName === 'table-row') {
+        const cells: Line[][] = []
+        for (const cell of children(node)) {
+          if (cell.localName !== 'table-cell' && cell.localName !== 'covered-table-cell') continue
+          const content = cell.localName === 'table-cell' ? await cellLines(cell, ctx) : []
+          const repeat = Math.min(Number(attr(cell, 'number-columns-repeated') ?? 1), MAX_REPEAT)
+          for (let i = 0; i < repeat; i++) cells.push(content)
+        }
+        const repeat = Math.min(Number(attr(node, 'number-rows-repeated') ?? 1), MAX_REPEAT)
+        for (let i = 0; i < repeat; i++) rows.push(cells)
+      } else if (['table-header-rows', 'table-rows', 'table-row-group'].includes(node.localName)) {
+        await addRows(node)
+      }
+    }
+  }
+  await addRows(el)
+  // Trailing empty columns (common in repeated spreadsheet cells) are dropped.
+  const used = Math.max(0, ...rows.map((r) => r.reduce((n, c, i) => (c.some((l) => l.runs.length) ? i + 1 : n), 0)))
+  return tableLines(rows.map((r) => r.slice(0, Math.max(used, 1))))
+}
+
+// Collects the lines of a table cell without adding them to the document.
+async function cellLines(cell: Element, ctx: Context): Promise<Line[]> {
+  const saved = ctx.lines
+  ctx.lines = []
+  await walkBlocks(cell, ctx, 0, null)
+  const lines = ctx.lines.map((l) => ({ ...l, attrs: {} }))
+  ctx.lines = saved
+  return lines
 }
 
 async function list(el: Element, ctx: Context, depth: number, listStyle: string | null): Promise<void> {

@@ -8,6 +8,7 @@ import QRCode from 'qrcode'
 import 'quill/dist/quill.snow.css'
 import './style.css'
 import { RoomProvider } from './network'
+import { setupTableUi } from './table-ui'
 import { exportFile, importFile, OPEN_ACCEPT, type ExportFormat } from './formats'
 import * as store from './store'
 
@@ -40,18 +41,23 @@ const quill = new Quill('#editor', {
   modules: {
     cursors: { transformOnTextChange: true },
     history: { userOnly: true },
-    toolbar: [
-      [{ header: [1, 2, 3, false] }, { font: [] }, { size: ['small', false, 'large', 'huge'] }],
-      ['bold', 'italic', 'underline', 'strike', { script: 'sub' }, { script: 'super' }],
-      [{ color: [] }, { background: [] }],
-      [{ list: 'ordered' }, { list: 'bullet' }, { list: 'check' }, { indent: '-1' }, { indent: '+1' }],
-      [{ align: [] }],
-      ['blockquote', 'code-block', 'link', 'image'],
-      ['clean'],
-    ],
+    table: true,
+    toolbar: {
+      container: [
+        [{ header: [1, 2, 3, false] }, { font: [] }, { size: ['small', false, 'large', 'huge'] }],
+        ['bold', 'italic', 'underline', 'strike', { script: 'sub' }, { script: 'super' }],
+        [{ color: [] }, { background: [] }],
+        [{ list: 'ordered' }, { list: 'bullet' }, { list: 'check' }, { indent: '-1' }, { indent: '+1' }],
+        [{ align: [] }],
+        ['blockquote', 'code-block', 'link', 'image', 'table'],
+        ['clean'],
+      ],
+      handlers: { table: () => toggleTablePopover() },
+    },
   },
 })
 quill.disable()
+const toggleTablePopover = setupTableUi(quill)
 
 persistence.whenSynced.then(() => {
   new QuillBinding(doc.getText('content'), quill, awareness)

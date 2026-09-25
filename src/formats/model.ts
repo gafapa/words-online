@@ -23,6 +23,8 @@ export interface BlockAttrs {
   align?: 'center' | 'right' | 'justify'
   blockquote?: boolean
   codeBlock?: boolean
+  // Table cell: lines sharing the same row id form a table row.
+  table?: string
 }
 
 export type Run = { text: string; attrs: InlineAttrs } | { image: string; attrs: InlineAttrs }
@@ -84,6 +86,51 @@ function blockAttrs(a: Record<string, unknown> = {}): BlockAttrs {
   if (a.align === 'center' || a.align === 'right' || a.align === 'justify') out.align = a.align
   if (a.blockquote) out.blockquote = true
   if (a['code-block']) out.codeBlock = true
+  if (typeof a.table === 'string' && a.table) out.table = a.table
+  return out
+}
+
+export type Block = { kind: 'line'; line: Line } | { kind: 'table'; rows: Line[][] }
+
+// Groups consecutive table-cell lines into tables made of rows of cells.
+export function groupBlocks(lines: Line[]): Block[] {
+  const blocks: Block[] = []
+  for (const line of lines) {
+    const rowId = line.attrs.table
+    if (!rowId) {
+      blocks.push({ kind: 'line', line })
+      continue
+    }
+    const last = blocks[blocks.length - 1]
+    if (last?.kind !== 'table') {
+      blocks.push({ kind: 'table', rows: [[line]] })
+      continue
+    }
+    const row = last.rows[last.rows.length - 1]
+    if (row[0].attrs.table === rowId) row.push(line)
+    else last.rows.push([line])
+  }
+  return blocks
+}
+
+export const newRowId = () => `row-${Math.random().toString(36).slice(2, 8)}`
+
+// Builds table lines from imported cells: each cell's lines are merged into one
+// (Quill cells are single-line) and rows are padded to the same column count.
+export function tableLines(rows: Line[][][]): Line[] {
+  const columns = Math.max(1, ...rows.map((r) => r.length))
+  const out: Line[] = []
+  for (const cells of rows) {
+    const table = newRowId()
+    for (let i = 0; i < columns; i++) {
+      const runs: Run[] = []
+      for (const line of cells[i] ?? []) {
+        if (runs.length && line.runs.length) runs.push({ text: ' ', attrs: {} })
+        runs.push(...line.runs)
+      }
+      out.push({ runs, attrs: { table } })
+    }
+  }
   return out
 }
 
@@ -167,6 +214,7 @@ function blockToQuill(a: BlockAttrs): Record<string, unknown> | undefined {
   if (a.align) out.align = a.align
   if (a.blockquote) out.blockquote = true
   if (a.codeBlock) out['code-block'] = 'plain'
+  if (a.table) return { table: a.table }
   return Object.keys(out).length ? out : undefined
 }
 

@@ -2,12 +2,13 @@
 
 import JSZip from 'jszip'
 import type { Op } from 'quill'
-import { deltaToLines, FONT_SIZE_PT, HEADING_SIZE_PT, loadImage, type InlineAttrs, type Line } from './model'
+import { deltaToLines, FONT_SIZE_PT, groupBlocks, HEADING_SIZE_PT, loadImage, type InlineAttrs, type Line } from './model'
 
 const NS = [
   'xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"',
   'xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"',
   'xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"',
+  'xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"',
   'xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0"',
   'xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"',
   'xmlns:xlink="http://www.w3.org/1999/xlink"',
@@ -42,9 +43,16 @@ class ContentWriter {
   private paraStyles = new Map<string, string>()
   // Open list nesting: kind per level ("L1" bullet / "L2" numbered).
   private openLists: string[] = []
+  private tableCount = 0
 
   async write(lines: Line[]): Promise<void> {
-    for (const line of lines) {
+    for (const block of groupBlocks(lines)) {
+      if (block.kind === 'table') {
+        this.adjustLists(0, '')
+        await this.table(block.rows)
+        continue
+      }
+      const { line } = block
       const { list, indent = 0 } = line.attrs
       if (list) {
         const listStyle = list === 'ordered' ? 'L2' : 'L1'
@@ -72,10 +80,30 @@ class ContentWriter {
       `<?xml version="1.0" encoding="UTF-8"?>` +
       `<office:document-content ${NS} office:version="1.3">` +
       `<office:automatic-styles>${para.join('')}${text.join('')}${LIST_STYLES}` +
+      `<style:style style:name="Tbl" style:family="table"><style:table-properties style:width="17cm" table:align="margins"/></style:style>` +
+      `<style:style style:name="Cell" style:family="table-cell"><style:table-cell-properties fo:padding="0.1cm" fo:border="0.5pt solid #000000"/></style:style>` +
       `<style:style style:name="fr1" style:family="graphic"><style:graphic-properties style:wrap="none" style:vertical-pos="top" style:vertical-rel="baseline"/></style:style>` +
       `</office:automatic-styles>` +
       `<office:body><office:text>${this.body.join('')}</office:text></office:body></office:document-content>`
     )
+  }
+
+  private async table(rows: Line[][]): Promise<void> {
+    const columns = Math.max(...rows.map((r) => r.length))
+    const name = `Table${++this.tableCount}`
+    this.body.push(`<table:table table:name="${name}" table:style-name="Tbl">`)
+    this.body.push(`<table:table-column table:number-columns-repeated="${columns}"/>`)
+    for (const cells of rows) {
+      this.body.push('<table:table-row>')
+      for (let i = 0; i < columns; i++) {
+        const line = cells[i] ?? { runs: [], attrs: {} }
+        this.body.push(`<table:table-cell table:style-name="Cell" office:value-type="string">`)
+        this.body.push(await this.paragraph({ runs: line.runs, attrs: {} }, ''))
+        this.body.push('</table:table-cell>')
+      }
+      this.body.push('</table:table-row>')
+    }
+    this.body.push('</table:table>')
   }
 
   // Opens/closes nested <text:list> elements to reach the requested depth.
