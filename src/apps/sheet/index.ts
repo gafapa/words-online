@@ -6,12 +6,13 @@ import { mountSheet, sheetHandles } from './app'
 import { exportSheetFile, importSheetFile, SHEET_ACCEPT } from './formats'
 import type { IWorkbookData } from '@univerjs/presets'
 import { SheetSync } from './sync'
+import { t } from '../../core/i18n'
 import './sheet.css'
 
 export const accept = SHEET_ACCEPT
 
-export function mount(session: Session): void {
-  mountSheet(session, document.getElementById('root')!)
+export async function mount(session: Session): Promise<void> {
+  await mountSheet(session, document.getElementById('root')!)
 }
 
 // Imports a spreadsheet file into a new local document; returns its path.
@@ -29,8 +30,8 @@ export function createFromWorkbook(title: string, data: Partial<IWorkbookData>):
 // "Hand in": the workbook as .ods and .xlsx.
 export async function submitFiles(session: Session): Promise<SubmitFile[]> {
   const handle = sheetHandles.get(session)
-  if (!handle) throw new Error('The spreadsheet is still loading')
-  const title = String(session.doc.getMap('meta').get('title') || 'Untitled spreadsheet')
+  if (!handle) throw new Error(t('The spreadsheet is still loading'))
+  const title = String(session.doc.getMap('meta').get('title') || t('Untitled spreadsheet'))
   const data = handle.snapshot()
   return [
     { name: `${title}.ods`, blob: await exportSheetFile('ods', data) },

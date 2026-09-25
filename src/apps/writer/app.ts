@@ -20,7 +20,7 @@ import { toast } from '../../ui/widgets'
 import { Find, setupFindPanel } from './find'
 import { mmToPx, notesHtml, Pagination, relayout, type Layout, type PageGeometry } from './pages'
 import { buildMenus, buildToolbar, setupContextMenu } from './commands'
-import { t } from '../../core/i18n'
+import { t, tn } from '../../core/i18n'
 import { authorDirectory, PENDING_COMMENTS, userIdOf, type Access } from './collab'
 import { Review, type CommentRecord, type CommentThread } from './review'
 import { AuthorshipView } from './authorship'
@@ -30,24 +30,24 @@ import { PositionIndex, encodeAnchor } from './ypos'
 import type { CommentData } from './formats/types'
 import { authorColor } from './formats/review'
 
-const UNTITLED = 'Untitled document'
+const UNTITLED = t('Untitled document')
 const ZOOM_KEY = 'words-online:zoom'
 
 const MAIN_HTML = `
   <div id="find-panel" class="find-panel" hidden>
     <div class="find-row">
-      <input data-find placeholder="Find in document" aria-label="Find" />
+      <input data-find placeholder="${t('Find in document')}" aria-label="${t('Find')}" />
       <span data-count class="find-count"></span>
-      <button type="button" data-prev title="Previous (Shift+Enter)">↑</button>
-      <button type="button" data-next title="Next (Enter)">↓</button>
-      <button type="button" data-close title="Close (Esc)">✕</button>
+      <button type="button" data-prev title="${t('Previous (Shift+Enter)')}">↑</button>
+      <button type="button" data-next title="${t('Next (Enter)')}">↓</button>
+      <button type="button" data-close title="${t('Close (Esc)')}">✕</button>
     </div>
     <div class="find-row" data-replace-row>
-      <input data-replace placeholder="Replace with" aria-label="Replace with" />
-      <button type="button" data-replace-one>Replace</button>
-      <button type="button" data-replace-all>Replace all</button>
+      <input data-replace placeholder="${t('Replace with')}" aria-label="${t('Replace with')}" />
+      <button type="button" data-replace-one>${t('Replace')}</button>
+      <button type="button" data-replace-all>${t('Replace all')}</button>
     </div>
-    <label class="find-option"><input type="checkbox" data-case /> Match case</label>
+    <label class="find-option"><input type="checkbox" data-case /> ${t('Match case')}</label>
   </div>
   <div id="canvas" class="canvas">
     <div class="canvas-row">
@@ -58,22 +58,22 @@ const MAIN_HTML = `
           <div id="page-tail" class="page-tail"></div>
         </div>
       </div>
-      <aside id="review-rail" class="review-rail" aria-label="Comments and suggestions" hidden></aside>
+      <aside id="review-rail" class="review-rail" aria-label="${t('Comments and suggestions')}" hidden></aside>
     </div>
   </div>
   <input id="file-input" type="file" hidden />
   <input id="image-input" type="file" accept="image/*" hidden />`
 
 const STATUS_HTML = `
-  <span id="status-page">Page 1 of 1</span>
-  <span id="status-words">0 words</span>
-  <span id="status-chars" class="hide-narrow">0 characters</span>
+  <span id="status-page"></span>
+  <span id="status-words"></span>
+  <span id="status-chars" class="hide-narrow"></span>
   <span class="spacer"></span>
   <span id="status-mode" class="status-mode" hidden></span>
   <button id="status-comments" class="status-comments" hidden></button>
-  <span class="hide-narrow">Zoom</span>
-  <input id="zoom-range" type="range" min="50" max="200" step="10" value="100" aria-label="Zoom" class="hide-narrow" />
-  <button id="zoom-value" class="zoom-value" title="Reset zoom">100%</button>`
+  <span class="hide-narrow">${t('Zoom')}</span>
+  <input id="zoom-range" type="range" min="50" max="200" step="10" value="100" aria-label="${t('Zoom')}" class="hide-narrow" />
+  <button id="zoom-value" class="zoom-value" title="${t('Reset zoom')}">100%</button>`
 
 export interface WriterContext {
   session: Session
@@ -181,7 +181,7 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
   const editor = new Editor({
     element: document.getElementById('editor')!,
     extensions: [
-      ...bodyExtensions({ history: false, placeholder: 'Start typing…' }),
+      ...bodyExtensions({ history: false, placeholder: t('Start typing…') }),
       Collaboration.configure({ document: doc, field: 'body' }),
       CollaborationCaret.configure({
         provider: { awareness },
@@ -285,7 +285,7 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
     zoomWrap.style.width = `${paper.offsetWidth * z}px`
     zoomWrap.style.height = `${paper.offsetHeight * z}px`
     zoomRange.value = String(Math.round(z * 100))
-    zoomValue.textContent = zoom > 0 ? `${Math.round(z * 100)}%` : 'Fit'
+    zoomValue.textContent = zoom > 0 ? `${Math.round(z * 100)}%` : t('Fit')
     review?.reposition()
   }
   const setZoom = (value: number) => {
@@ -320,9 +320,9 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
   function updateStatus() {
     const words = editor.storage.characterCount.words() as number
     const chars = editor.storage.characterCount.characters() as number
-    statusPage.textContent = `Page ${currentPage()} of ${layout.pages}`
-    statusWords.textContent = `${words.toLocaleString()} word${words === 1 ? '' : 's'}`
-    statusChars.textContent = `${chars.toLocaleString()} characters`
+    statusPage.textContent = t('Page {page} of {pages}', { page: currentPage(), pages: layout.pages })
+    statusWords.textContent = tn(words, '{n} word', '{n} words')
+    statusChars.textContent = tn(chars, '{n} character', '{n} characters')
   }
   editor.on('update', updateStatus)
   editor.on('selectionUpdate', updateStatus)
@@ -330,11 +330,11 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
   const saveState = document.getElementById('save-state')!
   let saveTimer = 0
   doc.on('update', () => {
-    saveState.textContent = 'Saving…'
+    saveState.textContent = t('Saving…')
     clearTimeout(saveTimer)
-    saveTimer = window.setTimeout(() => (saveState.textContent = 'Saved in this browser'), 600)
+    saveTimer = window.setTimeout(() => (saveState.textContent = t('Saved in this browser')), 600)
   })
-  saveState.textContent = 'Saved in this browser'
+  saveState.textContent = t('Saved in this browser')
 
   // ---------- Documents ----------
 
@@ -348,10 +348,10 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
     fileInput.value = ''
     if (!file) return
     try {
-      toast('Opening…')
+      toast(t('Opening…'))
       location.href = await importFileAsDocument(file)
     } catch (err) {
-      toast(`Could not open the file: ${(err as Error).message}`)
+      toast(t('Could not open the file: {message}', { message: (err as Error).message }))
     }
   })
 
@@ -379,7 +379,7 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
       a.click()
       setTimeout(() => URL.revokeObjectURL(a.href), 1000)
     } catch (err) {
-      toast(`Download failed: ${(err as Error).message}`)
+      toast(t('Download failed: {message}', { message: (err as Error).message }))
     }
   }
 
@@ -492,7 +492,7 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
       print()
     } else if (key === 's') {
       e.preventDefault()
-      toast('All changes are saved automatically in this browser')
+      toast(t('All changes are saved automatically in this browser'))
     } else if (key === 'o') {
       e.preventDefault()
       fileInput.click()

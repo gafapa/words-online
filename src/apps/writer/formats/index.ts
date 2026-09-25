@@ -4,6 +4,7 @@
 import { generateJSON, type JSONContent } from '@tiptap/core'
 import { allExtensions } from '../editor/extensions'
 import { DEFAULT_PAGE, type DocumentData } from './types'
+import { t } from '../../../core/i18n'
 
 export type ExportFormat = 'docx' | 'odt' | 'html' | 'txt'
 
@@ -15,7 +16,7 @@ export async function importFile(file: File): Promise<Imported> {
   const ext = file.name.split('.').pop()?.toLowerCase()
   if (ext === 'docx') return (await import('./docx-import')).importDocx(await file.arrayBuffer())
   if (ext === 'odt') return (await import('./odt-import')).importOdt(await file.arrayBuffer())
-  if (ext === 'doc') throw new Error('Legacy .doc files are not supported; save them as .docx first')
+  if (ext === 'doc') throw new Error(t('Legacy .doc files are not supported; save them as .docx first'))
   const text = await file.text()
   const body: JSONContent =
     ext === 'html' || ext === 'htm'

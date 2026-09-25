@@ -7,6 +7,7 @@ import { el } from '../../ui/widgets'
 import { renderSvg } from './export'
 import { applyLook, buildCells, styleFromString, type EditorGraph } from './graph'
 import type { PaletteCell, PaletteItem, PaletteLibrary } from './palette'
+import { t } from '../../core/i18n'
 
 export type { PaletteItem, PaletteLibrary }
 
@@ -73,11 +74,11 @@ export class ShapeSidebar {
     private readonly insertAtCenter: (cells: Cell[]) => void,
     private readonly options: SidebarOptions = {},
   ) {
-    const search = el('input', { type: 'search', class: 'sidebar-search', placeholder: 'Search shapes' })
+    const search = el('input', { type: 'search', class: 'sidebar-search', placeholder: t('Search shapes') })
     const list = el('div', { class: 'sidebar-list' })
-    this.element = el('aside', { class: 'diagram-sidebar', ariaLabel: 'Shapes' }, search, list)
+    this.element = el('aside', { class: 'diagram-sidebar', ariaLabel: t('Shapes') }, search, list)
     if (options.more) {
-      const more = el('button', { type: 'button', class: 'sidebar-more', textContent: 'More shapes…' })
+      const more = el('button', { type: 'button', class: 'sidebar-more', textContent: t('More shapes…') })
       more.addEventListener('click', () => options.more?.())
       this.element.append(more)
     }
@@ -95,7 +96,7 @@ export class ShapeSidebar {
           return words.every((w) => text.includes(w))
         }
         const found = all.flatMap((lib) => lib.items).filter(matches)
-        list.append(found.length ? this.grid(found.slice(0, MAX_RESULTS)) : el('div', { class: 'sidebar-empty', textContent: 'No shapes found' }))
+        list.append(found.length ? this.grid(found.slice(0, MAX_RESULTS)) : el('div', { class: 'sidebar-empty', textContent: t('No shapes found') }))
         if (found.length > MAX_RESULTS) list.append(el('div', { class: 'sidebar-empty', textContent: `${found.length - MAX_RESULTS} more: refine the search` }))
         return
       }

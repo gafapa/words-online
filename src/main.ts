@@ -33,7 +33,7 @@ if (route.kind === 'home') {
 } else {
   const info = appInfo(route.type)
   if (!info.load) {
-    notice(`${info.name}s are coming soon`, '')
+    notice(t('{app}: coming soon', { app: info.name }), '')
   } else {
     try {
       const [module, session] = await Promise.all([info.load(), openSession(route.type, route.id, route.key, route.keys)])

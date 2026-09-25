@@ -11,7 +11,7 @@ import '@fontsource/atkinson-hyperlegible/700.css'
 import '@fontsource/atkinson-hyperlegible/400-italic.css'
 import './accessibility.css'
 import { Accessibility, CircleStop, Mic, Volume2, X } from 'lucide'
-import { t } from '../core/i18n'
+import { languageSelect, t } from '../core/i18n'
 import * as speech from './speech'
 import { el, icon, toast } from './widgets'
 
@@ -406,6 +406,7 @@ function buildPanel(): HTMLElement {
     'fieldset',
     { class: 'a11y-group' },
     el('legend', { textContent: t('Display') }),
+    field(t('Interface language'), languageSelect('field a11y-language')),
     field(
       t('Theme'),
       bind(
@@ -535,7 +536,7 @@ function buildPanel(): HTMLElement {
   syncPanel()
   speech.onSpeechState(({ message }) => {
     syncPanel?.()
-    if (message !== undefined) setStatus(message, /not|no |stopped:/i.test(message))
+    if (message !== undefined) setStatus(message, /not|no |non |stopped:|detenid|detid/i.test(message))
   })
   window.addEventListener('online', () => syncPanel?.())
   window.addEventListener('offline', () => syncPanel?.())

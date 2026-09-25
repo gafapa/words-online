@@ -7,17 +7,18 @@ import { Bold, Italic, Underline, TextAlignStart, TextAlignCenter, TextAlignEnd,
 import { headerFooterExtensions } from './editor/extensions'
 import { PAGE_SIZES_MM, type PageSettings, type PageSize } from './formats/types'
 import * as store from '../../core/store'
-import { colorPalette, el, icon, promptText, showDialog, toast } from '../../ui/widgets'
+import { colorPalette, el, icon, promptText, shortcutLabel, showDialog, toast } from '../../ui/widgets'
 import type { WriterContext } from './app'
+import { locale, t } from '../../core/i18n'
 
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform)
 const mod = isMac ? '⌘' : 'Ctrl+'
 
 export async function pasteHint(): Promise<void> {
   await showDialog(
-    'Use keyboard shortcuts',
-    el('p', { textContent: `For security, browsers only allow clipboard access through the keyboard: ${mod}X to cut, ${mod}C to copy and ${mod}V to paste.` }),
-    [{ label: 'OK', value: 'ok', primary: true }],
+    t('Use keyboard shortcuts'),
+    el('p', { textContent: t('For security, browsers only allow clipboard access through the keyboard: {cut} to cut, {copy} to copy and {paste} to paste.', { cut: `${mod}X`, copy: `${mod}C`, paste: `${mod}V` }) }),
+    [{ label: t('OK'), value: 'ok', primary: true }],
   )
 }
 
@@ -27,40 +28,40 @@ export async function about(): Promise<void> {
     el(
       'div',
       {},
-      el('p', { textContent: 'A collaborative word processor that runs entirely in your browser.' }),
+      el('p', { textContent: t('A collaborative word processor that runs entirely in your browser.') }),
       el('p', {
         class: 'hint',
         textContent:
-          'Documents are stored in this browser. Collaborators connect directly (WebRTC); public Nostr relays are only used to find each other.',
+          t('Documents are stored in this browser. Collaborators connect directly (WebRTC); public Nostr relays are only used to find each other.'),
       }),
     ),
-    [{ label: 'Close', value: 'ok', primary: true }],
+    [{ label: t('Close'), value: 'ok', primary: true }],
   )
 }
 
 export async function shortcuts(): Promise<void> {
   const rows: [string, string][] = [
-    ['Bold / Italic / Underline', `${mod}B / ${mod}I / ${mod}U`],
-    ['Strikethrough', `${mod}Shift+S`],
-    ['Superscript / Subscript', `${mod}. / ${mod},`],
-    ['Headings 1–6', `${mod}Alt+1 … 6`],
-    ['Normal text', `${mod}Alt+0`],
-    ['Align left / center / right / justify', `${mod}Shift+L / E / R / J`],
-    ['Bulleted / numbered / checklist', `${mod}Shift+8 / 7 / 9`],
-    ['Indent / outdent', 'Tab / Shift+Tab'],
-    ['Line break in paragraph', 'Shift+Enter'],
-    ['Page break', `${mod}Enter`],
-    ['Insert link', `${mod}K`],
-    ['Insert footnote', `${mod}Alt+F`],
-    ['Find / replace', `${mod}F / ${mod}H`],
-    ['Undo / redo', `${mod}Z / ${mod}Y`],
-    ['Clear formatting', `${mod}\\`],
-    ['Open file', `${mod}O`],
-    ['Print', `${mod}P`],
+    [t('Bold / Italic / Underline'), `${mod}B / ${mod}I / ${mod}U`],
+    [t('Strikethrough'), `${mod}Shift+S`],
+    [t('Superscript / Subscript'), `${mod}. / ${mod},`],
+    [t('Headings 1–6'), `${mod}Alt+1 … 6`],
+    [t('Normal text'), `${mod}Alt+0`],
+    [t('Align left / center / right / justify'), `${mod}Shift+L / E / R / J`],
+    [t('Bulleted / numbered / checklist'), `${mod}Shift+8 / 7 / 9`],
+    [t('Indent / outdent'), 'Tab / Shift+Tab'],
+    [t('Line break in paragraph'), 'Shift+Enter'],
+    [t('Page break'), `${mod}Enter`],
+    [t('Insert link'), `${mod}K`],
+    [t('Insert footnote'), `${mod}Alt+F`],
+    [t('Find / replace'), `${mod}F / ${mod}H`],
+    [t('Undo / redo'), `${mod}Z / ${mod}Y`],
+    [t('Clear formatting'), `${mod}\\`],
+    [t('Open file'), `${mod}O`],
+    [t('Print'), `${mod}P`],
   ]
   const table = el('table', { class: 'shortcuts' })
-  for (const [label, keys] of rows) table.append(el('tr', {}, el('td', { textContent: label }), el('td', {}, el('kbd', { textContent: keys }))))
-  await showDialog('Keyboard shortcuts', table, [{ label: 'Close', value: 'ok', primary: true }], true)
+  for (const [label, keys] of rows) table.append(el('tr', {}, el('td', { textContent: label }), el('td', {}, el('kbd', { textContent: shortcutLabel(keys) }))))
+  await showDialog(t('Keyboard shortcuts'), table, [{ label: t('Close'), value: 'ok', primary: true }], true)
 }
 
 export async function wordCount(ctx: WriterContext): Promise<void> {
@@ -69,15 +70,15 @@ export async function wordCount(ctx: WriterContext): Promise<void> {
   const selected = empty ? '' : editor.state.doc.textBetween(from, to, ' ')
   const count = (t: string) => (t.trim() ? t.trim().split(/\s+/).length : 0)
   const rows: [string, string][] = [
-    ['Pages', String(ctx.pages())],
-    ['Words', String(editor.storage.characterCount.words())],
-    ['Characters', String(editor.storage.characterCount.characters())],
-    ['Characters excluding spaces', String(editor.getText().replace(/\s/g, '').length)],
+    [t('Pages'), String(ctx.pages())],
+    [t('Words'), String(editor.storage.characterCount.words())],
+    [t('Characters'), String(editor.storage.characterCount.characters())],
+    [t('Characters excluding spaces'), String(editor.getText().replace(/\s/g, '').length)],
   ]
-  if (selected) rows.push(['Words in selection', String(count(selected))])
+  if (selected) rows.push([t('Words in selection'), String(count(selected))])
   const table = el('table', { class: 'shortcuts' })
   for (const [k, v] of rows) table.append(el('tr', {}, el('td', { textContent: k }), el('td', { textContent: v, class: 'num' })))
-  await showDialog('Word count', table, [{ label: 'Close', value: 'ok', primary: true }])
+  await showDialog(t('Word count'), table, [{ label: t('Close'), value: 'ok', primary: true }])
 }
 
 export async function editLink(ctx: WriterContext): Promise<void> {
@@ -86,13 +87,13 @@ export async function editLink(ctx: WriterContext): Promise<void> {
   const { from, to, empty } = editor.state.selection
   const text = el('input', { class: 'field', value: empty ? '' : editor.state.doc.textBetween(from, to, ' ') })
   const url = el('input', { class: 'field', value: current, placeholder: 'https://…' })
-  const body = el('div', { class: 'form' }, el('label', { class: 'field-label' }, 'Text', text), el('label', { class: 'field-label' }, 'Link', url))
+  const body = el('div', { class: 'form' }, el('label', { class: 'field-label' }, t('Text'), text), el('label', { class: 'field-label' }, t('Link'), url))
   const buttons = [
-    { label: 'Cancel', value: 'cancel' },
-    ...(current ? [{ label: 'Remove link', value: 'remove' }] : []),
-    { label: 'Apply', value: 'ok', primary: true },
+    { label: t('Cancel'), value: 'cancel' },
+    ...(current ? [{ label: t('Remove link'), value: 'remove' }] : []),
+    { label: t('Apply'), value: 'ok', primary: true },
   ]
-  const result = await showDialog(current ? 'Edit link' : 'Insert link', body, buttons)
+  const result = await showDialog(current ? t('Edit link') : t('Insert link'), body, buttons)
   if (result === 'remove') {
     editor.chain().focus().extendMarkRange('link').unsetLink().run()
     return
@@ -108,7 +109,7 @@ export async function editLink(ctx: WriterContext): Promise<void> {
 }
 
 export async function imageFromUrl(ctx: WriterContext): Promise<void> {
-  const url = await promptText('Insert image', 'Image URL')
+  const url = await promptText(t('Insert image'), t('Image URL'))
   if (url) ctx.editor.chain().focus().setImage({ src: url.trim() }).run()
 }
 
@@ -119,11 +120,11 @@ export async function insertTableDialog(ctx: WriterContext): Promise<void> {
   const body = el(
     'div',
     { class: 'form grid2' },
-    el('label', { class: 'field-label' }, 'Rows', rows),
-    el('label', { class: 'field-label' }, 'Columns', cols),
-    el('label', { class: 'check' }, header, ' Header row'),
+    el('label', { class: 'field-label' }, t('Rows'), rows),
+    el('label', { class: 'field-label' }, t('Columns'), cols),
+    el('label', { class: 'check' }, header, ' ', t('Header row')),
   )
-  if ((await showDialog('Insert table', body, [{ label: 'Cancel', value: 'cancel' }, { label: 'Insert', value: 'ok', primary: true }])) !== 'ok') return
+  if ((await showDialog(t('Insert table'), body, [{ label: t('Cancel'), value: 'cancel' }, { label: t('Insert'), value: 'ok', primary: true }])) !== 'ok') return
   ctx.editor
     .chain()
     .focus()
@@ -136,13 +137,13 @@ export async function cellBackground(ctx: WriterContext): Promise<void> {
   const body = colorPalette((c) => {
     picked = c
     ;(body.closest('dialog') as HTMLDialogElement).close('ok')
-  }, 'No fill')
-  await showDialog('Cell background', body, [{ label: 'Cancel', value: 'cancel' }])
+  }, t('No fill'))
+  await showDialog(t('Cell background'), body, [{ label: t('Cancel'), value: 'cancel' }])
   if (picked !== undefined) ctx.editor.chain().focus().setCellAttribute('backgroundColor', picked).run()
 }
 
 export async function insertFootnote(ctx: WriterContext): Promise<void> {
-  const text = await promptText('Insert footnote', 'Footnote text', '', true)
+  const text = await promptText(t('Insert footnote'), t('Footnote text'), '', true)
   if (text?.trim()) ctx.editor.chain().focus().insertFootnote(text.trim()).run()
 }
 
@@ -152,10 +153,10 @@ export async function editFootnoteAt(ctx: WriterContext, pos: number): Promise<v
   if (node?.type.name !== 'footnote') return
   editor.view.dispatch(editor.state.tr.setSelection(NodeSelection.create(editor.state.doc, pos)))
   const input = el('textarea', { class: 'field', rows: 4, value: String(node.attrs.content ?? '') })
-  const result = await showDialog('Footnote', el('label', { class: 'field-label' }, 'Footnote text', input), [
-    { label: 'Delete', value: 'delete' },
-    { label: 'Cancel', value: 'cancel' },
-    { label: 'Save', value: 'ok', primary: true },
+  const result = await showDialog(t('Footnote'), el('label', { class: 'field-label' }, t('Footnote text'), input), [
+    { label: t('Delete'), value: 'delete' },
+    { label: t('Cancel'), value: 'cancel' },
+    { label: t('Save'), value: 'ok', primary: true },
   ])
   const current = editor.state.doc.nodeAt(pos)
   if (current?.type.name !== 'footnote') return
@@ -171,7 +172,7 @@ export async function specialCharacters(ctx: WriterContext): Promise<void> {
     b.addEventListener('click', () => ctx.editor.chain().focus().insertContent(ch).run())
     grid.append(b)
   }
-  await showDialog('Special characters', grid, [{ label: 'Close', value: 'ok', primary: true }])
+  await showDialog(t('Special characters'), grid, [{ label: t('Close'), value: 'ok', primary: true }])
 }
 
 export async function openDocuments(ctx: WriterContext): Promise<void> {
@@ -179,20 +180,20 @@ export async function openDocuments(ctx: WriterContext): Promise<void> {
   const render = () => {
     list.replaceChildren(
       ...store.listDocs().filter((d) => d.type === 'writer').map((d) => {
-        const link = el('a', { href: ctx.openUrl(d.id, d.key), textContent: d.title || 'Untitled document' })
+        const link = el('a', { href: ctx.openUrl(d.id, d.key), textContent: d.title || t('Untitled document') })
         if (d.id === ctx.session.docId) link.classList.add('current')
-        const del = el('button', { type: 'button', textContent: 'Delete', disabled: d.id === ctx.session.docId })
+        const del = el('button', { type: 'button', textContent: t('Delete'), disabled: d.id === ctx.session.docId })
         del.addEventListener('click', async () => {
-          if (!confirm(`Delete "${link.textContent}" from this browser?`)) return
+          if (!confirm(t('Delete “{title}” from this browser?', { title: link.textContent ?? '' }))) return
           await store.deleteDoc(d.id)
           render()
         })
-        return el('li', {}, link, el('small', { textContent: new Date(d.updated).toLocaleString() }), del)
+        return el('li', {}, link, el('small', { textContent: new Date(d.updated).toLocaleString(locale) }), del)
       }),
     )
   }
   render()
-  await showDialog('Documents in this browser', list, [{ label: 'Close', value: 'ok', primary: true }], true)
+  await showDialog(t('Documents in this browser'), list, [{ label: t('Close'), value: 'ok', primary: true }], true)
 }
 
 export async function pageSetup(ctx: WriterContext): Promise<void> {
@@ -203,28 +204,28 @@ export async function pageSetup(ctx: WriterContext): Promise<void> {
     size.append(el('option', { value: s, textContent: `${s} (${w} × ${h} mm)` }))
   }
   size.value = page.size
-  const orientation = el('select', { class: 'field' }, el('option', { value: 'portrait', textContent: 'Portrait' }), el('option', { value: 'landscape', textContent: 'Landscape' }))
+  const orientation = el('select', { class: 'field' }, el('option', { value: 'portrait', textContent: t('Portrait') }), el('option', { value: 'landscape', textContent: t('Landscape') }))
   orientation.value = page.orientation
   const margin = (label: string, value: number) => {
     const input = el('input', { type: 'number', min: '0', max: '100', step: '0.5', value: String(value / 10), class: 'field' })
     return { input, label: el('label', { class: 'field-label' }, `${label} (cm)`, input) }
   }
-  const top = margin('Top', page.margins.top)
-  const bottom = margin('Bottom', page.margins.bottom)
-  const left = margin('Left', page.margins.left)
-  const right = margin('Right', page.margins.right)
+  const top = margin(t('Top'), page.margins.top)
+  const bottom = margin(t('Bottom'), page.margins.bottom)
+  const left = margin(t('Left'), page.margins.left)
+  const right = margin(t('Right'), page.margins.right)
   const body = el(
     'div',
     { class: 'form grid2' },
-    el('label', { class: 'field-label' }, 'Paper size', size),
-    el('label', { class: 'field-label' }, 'Orientation', orientation),
+    el('label', { class: 'field-label' }, t('Paper size'), size),
+    el('label', { class: 'field-label' }, t('Orientation'), orientation),
     top.label,
     bottom.label,
     left.label,
     right.label,
-    el('p', { class: 'hint span2', textContent: 'Page setup applies to everyone editing this document.' }),
+    el('p', { class: 'hint span2', textContent: t('Page setup applies to everyone editing this document.') }),
   )
-  if ((await showDialog('Page setup', body, [{ label: 'Cancel', value: 'cancel' }, { label: 'Apply', value: 'ok', primary: true }])) !== 'ok') return
+  if ((await showDialog(t('Page setup'), body, [{ label: t('Cancel'), value: 'cancel' }, { label: t('Apply'), value: 'ok', primary: true }])) !== 'ok') return
   const mm = (i: HTMLInputElement, fallback: number) => {
     const v = parseFloat(i.value)
     return Number.isFinite(v) ? clamp(v * 10, 0, 100) : fallback
@@ -248,7 +249,7 @@ export async function editHeaderFooter(ctx: WriterContext): Promise<void> {
   const make = (field: string, host: HTMLElement) =>
     new Editor({
       element: host,
-      extensions: [...headerFooterExtensions({ history: false, placeholder: `Type the ${field} here` }), Collaboration.configure({ document: doc, field })],
+      extensions: [...headerFooterExtensions({ history: false, placeholder: field === 'header' ? t('Type the header here') : t('Type the footer here') }), Collaboration.configure({ document: doc, field })],
     })
   const headerHost = el('div', { class: 'hf-editor' })
   const footerHost = el('div', { class: 'hf-editor' })
@@ -273,17 +274,17 @@ export async function editHeaderFooter(ctx: WriterContext): Promise<void> {
   const toolbar = el(
     'div',
     { class: 'hf-toolbar' },
-    tool(Bold, 'Bold', (e) => e.chain().focus().toggleBold().run()),
-    tool(Italic, 'Italic', (e) => e.chain().focus().toggleItalic().run()),
-    tool(Underline, 'Underline', (e) => e.chain().focus().toggleUnderline().run()),
-    tool(TextAlignStart, 'Align left', (e) => e.chain().focus().setTextAlign('left').run()),
-    tool(TextAlignCenter, 'Center', (e) => e.chain().focus().setTextAlign('center').run()),
-    tool(TextAlignEnd, 'Align right', (e) => e.chain().focus().setTextAlign('right').run()),
-    tool(Hash, 'Insert page number', (e) => e.chain().focus().insertPageNumber('page').run()),
-    text('#/N', 'Insert page count', (e) => e.chain().focus().insertPageNumber('total').run()),
+    tool(Bold, t('Bold'), (e) => e.chain().focus().toggleBold().run()),
+    tool(Italic, t('Italic'), (e) => e.chain().focus().toggleItalic().run()),
+    tool(Underline, t('Underline'), (e) => e.chain().focus().toggleUnderline().run()),
+    tool(TextAlignStart, t('Align left'), (e) => e.chain().focus().setTextAlign('left').run()),
+    tool(TextAlignCenter, t('Center'), (e) => e.chain().focus().setTextAlign('center').run()),
+    tool(TextAlignEnd, t('Align right'), (e) => e.chain().focus().setTextAlign('right').run()),
+    tool(Hash, t('Insert page number'), (e) => e.chain().focus().insertPageNumber('page').run()),
+    text('#/N', t('Insert page count'), (e) => e.chain().focus().insertPageNumber('total').run()),
   )
   const clear = (editor: Editor) => {
-    const b = el('button', { type: 'button', class: 'link-btn', textContent: 'Remove' })
+    const b = el('button', { type: 'button', class: 'link-btn', textContent: t('Remove') })
     b.addEventListener('click', () => editor.commands.clearContent(true))
     return b
   }
@@ -291,18 +292,18 @@ export async function editHeaderFooter(ctx: WriterContext): Promise<void> {
     'div',
     { class: 'hf-dialog' },
     toolbar,
-    el('div', { class: 'hf-label' }, 'Header', clear(header)),
+    el('div', { class: 'hf-label' }, t('Header'), clear(header)),
     headerHost,
-    el('div', { class: 'hf-label' }, 'Footer', clear(footer)),
+    el('div', { class: 'hf-label' }, t('Footer'), clear(footer)),
     footerHost,
-    el('p', { class: 'hint', textContent: 'Shown on every page. Use # to insert the page number. Changes are shared with collaborators.' }),
+    el('p', { class: 'hint', textContent: t('Shown on every page. Use # to insert the page number. Changes are shared with collaborators.') }),
   )
-  const shown = showDialog('Header and footer', body, [{ label: 'Done', value: 'ok', primary: true }], true)
+  const shown = showDialog(t('Header and footer'), body, [{ label: t('Done'), value: 'ok', primary: true }], true)
   header.commands.focus('end')
   await shown
   header.destroy()
   footer.destroy()
-  toast('Header and footer updated')
+  toast(t('Header and footer updated'))
 }
 
 function clamp(v: number, min: number, max: number): number {

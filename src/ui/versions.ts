@@ -4,7 +4,7 @@
 //   createMenuBar(…, [{ label: 'File', items: [..., '-', ...documentMenuItems(session)] }])
 
 import { copyDocument, copyTitle, createCopyFromState } from '../core/copy'
-import { t } from '../core/i18n'
+import { locale, t } from '../core/i18n'
 import type { Session } from '../core/session'
 import { listVersions, restoreVersion, saveVersion, versionsArray, type Version } from '../core/versions'
 import { el, promptText, showDialog, toast, type MenuEntry } from './widgets'
@@ -29,7 +29,7 @@ export async function makeCopy(session: Session): Promise<void> {
 
 export async function saveNamedVersion(session: Session): Promise<void> {
   if (!session.canEdit) return
-  const label = await promptText(t('Save version'), t('Version name'), new Date().toLocaleString())
+  const label = await promptText(t('Save version'), t('Version name'), new Date().toLocaleString(locale))
   if (label === null) return
   saveVersion(session, label.trim() || undefined)
   toast(t('Version saved'))
@@ -59,7 +59,7 @@ export async function openVersionHistory(session: Session): Promise<void> {
     open.addEventListener('click', async () => {
       toast(t('Making a copy…'))
       const title = String(session.doc.getMap('meta').get('title') ?? '')
-      location.href = await createCopyFromState(session.type, `${copyTitle(title)} (${new Date(v.time).toLocaleString()})`, v.state)
+      location.href = await createCopyFromState(session.type, `${copyTitle(title)} (${new Date(v.time).toLocaleString(locale)})`, v.state)
     })
     const actions = el('div', { class: 'version-actions' }, open)
     if (session.canEdit) {
@@ -83,7 +83,7 @@ export async function openVersionHistory(session: Session): Promise<void> {
         'div',
         { class: 'version-info' },
         el('span', { class: 'version-label', textContent: v.label || (v.auto ? t('Automatic version') : t('Version')) }),
-        el('span', { class: 'version-meta', textContent: `${new Date(v.time).toLocaleString()} · ${v.authorName}` }),
+        el('span', { class: 'version-meta', textContent: `${new Date(v.time).toLocaleString(locale)} · ${v.authorName}` }),
       ),
       actions,
     )

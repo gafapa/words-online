@@ -10,6 +10,7 @@ import type { AbstractCanvas2D } from '@maxgraph/core'
 import '@fontsource/architects-daughter/400.css'
 import sketchFontData from '@fontsource/architects-daughter/files/architects-daughter-latin-400-normal.woff2?inline'
 import { str, styleOf } from './util'
+import { t } from '../../../core/i18n'
 
 const NONE = constants.NONE
 
@@ -19,13 +20,13 @@ export const SKETCH_FONT_FAMILY = 'Architects Daughter'
 export const SKETCH_FONT_SOURCE = 'https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter'
 // Fill styles offered by draw.io for sketch cells ('dots' is rendered as 'auto' there, see getStyle).
 export const SKETCH_FILL_STYLES: [string, string][] = [
-  ['auto', 'Auto'],
-  ['hachure', 'Hachure'],
-  ['solid', 'Solid'],
-  ['zigzag', 'Zigzag'],
-  ['cross-hatch', 'Cross hatch'],
-  ['dashed', 'Dashed'],
-  ['zigzag-line', 'Zigzag line'],
+  ['auto', t('Auto')],
+  ['hachure', t('Hachure')],
+  ['solid', t('Solid')],
+  ['zigzag', t('Zigzag')],
+  ['cross-hatch', t('Cross hatch')],
+  ['dashed', t('Dashed')],
+  ['zigzag-line', t('Zigzag line')],
 ]
 
 type Method = (...args: any[]) => any

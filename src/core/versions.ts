@@ -14,7 +14,7 @@
 // types see an ordinary remote-like change.
 
 import * as Y from 'yjs'
-import { t } from './i18n'
+import { locale, t } from './i18n'
 import { isRemoteOrigin } from './network'
 import type { Session } from './session'
 
@@ -116,7 +116,7 @@ export function setupAutoVersions(session: Session): void {
 // Restores a version (editors only). The current state is saved first.
 export async function restoreVersion(session: Session, version: Version): Promise<void> {
   if (!session.canEdit) throw new Error(t('Only editors can restore versions'))
-  saveVersion(session, t('Before restoring the version of {date}', { date: new Date(version.time).toLocaleString() }), true)
+  saveVersion(session, t('Before restoring the version of {date}', { date: new Date(version.time).toLocaleString(locale) }), true)
   if (session.hooks.restoreVersion) await session.hooks.restoreVersion(version.state)
   else applyStateGeneric(session.doc, version.state)
 }

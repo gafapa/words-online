@@ -2,6 +2,7 @@
 // merges, column widths and formatted values) for the browser's print dialog.
 
 import type { ICellData, IRange, IStyleData, IWorkbookData } from '@univerjs/presets'
+import { t } from '../../core/i18n'
 
 const H_ALIGN: Record<number, string> = { 1: 'left', 2: 'center', 3: 'right', 4: 'justify', 5: 'justify', 6: 'justify' }
 const V_ALIGN: Record<number, string> = { 1: 'top', 2: 'middle', 3: 'bottom' }
@@ -28,7 +29,7 @@ export function renderPrintHtml(data: IWorkbookData, sheetId: string, display: (
     lastRow = Math.max(lastRow, m.endRow)
     lastCol = Math.max(lastCol, m.endColumn)
   }
-  if (lastRow < 0) return '<p>(empty sheet)</p>'
+  if (lastRow < 0) return `<p>${t('(empty sheet)')}</p>`
 
   const covered = new Set<string>()
   const spans = new Map<string, IRange>()

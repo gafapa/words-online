@@ -2,6 +2,7 @@
 // Converters are loaded on demand.
 
 import type { IWorkbookData } from '@univerjs/presets'
+import { t } from '../../../core/i18n'
 
 export type SheetExportFormat = 'xlsx' | 'ods' | 'csv'
 
@@ -13,7 +14,7 @@ const converters = import.meta.glob(['./xlsx-*.ts', './ods-*.ts', './csv.ts'])
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function load(name: string): Promise<any> {
   const loader = converters[`./${name}.ts`]
-  if (!loader) throw new Error('This format is not available')
+  if (!loader) throw new Error(t('This format is not available'))
   return loader()
 }
 
@@ -22,8 +23,8 @@ export async function importSheetFile(file: File): Promise<Partial<IWorkbookData
   if (ext === 'xlsx') return (await load('xlsx-import')).importXlsx(await file.arrayBuffer())
   if (ext === 'ods') return (await load('ods-import')).importOds(await file.arrayBuffer())
   if (ext === 'csv' || ext === 'tsv') return (await load('csv')).importCsv(await file.text(), ext === 'tsv' ? '\t' : undefined)
-  if (ext === 'xls') throw new Error('Legacy .xls files are not supported; save them as .xlsx first')
-  throw new Error('Unsupported file type')
+  if (ext === 'xls') throw new Error(t('Legacy .xls files are not supported; save them as .xlsx first'))
+  throw new Error(t('Unsupported file type'))
 }
 
 // `sheetId` selects the sheet for single-sheet formats (CSV).

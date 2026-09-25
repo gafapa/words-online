@@ -1,6 +1,7 @@
 // Small UI building blocks: icons, menu bar, popovers and dialogs.
 
 import { createElement, type IconNode } from 'lucide'
+import { t } from '../core/i18n'
 
 export function icon(node: IconNode, size = 18): SVGElement {
   return createElement(node, { width: size, height: size, 'stroke-width': 1.8 })
@@ -189,6 +190,12 @@ export function showContextMenu(x: number, y: number, items: MenuEntry[]): void 
   if (previous instanceof HTMLButtonElement) focusRow(panel, 0)
 }
 
+// Key names as printed on the user's keyboard (Shift → Mayús, Enter → Intro…).
+export function shortcutLabel(shortcut: string): string {
+  const names: Record<string, string> = { Shift: t('Shift'), Enter: t('Enter'), Del: t('Del'), Arrow: t('Arrow'), Wheel: t('Wheel') }
+  return shortcut.replace(/\b(Shift|Enter|Del|Arrow|Wheel)\b/g, (k) => names[k])
+}
+
 function renderItems(items: MenuEntry[], close: () => void, beforeRun = () => {}, parentRow?: HTMLElement): HTMLElement {
   const list = el('div', { class: 'menu-list', role: 'menu' })
   let submenu: HTMLElement | null = null
@@ -216,7 +223,7 @@ function renderItems(items: MenuEntry[], close: () => void, beforeRun = () => {}
       { type: 'button', class: 'menu-row', disabled: !enabled, tabIndex: -1 },
       el('span', { class: 'menu-check', textContent: checked ? '✓' : '' }),
       el('span', { class: 'menu-label', textContent: item.label }),
-      el('span', { class: 'menu-shortcut', textContent: item.submenu ? '▸' : (item.shortcut ?? '') }),
+      el('span', { class: 'menu-shortcut', textContent: item.submenu ? '▸' : shortcutLabel(item.shortcut ?? '') }),
     )
     row.setAttribute('role', item.active ? 'menuitemcheckbox' : 'menuitem')
     if (item.active) row.setAttribute('aria-checked', String(!!checked))
@@ -338,17 +345,17 @@ export function colorPalette(onPick: (color: string | null) => void, resetLabel:
       grid.append(swatch)
     }
   }
-  const custom = el('input', { type: 'color', class: 'palette-custom', title: 'Custom color' })
+  const custom = el('input', { type: 'color', class: 'palette-custom', title: t('Custom color') })
   custom.addEventListener('change', () => {
     closePopover()
     onPick(custom.value)
   })
-  wrap.append(grid, el('label', { class: 'palette-custom-row' }, 'Custom… ', custom))
+  wrap.append(grid, el('label', { class: 'palette-custom-row' }, t('Custom…'), ' ', custom))
   return wrap
 }
 
 export function tableGrid(onPick: (rows: number, cols: number) => void, size = 10): HTMLElement {
-  const label = el('div', { class: 'table-size', textContent: 'Insert table' })
+  const label = el('div', { class: 'table-size', textContent: t('Insert table') })
   const grid = el('div', { class: 'table-grid' })
   grid.style.gridTemplateColumns = `repeat(${size}, 16px)`
   const cells: HTMLElement[] = []
@@ -423,8 +430,8 @@ export async function promptText(title: string, label: string, value = '', multi
     })
   }
   const result = await showDialog(title, body, [
-    { label: 'Cancel', value: 'cancel' },
-    { label: 'OK', value: 'ok', primary: true },
+    { label: t('Cancel'), value: 'cancel' },
+    { label: t('OK'), value: 'ok', primary: true },
   ])
   return result === 'ok' ? input.value : null
 }

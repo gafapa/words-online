@@ -5,6 +5,7 @@
 
 import { emptyPage, newCellId, type CellRecord, type GeometryRecord, type PageRecord } from '../model'
 import { deflateRawSync } from './deflate'
+import { t } from '../../../core/i18n'
 
 // Extra geometry kept in the JSON for fidelity: the collapsed/expanded size of
 // containers (draw.io's <mxRectangle as="alternateBounds">), as [x, y, width, height].
@@ -48,7 +49,7 @@ export async function parseDrawio(text: string): Promise<PageRecord[]> {
       addPage(null, null, root)
       break
     default:
-      throw new Error(`Not a draw.io file (root element <${root.localName}>)`)
+      throw new Error(t('Not a draw.io file (root element <{name}>)', { name: root.localName }))
   }
   if (!pages.length) addPage(null, null, null)
   return pages

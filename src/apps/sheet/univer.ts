@@ -1,6 +1,7 @@
 // Univer setup: open-source presets only (Apache-2.0).
 
 import { createUniver, LocaleType, mergeLocales, type IWorkbookData } from '@univerjs/presets'
+import { language } from '../../core/i18n'
 import { UniverSheetsCorePreset } from '@univerjs/preset-sheets-core'
 import { UniverSheetsFilterPreset } from '@univerjs/preset-sheets-filter'
 import { UniverSheetsSortPreset } from '@univerjs/preset-sheets-sort'
@@ -49,12 +50,29 @@ export function emptyWorkbook(): Partial<IWorkbookData> {
   }
 }
 
-export function createSpreadsheet(container: HTMLElement) {
+// Univer's interface in Spanish for Spanish and Galician (Univer has no Galician), else English.
+async function spanishLocale() {
+  const parts = await Promise.all([
+    import('@univerjs/preset-sheets-core/locales/es-ES'),
+    import('@univerjs/preset-sheets-filter/locales/es-ES'),
+    import('@univerjs/preset-sheets-sort/locales/es-ES'),
+    import('@univerjs/preset-sheets-conditional-formatting/locales/es-ES'),
+    import('@univerjs/preset-sheets-data-validation/locales/es-ES'),
+    import('@univerjs/preset-sheets-find-replace/locales/es-ES'),
+    import('@univerjs/preset-sheets-hyper-link/locales/es-ES'),
+    import('@univerjs/preset-sheets-note/locales/es-ES'),
+    import('@univerjs/preset-sheets-drawing/locales/es-ES'),
+    import('@univerjs/preset-sheets-table/locales/es-ES'),
+  ])
+  return mergeLocales(...parts.map((m) => m.default))
+}
+
+export async function createSpreadsheet(container: HTMLElement) {
+  const english = mergeLocales(coreEnUS, filterEnUS, sortEnUS, cfEnUS, dvEnUS, findEnUS, linkEnUS, noteEnUS, drawingEnUS, tableEnUS)
+  const spanish = language === 'en' ? null : await spanishLocale()
   return createUniver({
-    locale: LocaleType.EN_US,
-    locales: {
-      [LocaleType.EN_US]: mergeLocales(coreEnUS, filterEnUS, sortEnUS, cfEnUS, dvEnUS, findEnUS, linkEnUS, noteEnUS, drawingEnUS, tableEnUS),
-    },
+    locale: spanish ? LocaleType.ES_ES : LocaleType.EN_US,
+    locales: spanish ? { [LocaleType.ES_ES]: spanish, [LocaleType.EN_US]: english } : { [LocaleType.EN_US]: english },
     presets: [
       UniverSheetsCorePreset({ container }),
       UniverSheetsFilterPreset(),

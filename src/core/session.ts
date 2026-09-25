@@ -25,6 +25,7 @@ import { accessRank, keysForAccess, mergeKeys, newLinkKeys, type Access, type Do
 import { isRemoteOrigin, RoomProvider, type ChannelSecurity } from './network'
 import { absoluteUrl, docPath } from './router'
 import * as store from './store'
+import { t } from './i18n'
 
 export type { Access } from './keys'
 
@@ -121,7 +122,7 @@ export async function openSession(type: store.DocType, docId: string, docKey: st
     hooks: {},
     shareUrl: (level = access) => absoluteUrl(docPath(type, docId, docKey, keysForAccess(keys.link, accessRank(level) > accessRank(access) ? access : level))),
     copyUrl: () => absoluteUrl(docPath(type, docId, docKey, keysForAccess(keys.link, 'view'), true)),
-    warning: ignoredLink ? 'This link carries keys that do not match this document; it was opened with the access you already had.' : undefined,
+    warning: ignoredLink ? t('This link carries keys that do not match this document; it was opened with the access you already had.') : undefined,
   }
   if (session.canEdit) recordAuthor(session)
   return session

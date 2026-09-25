@@ -9,7 +9,7 @@ import { setupChrome } from '../../ui/chrome'
 import { renderShell } from '../../ui/shell'
 import { t } from '../../core/i18n'
 import { documentMenuItems } from '../../ui/versions'
-import { createMenuBar, el, showDialog, toast } from '../../ui/widgets'
+import { createMenuBar, el, shortcutLabel, showDialog, toast } from '../../ui/widgets'
 import { exportSheetFile, SHEET_ACCEPT, type SheetExportFormat } from './formats'
 import { renderPrintHtml } from './print'
 import { SheetSync } from './sync'
@@ -21,7 +21,7 @@ const mod = (k: string) => (isMac ? `⌘${k}` : `Ctrl+${k}`)
 // Live workbook access of each open session (for hand in).
 export const sheetHandles = new WeakMap<Session, { snapshot: () => IWorkbookData; activeSheetId: () => string }>()
 
-export function mountSheet(session: Session, root: HTMLElement): void {
+export async function mountSheet(session: Session, root: HTMLElement): Promise<void> {
   const info = appInfo('sheet')
   const shell = renderShell(info, root)
   shell.toolbar.hidden = true // Univer brings its own ribbon
@@ -34,7 +34,7 @@ export function mountSheet(session: Session, root: HTMLElement): void {
   shell.main.append(container)
   document.body.append(printArea, fileInput)
 
-  const { univer, univerAPI } = createSpreadsheet(container)
+  const { univer, univerAPI } = await createSpreadsheet(container)
   // Declared first: the initial rebuild runs inside the SheetSync constructor.
   let presence: SelectionPresence | undefined
   // Viewers and commenters get a read-only workbook (again after every rebuild).
@@ -78,7 +78,7 @@ export function mountSheet(session: Session, root: HTMLElement): void {
       a.click()
       setTimeout(() => URL.revokeObjectURL(a.href), 1000)
     } catch (err) {
-      toast(`Download failed: ${(err as Error).message}`)
+      toast(t('Download failed: {message}', { message: (err as Error).message }))
     }
   }
 
@@ -95,11 +95,11 @@ export function mountSheet(session: Session, root: HTMLElement): void {
     fileInput.value = ''
     if (!file) return
     try {
-      toast('Opening…')
+      toast(t('Opening…'))
       const { importFile } = await import('./index')
       location.href = await importFile(file)
     } catch (err) {
-      toast(`Could not open the file: ${(err as Error).message}`)
+      toast(t('Could not open the file: {message}', { message: (err as Error).message }))
     }
   })
 
@@ -109,40 +109,40 @@ export function mountSheet(session: Session, root: HTMLElement): void {
 
   createMenuBar(shell.menubar, [
     {
-      label: 'File',
+      label: t('File'),
       items: [
-        { label: 'New spreadsheet', run: () => window.open(newDocPath('sheet'), '_blank') },
-        { label: 'Open file…', shortcut: mod('O'), run: () => fileInput.click() },
-        { label: 'All documents', run: () => (location.href = homePath()) },
+        { label: t('New spreadsheet'), run: () => window.open(newDocPath('sheet'), '_blank') },
+        { label: t('Open file…'), shortcut: mod('O'), run: () => fileInput.click() },
+        { label: t('All documents'), run: () => (location.href = homePath()) },
         '-',
-        { label: 'Share…', run: () => document.getElementById('btn-share')!.click() },
+        { label: t('Share…'), run: () => document.getElementById('btn-share')!.click() },
         {
-          label: 'Download',
+          label: t('Download'),
           submenu: [
-            { label: 'Microsoft Excel (.xlsx)', run: () => download('xlsx') },
-            { label: 'OpenDocument spreadsheet (.ods)', run: () => download('ods') },
-            { label: 'Comma-separated values (.csv, current sheet)', run: () => download('csv') },
-            { label: 'PDF (via Print, current sheet)', run: print },
+            { label: t('Microsoft Excel (.xlsx)'), run: () => download('xlsx') },
+            { label: t('OpenDocument spreadsheet (.ods)'), run: () => download('ods') },
+            { label: t('Comma-separated values (.csv, current sheet)'), run: () => download('csv') },
+            { label: t('PDF (via Print, current sheet)'), run: print },
           ],
         },
         '-',
         ...documentMenuItems(session),
         '-',
-        { label: 'Print', shortcut: mod('P'), run: print },
+        { label: t('Print'), shortcut: mod('P'), run: print },
       ],
     },
     {
-      label: 'Edit',
+      label: t('Edit'),
       items: [
-        { label: 'Undo', shortcut: mod('Z'), run: () => univerAPI.undo() },
-        { label: 'Redo', shortcut: mod('Y'), run: () => univerAPI.redo() },
+        { label: t('Undo'), shortcut: mod('Z'), run: () => univerAPI.undo() },
+        { label: t('Redo'), shortcut: mod('Y'), run: () => univerAPI.redo() },
         '-',
-        { label: 'Find and replace', shortcut: mod('F'), run: () => univerAPI.executeCommand('ui.operation.open-find-dialog') },
+        { label: t('Find and replace'), shortcut: mod('F'), run: () => univerAPI.executeCommand('ui.operation.open-find-dialog') },
       ],
     },
     {
-      label: 'Help',
-      items: [{ label: 'Keyboard shortcuts', run: shortcuts }],
+      label: t('Help'),
+      items: [{ label: t('Keyboard shortcuts'), run: shortcuts }],
     },
   ])
 
@@ -160,7 +160,7 @@ export function mountSheet(session: Session, root: HTMLElement): void {
         fileInput.click()
       } else if (key === 's') {
         e.preventDefault()
-        toast('All changes are saved automatically in this browser')
+        toast(t('All changes are saved automatically in this browser'))
       }
     },
     true,
@@ -171,11 +171,11 @@ export function mountSheet(session: Session, root: HTMLElement): void {
   const saveState = document.getElementById('save-state')!
   let saveTimer = 0
   session.doc.on('update', () => {
-    saveState.textContent = 'Saving…'
+    saveState.textContent = t('Saving…')
     clearTimeout(saveTimer)
-    saveTimer = window.setTimeout(() => (saveState.textContent = 'Saved in this browser'), 600)
+    saveTimer = window.setTimeout(() => (saveState.textContent = t('Saved in this browser')), 600)
   })
-  saveState.textContent = 'Saved in this browser'
+  saveState.textContent = t('Saved in this browser')
 
   // Handles for automated browser tests in development builds only.
   if (import.meta.env.DEV) Object.assign(window, { univerAPI, sheetSync: sync, awareness: session.awareness })
@@ -234,19 +234,19 @@ function hexToRgba(hex: string, alpha: number): string {
 
 async function shortcuts(): Promise<void> {
   const rows: [string, string][] = [
-    ['Edit cell', 'F2 / Enter'],
-    ['Confirm and move down / right', 'Enter / Tab'],
-    ['Line break in cell', 'Alt+Enter'],
-    ['Bold / Italic / Underline', `${mod('B')} / ${mod('I')} / ${mod('U')}`],
-    ['Undo / redo', `${mod('Z')} / ${mod('Y')}`],
-    ['Copy / cut / paste', `${mod('C')} / ${mod('X')} / ${mod('V')}`],
-    ['Find and replace', `${mod('F')} / ${mod('H')}`],
-    ['Select all', mod('A')],
-    ['Jump to edge of data', `${mod('Arrow')}`],
-    ['Extend selection', 'Shift+Arrow'],
-    ['Open file / print', `${mod('O')} / ${mod('P')}`],
+    [t('Edit cell'), 'F2 / Enter'],
+    [t('Confirm and move down / right'), 'Enter / Tab'],
+    [t('Line break in cell'), 'Alt+Enter'],
+    [t('Bold / Italic / Underline'), `${mod('B')} / ${mod('I')} / ${mod('U')}`],
+    [t('Undo / redo'), `${mod('Z')} / ${mod('Y')}`],
+    [t('Copy / cut / paste'), `${mod('C')} / ${mod('X')} / ${mod('V')}`],
+    [t('Find and replace'), `${mod('F')} / ${mod('H')}`],
+    [t('Select all'), mod('A')],
+    [t('Jump to edge of data'), `${mod('Arrow')}`],
+    [t('Extend selection'), 'Shift+Arrow'],
+    [t('Open file / print'), `${mod('O')} / ${mod('P')}`],
   ]
   const table = el('table', { class: 'shortcuts' })
-  for (const [label, keys] of rows) table.append(el('tr', {}, el('td', { textContent: label }), el('td', {}, el('kbd', { textContent: keys }))))
-  await showDialog('Keyboard shortcuts', table, [{ label: 'Close', value: 'ok', primary: true }], true)
+  for (const [label, keys] of rows) table.append(el('tr', {}, el('td', { textContent: label }), el('td', {}, el('kbd', { textContent: shortcutLabel(keys) }))))
+  await showDialog(t('Keyboard shortcuts'), table, [{ label: t('Close'), value: 'ok', primary: true }], true)
 }

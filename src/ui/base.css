@@ -64,6 +64,8 @@ input, select, textarea { font: inherit; color: inherit; }
 .status.offline { color: var(--muted); background: var(--surface); border: 1px solid var(--border); }
 .status.online { color: #fff; background: var(--ok); }
 .share-btn { border-radius: 18px !important; padding: 7px 18px !important; }
+.share-btn, .handin-btn { display: inline-flex; align-items: center; gap: 6px; }
+.share-btn svg, .handin-btn svg { flex: none; }
 .user-name { width: 120px; padding: 5px 8px; border: 2px solid var(--border); border-radius: 6px; background: var(--surface); }
 
 /* ---------- Menus & popovers ---------- */
@@ -193,6 +195,27 @@ dialog.dlg { background: var(--surface); color: var(--text); }
   .user-name, .save-state, .hide-narrow { display: none; }
   .toolbar { flex-wrap: nowrap; overflow-x: auto; border-radius: 8px; }
   .tb-group { flex: none; }
+}
+
+/* Phones: compact icon buttons, the connection status as a dot, one scrolling menu row. */
+@media (max-width: 600px) {
+  .appbar-main { gap: 6px; }
+  .app-logo { width: 30px; height: 30px; font-size: 18px; line-height: 30px; }
+  .appbar-actions { gap: 4px; }
+  .btn-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .share-btn, .handin-btn { padding: 0 !important; width: 34px; height: 34px; justify-content: center; border-radius: 50% !important; }
+  .status { font-size: 0; padding: 0; width: 10px; height: 10px; border-radius: 50%; }
+  .presence .avatar:nth-child(n + 3) { display: none; }
+  .access-badge { max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .doc-title { font-size: 16px; }
+  /* Title and actions on the first row, the menu bar on its own full-width row. */
+  .appbar-main { flex-wrap: wrap; row-gap: 0; }
+  .title-block { display: contents; }
+  .title-row { flex: 1; min-width: 0; order: 1; }
+  .appbar-actions { order: 2; }
+  .menubar { order: 3; flex-basis: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .menubar::-webkit-scrollbar { display: none; }
+  .menubar-item { flex: none; padding: 2px 6px; }
 }
 
 /* ---------- Print ---------- */

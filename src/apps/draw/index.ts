@@ -7,6 +7,7 @@ import { createLocalDocument } from '../../core/session'
 import { applyStateGeneric, RESTORE_ORIGIN } from '../../core/versions'
 import { DRAW_ACCEPT, drawApis, exportDrawing, mountDraw } from './app'
 import { DrawSync } from './sync'
+import { t } from '../../core/i18n'
 import './draw.css'
 
 export const accept = DRAW_ACCEPT
@@ -27,8 +28,8 @@ export async function importFile(file: File): Promise<string> {
 // "Hand in": the .excalidraw file and a PNG.
 export async function submitFiles(session: Session): Promise<SubmitFile[]> {
   const api = drawApis.get(session)
-  if (!api) throw new Error('The drawing is still loading')
-  const title = String(session.doc.getMap('meta').get('title') || 'Untitled drawing')
+  if (!api) throw new Error(t('The drawing is still loading'))
+  const title = String(session.doc.getMap('meta').get('title') || t('Untitled drawing'))
   return [
     { name: `${title}.excalidraw`, blob: await exportDrawing(api, 'excalidraw') },
     { name: `${title}.png`, blob: await exportDrawing(api, 'png') },

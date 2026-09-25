@@ -8,7 +8,7 @@ import type { Node as PMNode } from '@tiptap/pm/model'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import type { Session } from '../../core/session'
-import { t } from '../../core/i18n'
+import { locale, t } from '../../core/i18n'
 import { el, showDialog } from '../../ui/widgets'
 import type { AuthorDirectory } from './collab'
 import { PositionIndex } from './ypos'
@@ -180,7 +180,7 @@ export async function contributionsDialog(editor: Editor, session: Session, auth
       el('th', { textContent: t('Author') }),
       el('th', { textContent: t('Words') }),
       el('th', { textContent: t('Characters') }),
-      el('th', { textContent: t('Share') }),
+      el('th', { textContent: t('Percentage') }),
     ),
   )
   for (const p of list) {
@@ -195,8 +195,8 @@ export async function contributionsDialog(editor: Editor, session: Session, auth
         'tr',
         {},
         el('td', {}, swatch, p.name),
-        el('td', { textContent: p.words.toLocaleString() }),
-        el('td', { textContent: p.characters.toLocaleString() }),
+        el('td', { textContent: p.words.toLocaleString(locale) }),
+        el('td', { textContent: p.characters.toLocaleString(locale) }),
         el('td', { class: 'contrib-share' }, el('span', { class: 'contrib-track' }, bar), `${pct.toFixed(1)}%`),
       ),
     )

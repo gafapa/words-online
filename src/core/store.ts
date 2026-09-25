@@ -3,6 +3,7 @@
 import { clearDocument } from 'y-indexeddb'
 import { kvDelete } from './idb'
 import type { Access, LinkKeys } from './keys'
+import { t } from './i18n'
 
 const DOCS_KEY = 'words-online:docs'
 const USER_KEY = 'words-online:user'
@@ -71,7 +72,7 @@ export function loadUser(): User {
   const user = read<User | null>(USER_KEY, null)
   if (user) return user
   const created = {
-    name: `Guest ${Math.floor(Math.random() * 900 + 100)}`,
+    name: t('Guest {n}', { n: Math.floor(Math.random() * 900 + 100) }),
     color: COLORS[Math.floor(Math.random() * COLORS.length)],
   }
   saveUser(created)

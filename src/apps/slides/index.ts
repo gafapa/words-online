@@ -7,6 +7,7 @@ import { DiagramSync } from '../diagram/sync'
 import { SLIDES_ACCEPT, mountSlides } from './app'
 import { notesText, parseBackground, presentationSize, presentationTheme, readSlideMeta, writePresentation, type PresentationData } from './model'
 import { SlideRenderer } from './render'
+import { t } from '../../core/i18n'
 import '../diagram/diagram.css'
 import './slides.css'
 
@@ -41,7 +42,7 @@ export function readPresentation(session: Session): PresentationData {
 // "Hand in": the .pptx file plus a PNG of every slide.
 export async function submitFiles(session: Session): Promise<SubmitFile[]> {
   const data = readPresentation(session)
-  const title = String(session.doc.getMap('meta').get('title') || 'Untitled presentation')
+  const title = String(session.doc.getMap('meta').get('title') || t('Untitled presentation'))
   const renderer = new SlideRenderer(() => data.theme)
   try {
     const { exportPptx } = await import('./formats/pptx')

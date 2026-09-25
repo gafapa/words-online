@@ -6,6 +6,7 @@ import { DEFAULT_PAGE, PAGE_SIZES_MM, type CommentData, type ImportedDocument, t
 import { attr, bytesToDataUrl, child, children, mimeFromPath, parseXml, toHex } from '../../../core/formats'
 import { ommlToLatex } from './math'
 import { authorColor } from './review'
+import { t } from '../../../core/i18n'
 
 const TWIPS_PER_INDENT = 720
 const TWIPS_PER_MM = 1440 / 25.4
@@ -103,7 +104,7 @@ export async function importDocx(file: ArrayBuffer): Promise<ImportedDocument> {
   const zip = await JSZip.loadAsync(file)
   const read = async (path: string) => (await zip.file(path)?.async('text')) ?? null
   const documentXml = await read('word/document.xml')
-  if (!documentXml) throw new Error('Not a Word document')
+  if (!documentXml) throw new Error(t('Not a Word document'))
 
   const stylesRoot = xmlRoot(await read('word/styles.xml'))
   const ctx: Context = {

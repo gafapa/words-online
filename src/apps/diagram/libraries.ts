@@ -10,6 +10,7 @@ import { LIBS_BASE } from './graph'
 import type { PaletteItem, PaletteLibrary } from './palette'
 import { loadShapeFile } from './shapes/compat'
 import { registerStencilSet } from './shapes/stencils'
+import { locale, t } from '../../core/i18n'
 
 export interface CatalogEntry {
   id: string
@@ -253,29 +254,55 @@ export async function loadEnabledLibraries(ids = enabledEntries()): Promise<Pale
 
 const formatSize = (bytes: number) => (bytes < 1e6 ? `${Math.max(1, Math.round(bytes / 1e3))} KB` : `${(bytes / 1e6).toFixed(1)} MB`)
 
+// Generic group and library titles of the catalog in the user's language (product names stay).
+const CATALOG_TITLES: Record<string, string> = {
+  Standard: t('Standard'),
+  Software: t('Software'),
+  Networking: t('Networking'),
+  Business: t('Business'),
+  Other: t('Other'),
+  General: t('General'),
+  Arrows: t('Arrows'),
+  Clipart: t('Clipart'),
+  'Data Flow Diagram': t('Data Flow Diagram'),
+  Mockups: t('Mockups'),
+  Sitemap: t('Sitemap'),
+  'Value Stream Mapping': t('Value Stream Mapping'),
+  Cabinets: t('Cabinets'),
+  Infographic: t('Infographic'),
+  Electrical: t('Electrical'),
+  Floorplans: t('Floorplans'),
+  'Fluid Power (ISO 1219)': t('Fluid Power (ISO 1219)'),
+  'Process Engineering': t('Process Engineering'),
+  'Threat Modeling': t('Threat Modeling'),
+  'Web Icons': t('Web Icons'),
+  Signs: t('Signs'),
+}
+const catalogTitle = (title: string) => CATALOG_TITLES[title] ?? title
+
 // "More shapes" dialog: pick the draw.io libraries shown in the shape panel.
 // Resolves the new selection, or null when cancelled.
 export async function chooseLibraries(): Promise<string[] | null> {
   const cat = await loadCatalog()
   if (!cat) {
-    toast('Shape libraries are not available (offline?)')
+    toast(t('Shape libraries are not available (offline?)'))
     return null
   }
   const enabled = new Set(enabledEntries())
-  const filter = el('input', { type: 'search', class: 'field', placeholder: 'Filter libraries' })
-  filter.setAttribute('aria-label', 'Filter libraries')
+  const filter = el('input', { type: 'search', class: 'field', placeholder: t('Filter libraries') })
+  filter.setAttribute('aria-label', t('Filter libraries'))
   const list = el('div', { class: 'libs-list' })
   const boxes: { box: HTMLInputElement; row: HTMLElement; text: string }[] = []
   const sections: { section: HTMLElement; rows: HTMLElement[] }[] = []
   for (const group of cat.groups) {
     const rows: HTMLElement[] = []
-    const section = el('section', { class: 'libs-group' }, el('h3', { textContent: group.title }))
+    const section = el('section', { class: 'libs-group' }, el('h3', { textContent: catalogTitle(group.title) }))
     for (const entry of group.entries) {
       const box = el('input', { type: 'checkbox', value: entry.id, checked: enabled.has(entry.id) })
       const count = entry.libraries.reduce((n, l) => n + l.count, 0)
-      const row = el('label', { class: 'libs-entry', title: entry.libraries.map((l) => l.name).join('\n') },
-        box, el('span', { textContent: entry.title }), el('small', { textContent: `${count} · ${formatSize(entry.bytes)}` }))
-      boxes.push({ box, row, text: `${group.title} ${entry.title} ${entry.libraries.map((l) => l.name).join(' ')}`.toLowerCase() })
+      const row = el('label', { class: 'libs-entry', title: entry.libraries.map((l) => catalogTitle(l.name)).join('\n') },
+        box, el('span', { textContent: catalogTitle(entry.title) }), el('small', { textContent: `${count.toLocaleString(locale)} · ${formatSize(entry.bytes)}` }))
+      boxes.push({ box, row, text: `${group.title} ${catalogTitle(group.title)} ${entry.title} ${catalogTitle(entry.title)} ${entry.libraries.map((l) => l.name).join(' ')}`.toLowerCase() })
       rows.push(row)
       section.append(row)
     }
@@ -291,10 +318,10 @@ export async function chooseLibraries(): Promise<string[] | null> {
     if (e.key === 'Enter') e.preventDefault()
   })
   const body = el('div', { class: 'libs-dialog' }, filter, list,
-    el('p', { class: 'libs-note', textContent: 'Shapes from draw.io. Libraries are downloaded when enabled and then also work offline.' }))
-  const result = await showDialog('More shapes', body, [
-    { label: 'Cancel', value: 'cancel' },
-    { label: 'Apply', value: 'ok', primary: true },
+    el('p', { class: 'libs-note', textContent: t('Shapes from draw.io. Libraries are downloaded when enabled and then also work offline.') }))
+  const result = await showDialog(t('More shapes'), body, [
+    { label: t('Cancel'), value: 'cancel' },
+    { label: t('Apply'), value: 'ok', primary: true },
   ], true)
   if (result !== 'ok') return null
   const ids = boxes.filter((b) => b.box.checked).map((b) => b.box.value)

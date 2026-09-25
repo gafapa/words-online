@@ -4,7 +4,7 @@
 import { ALL_ACCEPT, APPS, appForFile, appInfo, type AppInfo } from '../apps/registry'
 import { docPath, newDocPath } from '../core/router'
 import { isOfflineCapable, whenOfflineReady } from '../core/offline'
-import { t } from '../core/i18n'
+import { languageSelect, locale, t } from '../core/i18n'
 import * as store from '../core/store'
 import { accessibilityButton } from '../ui/accessibility'
 import { el, showContextMenu, toast } from '../ui/widgets'
@@ -18,8 +18,8 @@ export function mountHome(root: HTMLElement): void {
   let filter: Filter = 'all'
   let query = ''
 
-  const nameInput = el('input', { class: 'user-name', value: user.name, title: 'Your name, as others see it' })
-  nameInput.setAttribute('aria-label', 'Your name')
+  const nameInput = el('input', { class: 'user-name', value: user.name, title: t('Your name, as others see it') })
+  nameInput.setAttribute('aria-label', t('Your name'))
   nameInput.style.borderColor = user.color
   nameInput.addEventListener('change', () => {
     user.name = nameInput.value.trim() || user.name
@@ -34,14 +34,14 @@ export function mountHome(root: HTMLElement): void {
     if (!file) return
     try {
       const target = await appForFile(file)
-      if (!target) return toast('This file type is not supported yet')
-      toast('Opening…')
+      if (!target) return toast(t('This file type is not supported yet'))
+      toast(t('Opening…'))
       location.href = await target.module.importFile(file)
     } catch (err) {
-      toast(`Could not open the file: ${(err as Error).message}`)
+      toast(t('Could not open the file: {message}', { message: (err as Error).message }))
     }
   })
-  const openButton = el('button', { type: 'button', class: 'home-open', textContent: 'Open file…' })
+  const openButton = el('button', { type: 'button', class: 'home-open', textContent: t('Open file…') })
   fileInput.accept = ALL_ACCEPT
   openButton.addEventListener('click', () => fileInput.click())
 
@@ -51,25 +51,25 @@ export function mountHome(root: HTMLElement): void {
     ...APPS.map((app) => {
       const card = el(
         'a',
-        { class: `new-card${app.load ? '' : ' disabled'}`, href: app.load ? newDocPath(app.type) : '#', title: app.load ? app.newLabel : 'Coming soon' },
+        { class: `new-card${app.load ? '' : ' disabled'}`, href: app.load ? newDocPath(app.type) : '#', title: app.load ? app.newLabel : t('Coming soon') },
         appIcon(app, 'large'),
         el('span', { class: 'new-label', textContent: app.newLabel }),
-        app.load ? null : el('span', { class: 'soon', textContent: 'Coming soon' }),
+        app.load ? null : el('span', { class: 'soon', textContent: t('Coming soon') }),
       )
       if (!app.load) card.addEventListener('click', (e) => e.preventDefault())
       return card
     }),
   )
 
-  const search = el('input', { class: 'home-search', type: 'search', placeholder: 'Search documents' })
-  search.setAttribute('aria-label', 'Search documents')
+  const search = el('input', { class: 'home-search', type: 'search', placeholder: t('Search documents') })
+  search.setAttribute('aria-label', t('Search documents'))
   search.addEventListener('input', () => {
     query = search.value.trim().toLowerCase()
     renderList()
   })
 
   const filters = el('div', { class: 'home-filters', role: 'tablist' })
-  const filterOptions: [Filter, string][] = [['all', 'All'], ...APPS.map((a) => [a.type, `${a.name}s`] as [Filter, string])]
+  const filterOptions: [Filter, string][] = [['all', t('All')], ...APPS.map((a) => [a.type, a.plural] as [Filter, string])]
   const renderFilters = () =>
     filters.replaceChildren(
       ...filterOptions.map(([value, label]) => {
@@ -95,7 +95,7 @@ export function mountHome(root: HTMLElement): void {
       list.replaceChildren(
         el('p', {
           class: 'empty',
-          textContent: query || filter !== 'all' ? 'No matching documents.' : 'No documents yet. Create one above or open a file.',
+          textContent: query || filter !== 'all' ? t('No matching documents.') : t('No documents yet. Create one above or open a file.'),
         }),
       )
       return
@@ -104,8 +104,8 @@ export function mountHome(root: HTMLElement): void {
       ...docs.map((d) => {
         const app = appInfo(d.type)
         const href = docPath(d.type, d.id, d.key)
-        const more = el('button', { type: 'button', class: 'row-more', title: 'More actions', textContent: '⋮' })
-        more.setAttribute('aria-label', 'More actions')
+        const more = el('button', { type: 'button', class: 'row-more', title: t('More actions'), textContent: '⋮' })
+        more.setAttribute('aria-label', t('More actions'))
         const row = el(
           'a',
           { class: 'doc-row', href, role: 'listitem' },
@@ -118,17 +118,17 @@ export function mountHome(root: HTMLElement): void {
               : null,
           ),
           el('span', { class: 'doc-type', textContent: app.name }),
-          el('span', { class: 'doc-date', textContent: formatDate(d.updated), title: new Date(d.updated).toLocaleString() }),
+          el('span', { class: 'doc-date', textContent: formatDate(d.updated), title: new Date(d.updated).toLocaleString(locale) }),
           more,
         )
         const actions = () => [
-          { label: 'Open', run: () => (location.href = href) },
-          { label: 'Open in new tab', run: () => window.open(href, '_blank') },
+          { label: t('Open'), run: () => (location.href = href) },
+          { label: t('Open in new tab'), run: () => window.open(href, '_blank') },
           '-' as const,
           {
-            label: 'Remove from this browser',
+            label: t('Remove from this browser'),
             run: async () => {
-              if (!confirm(`Remove "${d.title || app.untitled}" from this browser? Collaborators keep their copies.`)) return
+              if (!confirm(t('Remove “{title}” from this browser? Collaborators keep their copies.', { title: d.title || app.untitled }))) return
               await store.deleteDoc(d.id)
               renderList()
             },
@@ -160,13 +160,14 @@ export function mountHome(root: HTMLElement): void {
         el('h1', { textContent: 'Words Online' }),
         el('span', { class: 'spacer' }),
         offlineControl(),
+        languageSelect('home-language'),
         accessibilityButton(true),
         nameInput,
       ),
       el(
         'section',
         { class: 'home-new' },
-        el('div', { class: 'home-inner' }, el('div', { class: 'home-section-title' }, el('h2', { textContent: 'Start something new' }), openButton, fileInput), newCards),
+        el('div', { class: 'home-inner' }, el('div', { class: 'home-section-title' }, el('h2', { textContent: t('Start something new') }), openButton, fileInput), newCards),
       ),
       templatesSection(),
       el(
@@ -175,13 +176,13 @@ export function mountHome(root: HTMLElement): void {
         el(
           'div',
           { class: 'home-inner' },
-          el('div', { class: 'home-section-title' }, el('h2', { textContent: 'Recent documents' }), search),
+          el('div', { class: 'home-section-title' }, el('h2', { textContent: t('Recent documents') }), search),
           filters,
           list,
           el('p', {
             class: 'hint',
             textContent:
-              'Documents are stored in this browser. Share a document to edit it with others in real time; edits travel directly between browsers.',
+              t('Documents are stored in this browser. Share a document to edit it with others in real time; edits travel directly between browsers.'),
           }),
         ),
       ),
@@ -212,18 +213,18 @@ function appIcon(app: AppInfo, size: 'small' | 'large'): HTMLElement {
 function formatDate(time: number): string {
   const date = new Date(time)
   const now = new Date()
-  if (date.toDateString() === now.toDateString()) return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+  if (date.toDateString() === now.toDateString()) return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
   const sameYear = date.getFullYear() === now.getFullYear()
-  return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }) })
+  return date.toLocaleDateString(locale, { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }) })
 }
 
 // Offline status: the whole suite is precached by the service worker.
 function offlineControl(): HTMLElement {
   const wrap = el('span', { class: 'offline-control' })
   if (!isOfflineCapable()) return wrap
-  wrap.append(el('span', { class: 'offline-pending', textContent: 'Preparing offline use…' }))
+  wrap.append(el('span', { class: 'offline-pending', textContent: t('Preparing offline use…') }))
   whenOfflineReady()
-    .then(() => wrap.replaceChildren(el('span', { class: 'offline-ready', textContent: '✓ Available offline', title: 'All apps work without a connection' })))
+    .then(() => wrap.replaceChildren(el('span', { class: 'offline-ready', textContent: t('✓ Available offline'), title: t('All apps work without a connection') })))
     .catch(() => wrap.replaceChildren())
   return wrap
 }
@@ -237,11 +238,11 @@ function handleLaunchedFiles(): void {
     try {
       const file = await handle.getFile()
       const target = await appForFile(file)
-      if (!target) return toast('This file type is not supported yet')
-      toast('Opening…')
+      if (!target) return toast(t('This file type is not supported yet'))
+      toast(t('Opening…'))
       location.href = await target.module.importFile(file)
     } catch (err) {
-      toast(`Could not open the file: ${(err as Error).message}`)
+      toast(t('Could not open the file: {message}', { message: (err as Error).message }))
     }
   })
 }

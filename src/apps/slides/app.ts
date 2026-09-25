@@ -598,7 +598,7 @@ export function mountSlides(session: Session, root: HTMLElement): void {
   const layoutMenu = (): MenuEntry[] =>
     LAYOUTS.map((l) => ({ label: layoutName(l.id), run: () => applyLayout(l.id), active: () => readSlideMeta(doc, sync.page).layout === l.id, enabled: editable() }))
   const newSlideMenu = (): MenuEntry[] => LAYOUTS.map((l) => ({ label: layoutName(l.id), run: () => addSlide(l.id), enabled: editable() }))
-  const themeMenu = (): MenuEntry[] => THEMES.map((th) => ({ label: t(th.name), run: () => setTheme(th.id), active: () => theme.id === th.id, enabled: editable() }))
+  const themeMenu = (): MenuEntry[] => THEMES.map((th) => ({ label: th.name, run: () => setTheme(th.id), active: () => theme.id === th.id, enabled: editable() }))
   const sizeMenu = (): MenuEntry[] => [
     { label: t('Widescreen (16:9)'), run: () => setRatio('16:9'), active: () => size.ratio === '16:9', enabled: editable() },
     { label: t('Standard (4:3)'), run: () => setRatio('4:3'), active: () => size.ratio === '4:3', enabled: editable() },
@@ -833,11 +833,11 @@ export function mountSlides(session: Session, root: HTMLElement): void {
     bgBtn.addEventListener('click', () => openPopover(bgBtn, colorPalette((c) => setBackground(c), t('Theme background'))))
     const themes = el('div', { class: 'slides-theme-grid' })
     for (const th of THEMES) {
-      const b = el('button', { type: 'button', class: 'slides-theme-card', title: t(th.name), disabled: readOnly })
+      const b = el('button', { type: 'button', class: 'slides-theme-card', title: th.name, disabled: readOnly })
       b.style.background = backgroundCss(th.background)
-      const aa = el('span', { textContent: 'Aa' })
+      const aa = el('span', { textContent: t('Aa') })
       aa.style.cssText = `color:${th.titleColor};font-family:${th.titleFont}`
-      const name = el('small', { textContent: t(th.name) })
+      const name = el('small', { textContent: th.name })
       name.style.color = th.bodyColor
       b.append(aa, name)
       b.classList.toggle('active', th.id === theme.id)

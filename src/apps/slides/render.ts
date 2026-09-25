@@ -3,7 +3,6 @@
 // as a standalone SVG (thumbnails, presenting, printing and exports).
 
 import { CellEditorHandler, Graph, type Cell, type CellState } from '@maxgraph/core'
-import { t } from '../../core/i18n'
 import { renderSvg } from '../diagram/export'
 import { applyLook, buildCells } from '../diagram/graph'
 import { prepareItems } from '../diagram/libraries'
@@ -43,7 +42,7 @@ export function installTheme(graph: Graph, getTheme: () => Theme, editing: boole
   renderer.getLabelValue = (state: CellState) => {
     const role = (state.cell.getStyle() as Style | null)?.slidePh as Role | undefined
     if (role && isEmpty(state.cell) && !(graph.isEditing() && editingCell(graph) === state.cell)) {
-      return `<span style="opacity:0.5">${t(PLACEHOLDER_HINTS[role] ?? PLACEHOLDER_HINTS.body)}</span>`
+      return `<span style="opacity:0.5">${PLACEHOLDER_HINTS[role] ?? PLACEHOLDER_HINTS.body}</span>`
     }
     return getLabelValue(state)
   }

@@ -6,6 +6,7 @@ import type { Session, SubmitFile } from '../../core/session'
 import { importFileAsDocument, mountWriter, OPEN_ACCEPT } from './app'
 import { exportFile } from './formats'
 import { DEFAULT_PAGE, type DocumentData, type PageSettings } from './formats/types'
+import { t } from '../../core/i18n'
 import './writer.css'
 
 export const accept = OPEN_ACCEPT
@@ -34,7 +35,7 @@ export async function submitFiles(session: Session): Promise<SubmitFile[]> {
   } catch {
     // Default page settings.
   }
-  const title = String(meta.get('title') || 'Untitled document')
+  const title = String(meta.get('title') || t('Untitled document'))
   const data: DocumentData = {
     title,
     body: fragment('body') ?? { type: 'doc', content: [{ type: 'paragraph' }] },

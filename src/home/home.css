@@ -5,6 +5,7 @@ body:has(.home) { overflow: auto; }
 .home-bar { display: flex; align-items: center; gap: 12px; padding: 10px 24px; border-bottom: 1px solid var(--border); }
 .home-bar h1 { font-size: 20px; font-weight: 500; margin: 0; }
 .home-bar .spacer { flex: 1; }
+.home-language { padding: 5px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); }
 .home-logo { width: 36px; height: 36px; border-radius: 8px; background: var(--accent); color: #fff; font: 700 22px/36px Arial, sans-serif; text-align: center; }
 .home-inner { max-width: 960px; margin: 0 auto; padding: 0 24px; }
 .home-new { background: var(--bg); padding: 20px 0 28px; }
@@ -55,6 +56,8 @@ body:has(.home) { overflow: auto; }
   .doc-row { grid-template-columns: 24px 1fr 32px; }
   .doc-type, .doc-date { display: none; }
   .home-section-title { flex-wrap: wrap; }
+  .home-bar { gap: 8px; }
+  .home-bar .user-name, .offline-control { display: none; }
 }
 
 .offline-control { display: flex; align-items: center; }

@@ -27,12 +27,12 @@ export interface Theme {
 }
 
 export const THEMES: Theme[] = [
-  { id: 'light', name: 'Light', background: '#ffffff', titleFont: 'Helvetica', bodyFont: 'Helvetica', titleColor: '#1f2937', bodyColor: '#374151', accent: '#1a73e8' },
-  { id: 'dark', name: 'Dark', background: '#1f2430', titleFont: 'Helvetica', bodyFont: 'Helvetica', titleColor: '#ffffff', bodyColor: '#d7dbe4', accent: '#7cb7ff' },
-  { id: 'ocean', name: 'Ocean', background: ['#0f4c81', '#1d7fb8'], titleFont: 'Trebuchet MS, Helvetica, Arial, sans-serif', bodyFont: 'Trebuchet MS, Helvetica, Arial, sans-serif', titleColor: '#ffffff', bodyColor: '#e3f1fb', accent: '#ffd166' },
-  { id: 'paper', name: 'Paper', background: '#fbf6ec', titleFont: 'Georgia, Times New Roman, serif', bodyFont: 'Georgia, Times New Roman, serif', titleColor: '#9a3412', bodyColor: '#3f3a34', accent: '#b45309' },
-  { id: 'chalk', name: 'Chalkboard', background: '#2e4a3b', titleFont: 'Architects Daughter', bodyFont: 'Architects Daughter', titleColor: '#fdfcf5', bodyColor: '#e9efe6', accent: '#ffe08a' },
-  { id: 'fresh', name: 'Fresh', background: ['#f0fdf4', '#dcfce7'], titleFont: 'Verdana, Helvetica, Arial, sans-serif', bodyFont: 'Verdana, Helvetica, Arial, sans-serif', titleColor: '#166534', bodyColor: '#1f2937', accent: '#16a34a' },
+  { id: 'light', name: t('Light'), background: '#ffffff', titleFont: 'Helvetica', bodyFont: 'Helvetica', titleColor: '#1f2937', bodyColor: '#374151', accent: '#1a73e8' },
+  { id: 'dark', name: t('Dark'), background: '#1f2430', titleFont: 'Helvetica', bodyFont: 'Helvetica', titleColor: '#ffffff', bodyColor: '#d7dbe4', accent: '#7cb7ff' },
+  { id: 'ocean', name: t('Ocean'), background: ['#0f4c81', '#1d7fb8'], titleFont: 'Trebuchet MS, Helvetica, Arial, sans-serif', bodyFont: 'Trebuchet MS, Helvetica, Arial, sans-serif', titleColor: '#ffffff', bodyColor: '#e3f1fb', accent: '#ffd166' },
+  { id: 'paper', name: t('Paper'), background: '#fbf6ec', titleFont: 'Georgia, Times New Roman, serif', bodyFont: 'Georgia, Times New Roman, serif', titleColor: '#9a3412', bodyColor: '#3f3a34', accent: '#b45309' },
+  { id: 'chalk', name: t('Chalkboard'), background: '#2e4a3b', titleFont: 'Architects Daughter', bodyFont: 'Architects Daughter', titleColor: '#fdfcf5', bodyColor: '#e9efe6', accent: '#ffe08a' },
+  { id: 'fresh', name: t('Fresh'), background: ['#f0fdf4', '#dcfce7'], titleFont: 'Verdana, Helvetica, Arial, sans-serif', bodyFont: 'Verdana, Helvetica, Arial, sans-serif', titleColor: '#166534', bodyColor: '#1f2937', accent: '#16a34a' },
 ]
 
 export function themeById(id: unknown): Theme {
@@ -43,21 +43,21 @@ export type LayoutId = 'title' | 'titleContent' | 'twoColumns' | 'section' | 'ti
 export type Role = 'title' | 'subtitle' | 'body' | 'body2'
 
 export const LAYOUTS: { id: LayoutId; name: string }[] = [
-  { id: 'title', name: 'Title slide' },
-  { id: 'titleContent', name: 'Title and content' },
-  { id: 'twoColumns', name: 'Two columns' },
-  { id: 'section', name: 'Section header' },
-  { id: 'titleOnly', name: 'Title only' },
-  { id: 'blank', name: 'Blank' },
+  { id: 'title', name: t('Title slide') },
+  { id: 'titleContent', name: t('Title and content') },
+  { id: 'twoColumns', name: t('Two columns') },
+  { id: 'section', name: t('Section header') },
+  { id: 'titleOnly', name: t('Title only') },
+  { id: 'blank', name: t('Blank') },
 ]
 
-export const layoutName = (id: LayoutId) => t(LAYOUTS.find((l) => l.id === id)?.name ?? 'Blank')
+export const layoutName = (id: LayoutId) => LAYOUTS.find((l) => l.id === id)?.name ?? t('Blank')
 
 export const PLACEHOLDER_HINTS: Record<Role, string> = {
-  title: 'Click to add title',
-  subtitle: 'Click to add subtitle',
-  body: 'Click to add text',
-  body2: 'Click to add text',
+  title: t('Click to add title'),
+  subtitle: t('Click to add subtitle'),
+  body: t('Click to add text'),
+  body2: t('Click to add text'),
 }
 
 interface Placeholder {

@@ -4,6 +4,7 @@ import { Extension, type Editor } from '@tiptap/core'
 import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state'
 import type { Node as PMNode } from '@tiptap/pm/model'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
+import { t } from '../../core/i18n'
 
 interface Match {
   from: number
@@ -98,7 +99,7 @@ export function setupFindPanel(editor: Editor, panel: HTMLElement): { open: (rep
 
   const render = () => {
     const s = state()
-    count.textContent = s.query ? (s.matches.length ? `${s.current + 1} of ${s.matches.length}` : 'No results') : ''
+    count.textContent = s.query ? (s.matches.length ? t('{current} of {total}', { current: s.current + 1, total: s.matches.length }) : t('No results')) : ''
   }
 
   const reveal = () => {

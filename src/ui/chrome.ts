@@ -42,7 +42,7 @@ export function setupChrome(session: Session, untitled: string): void {
         ? t('You can read this document and make your own copy (File → Make a copy)')
         : t('You can read and comment on this document')
   }
-  if (session.warning) toast(t(session.warning))
+  if (session.warning) toast(session.warning)
 
   // Local name and color.
   const nameInput = document.getElementById('user-name') as HTMLInputElement
@@ -160,7 +160,7 @@ export async function openShareDialog(session: Session): Promise<void> {
 // offers printing (Save as PDF).
 export async function handIn(session: Session, untitled: string): Promise<void> {
   const { user } = session
-  if (/^Guest \d+$/.test(user.name)) {
+  if (isGuestName(user.name)) {
     const name = await promptText(t('Hand in'), t('Your full name (it goes in the file name)'), '')
     if (name === null) return
     if (name.trim()) {
@@ -193,6 +193,12 @@ export async function handIn(session: Session, untitled: string): Promise<void> 
     { label: t('Done'), value: 'ok', primary: true },
   ])
   if (choice === 'print') setTimeout(() => printDocument(session), 100)
+}
+
+// Automatic names ("Guest 123", in any language) are replaced by a real one when handing in.
+function isGuestName(name: string): boolean {
+  const prefix = /^(.+) \d+$/.exec(name)?.[1]
+  return prefix === 'Guest' || prefix === t('Guest {n}').replace('{n}', '').trim()
 }
 
 export async function copyText(input: HTMLInputElement): Promise<void> {

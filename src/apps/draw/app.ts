@@ -8,7 +8,7 @@ import { Excalidraw, MainMenu, exportToBlob, exportToSvg, serializeAsJSON } from
 import '@excalidraw/excalidraw/index.css'
 import { appInfo } from '../registry'
 import { printImages } from '../../core/handin'
-import { t } from '../../core/i18n'
+import { language, locale, t } from '../../core/i18n'
 import { homePath, newDocPath } from '../../core/router'
 import type { Session } from '../../core/session'
 import { setupChrome } from '../../ui/chrome'
@@ -55,11 +55,11 @@ export function mountDraw(session: Session, root: HTMLElement): void {
     fileInput.value = ''
     if (!file) return
     try {
-      toast('Opening…')
+      toast(t('Opening…'))
       const { importFile } = await import('./index')
       location.href = await importFile(file)
     } catch (err) {
-      toast(`Could not open the file: ${(err as Error).message}`)
+      toast(t('Could not open the file: {message}', { message: (err as Error).message }))
     }
   })
 
@@ -100,6 +100,8 @@ export function mountDraw(session: Session, root: HTMLElement): void {
         onPointerUpdate: (payload: any) =>
           sync.onPointer(payload.pointer, payload.button, apiRef.current?.getAppState().selectedElementIds ?? {}),
         isCollaborating: true,
+        // Excalidraw's own interface in the suite's language.
+        langCode: language === 'en' ? 'en' : locale,
         // Viewers and commenters cannot change the drawing.
         viewModeEnabled: !session.canEdit,
         UIOptions: { canvasActions: { loadScene: false } },
@@ -107,18 +109,18 @@ export function mountDraw(session: Session, root: HTMLElement): void {
       h(
         MainMenu,
         null,
-        item('New drawing', () => window.open(newDocPath('draw'), '_blank')),
-        item('Open file (.excalidraw)…', () => fileInput.click()),
-        item('All documents', () => (location.href = homePath())),
-        item('Share…', () => document.getElementById('btn-share')!.click()),
+        item(t('New drawing'), () => window.open(newDocPath('draw'), '_blank')),
+        item(t('Open file (.excalidraw)…'), () => fileInput.click()),
+        item(t('All documents'), () => (location.href = homePath())),
+        item(t('Share…'), () => document.getElementById('btn-share')!.click()),
         h(MainMenu.Separator),
         item(t('Make a copy'), () => void makeCopy(session)),
         session.canEdit ? item(t('Save version…'), () => void saveNamedVersion(session)) : null,
         item(t('Version history…'), () => void openVersionHistory(session)),
         h(MainMenu.Separator),
-        item('Download PNG', () => download('png')),
-        item('Download SVG', () => download('svg')),
-        item('Download .excalidraw', () => download('excalidraw')),
+        item(t('Download PNG'), () => download('png')),
+        item(t('Download SVG'), () => download('svg')),
+        item(t('Download .excalidraw'), () => download('excalidraw')),
         h(MainMenu.Separator),
         h(MainMenu.DefaultItems.SaveAsImage),
         h(MainMenu.DefaultItems.ClearCanvas),

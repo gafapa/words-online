@@ -1,7 +1,7 @@
 // "Hand in": one ZIP with the document in its original formats (from the app's
 // submitFiles hook) and a README.txt with title, author and date.
 
-import { t } from './i18n'
+import { locale, t } from './i18n'
 import type { Session, SubmitFile } from './session'
 
 export const safeFileName = (name: string) => name.normalize('NFC').replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '_').trim() || 'document'
@@ -24,7 +24,7 @@ export async function buildHandIn(session: Session, title: string, author: strin
   const readme = [
     `${t('Title')}: ${title}`,
     `${t('Author')}: ${author}`,
-    `${t('Date')}: ${now.toLocaleString()} (${now.toISOString()})`,
+    `${t('Date')}: ${now.toLocaleString(locale)} (${now.toISOString()})`,
     '',
     `${t('Files')}:`,
     ...names.map((n) => `  ${n}`),

@@ -18,8 +18,8 @@ import {
 } from '@maxgraph/core'
 import { Maximize, Minus, Plus, type IconNode } from 'lucide'
 import type { Session } from '../../core/session'
-import { t } from '../../core/i18n'
-import { colorPalette, el, icon, openPopover, promptText, showContextMenu, showDialog, toast, type MenuEntry } from '../../ui/widgets'
+import { t, tn } from '../../core/i18n'
+import { colorPalette, el, icon, openPopover, promptText, shortcutLabel, showContextMenu, showDialog, toast, type MenuEntry } from '../../ui/widgets'
 import { FormatPanel } from './format'
 import { buildCells, cellsToRecords, createGraph, isTyping, setStyleKey, styleFromString, styleToString, type EditorGraph } from './graph'
 import { chooseLibraries, loadEnabledLibraries, prepareItems, watchGraph } from './libraries'
@@ -502,7 +502,7 @@ export function createDiagramEditor(session: Session, options: EditorOptions) {
     { label: t('Copy'), shortcut: mod('C'), run: () => menuCopy(false), enabled: hasSelection },
     { label: t('Paste'), shortcut: mod('V'), run: () => void menuPaste(), enabled: editable() },
     { label: t('Duplicate'), shortcut: mod('D'), run: duplicate, enabled: editable(hasSelection) },
-    { label: t('Delete'), shortcut: 'Del', run: remove, enabled: editable(hasSelection) },
+    { label: t('Delete'), shortcut: t('Del'), run: remove, enabled: editable(hasSelection) },
     '-',
     { label: t('Select all'), shortcut: mod('A'), run: selectAll, enabled: editable() },
     { label: t('Select shapes'), run: selectVertices, enabled: editable() },
@@ -677,7 +677,7 @@ export function createDiagramEditor(session: Session, options: EditorOptions) {
           { label: t('Copy'), shortcut: mod('C'), run: () => menuCopy(false) },
           { label: t('Paste'), shortcut: mod('V'), run: () => void menuPaste() },
           { label: t('Duplicate'), shortcut: mod('D'), run: duplicate },
-          { label: t('Delete'), shortcut: 'Del', run: remove },
+          { label: t('Delete'), shortcut: t('Del'), run: remove },
           '-',
           { label: t('Edit label'), shortcut: 'F2', run: editLabel, enabled: one },
           { label: t('Edit style…'), run: () => void editStyle() },
@@ -717,7 +717,7 @@ export function createDiagramEditor(session: Session, options: EditorOptions) {
   const statusListeners: (() => void)[] = []
   const updateStatus = () => {
     const n = graph.getSelectionCount()
-    selectionLabel.textContent = n ? t('{n} selected', { n }) : ''
+    selectionLabel.textContent = n ? tn(n, '{n} object selected', '{n} objects selected') : ''
     updateToolbar()
     statusListeners.forEach((fn) => fn())
   }
@@ -812,7 +812,7 @@ export function showShortcuts(extra: [string, string][] = []): void {
     [t('Undo / redo'), `${mod('Z')} / ${mod('Y')}`],
     [t('Cut / copy / paste'), `${mod('X')} / ${mod('C')} / ${mod('V')}`],
     [t('Duplicate'), mod('D')],
-    [t('Delete'), 'Del'],
+    [t('Delete'), t('Del')],
     [t('Select all'), mod('A')],
     [t('Edit label'), t('F2 / Enter / double click')],
     [t('Add text'), t('Double click on the canvas')],
@@ -828,7 +828,7 @@ export function showShortcuts(extra: [string, string][] = []): void {
     ...extra,
   ]
   const table = el('table', { class: 'shortcuts' })
-  for (const [action, keys] of rows) table.append(el('tr', {}, el('td', { textContent: action }), el('td', {}, el('kbd', { textContent: keys }))))
+  for (const [action, keys] of rows) table.append(el('tr', {}, el('td', { textContent: action }), el('td', {}, el('kbd', { textContent: shortcutLabel(keys) }))))
   void showDialog(t('Keyboard shortcuts'), table, [{ label: t('Close'), value: 'ok', primary: true }], true)
 }
 

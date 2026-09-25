@@ -5,6 +5,7 @@ import type { Cell } from '@maxgraph/core'
 import { colorPalette, el, openPopover } from '../../ui/widgets'
 import { setStyleKey, type EditorGraph } from './graph'
 import { SKETCH_DEFAULTS, SKETCH_FILL_STYLES, SKETCH_FONT_FAMILY, SKETCH_FONT_SOURCE } from './shapes/sketch'
+import { t } from '../../core/i18n'
 
 export interface FormatActions {
   toFront(): void
@@ -25,48 +26,48 @@ export interface FormatActions {
 const FONTS = ['Helvetica', 'Arial', 'Verdana', 'Tahoma', 'Trebuchet MS', 'Georgia', 'Times New Roman', 'Garamond', 'Courier New', 'Comic Sans MS', 'Lucida Console']
 
 const EDGE_STYLES: [string, string, Record<string, string | null>][] = [
-  ['straight', 'Straight', { edgeStyle: 'none', curved: null, elbow: null }],
-  ['orthogonal', 'Orthogonal', { edgeStyle: 'orthogonalEdgeStyle', curved: null, elbow: null }],
-  ['curved', 'Curved', { edgeStyle: 'orthogonalEdgeStyle', curved: '1', elbow: null }],
-  ['elbowH', 'Elbow (horizontal)', { edgeStyle: 'elbowEdgeStyle', elbow: 'horizontal', curved: null }],
-  ['elbowV', 'Elbow (vertical)', { edgeStyle: 'elbowEdgeStyle', elbow: 'vertical', curved: null }],
-  ['er', 'Entity relation', { edgeStyle: 'entityRelationEdgeStyle', curved: null, elbow: null }],
+  ['straight', t('Straight'), { edgeStyle: 'none', curved: null, elbow: null }],
+  ['orthogonal', t('Orthogonal'), { edgeStyle: 'orthogonalEdgeStyle', curved: null, elbow: null }],
+  ['curved', t('Curved'), { edgeStyle: 'orthogonalEdgeStyle', curved: '1', elbow: null }],
+  ['elbowH', t('Elbow (horizontal)'), { edgeStyle: 'elbowEdgeStyle', elbow: 'horizontal', curved: null }],
+  ['elbowV', t('Elbow (vertical)'), { edgeStyle: 'elbowEdgeStyle', elbow: 'vertical', curved: null }],
+  ['er', t('Entity relation'), { edgeStyle: 'entityRelationEdgeStyle', curved: null, elbow: null }],
 ]
 
 // value = "marker|fill"
 const MARKERS: [string, string][] = [
-  ['none|1', 'None'],
-  ['classic|1', 'Classic'],
-  ['classicThin|1', 'Classic thin'],
-  ['block|1', 'Block'],
-  ['block|0', 'Block (open)'],
-  ['open|1', 'Open'],
-  ['oval|1', 'Oval'],
-  ['oval|0', 'Oval (open)'],
-  ['diamond|1', 'Diamond'],
-  ['diamond|0', 'Diamond (open)'],
-  ['diamondThin|1', 'Diamond thin'],
-  ['diamondThin|0', 'Diamond thin (open)'],
-  ['dash|1', 'Dash'],
-  ['cross|1', 'Cross'],
-  ['ERone|1', 'ER one'],
-  ['ERmandOne|1', 'ER mandatory one'],
-  ['ERmany|1', 'ER many'],
-  ['ERoneToMany|1', 'ER one to many'],
-  ['ERzeroToOne|1', 'ER zero to one'],
-  ['ERzeroToMany|1', 'ER zero to many'],
+  ['none|1', t('None')],
+  ['classic|1', t('Classic')],
+  ['classicThin|1', t('Classic thin')],
+  ['block|1', t('Block')],
+  ['block|0', t('Block (open)')],
+  ['open|1', t('Open arrow')],
+  ['oval|1', t('Oval')],
+  ['oval|0', t('Oval (open)')],
+  ['diamond|1', t('Diamond')],
+  ['diamond|0', t('Diamond (open)')],
+  ['diamondThin|1', t('Diamond thin')],
+  ['diamondThin|0', t('Diamond thin (open)')],
+  ['dash|1', t('Dash')],
+  ['cross|1', t('Cross')],
+  ['ERone|1', t('ER one')],
+  ['ERmandOne|1', t('ER mandatory one')],
+  ['ERmany|1', t('ER many')],
+  ['ERoneToMany|1', t('ER one to many')],
+  ['ERzeroToOne|1', t('ER zero to one')],
+  ['ERzeroToMany|1', t('ER zero to many')],
 ]
 
 const PATTERNS: [string, string][] = [
-  ['solid', 'Solid'],
-  ['dashed', 'Dashed'],
-  ['dotted', 'Dotted'],
+  ['solid', t('Solid')],
+  ['dashed', t('Dashed')],
+  ['dotted', t('Dotted')],
 ]
 
 type Style = Record<string, unknown>
 
 export class FormatPanel {
-  readonly element = el('aside', { class: 'diagram-format', ariaLabel: 'Format' })
+  readonly element = el('aside', { class: 'diagram-format', ariaLabel: t('Format') })
   private frame = 0
 
   constructor(
@@ -133,11 +134,10 @@ export class FormatPanel {
   private diagramSection(): HTMLElement {
     const name = el('input', { class: 'fmt-input', value: this.actions.pageName() })
     name.addEventListener('change', () => this.actions.renamePage(name.value.trim() || this.actions.pageName()))
-    return section(
-      'Diagram',
-      row('Page name', name),
-      checkbox('Grid', this.actions.isGridVisible(), (on) => this.actions.setGridVisible(on)),
-      el('p', { class: 'fmt-hint', textContent: 'Drag shapes from the left panel, or click one to insert it. Hover a shape and drag from its blue points to connect it.' }),
+    return section(t('Diagram'),
+      row(t('Page name'), name),
+      checkbox(t('Grid'), this.actions.isGridVisible(), (on) => this.actions.setGridVisible(on)),
+      el('p', { class: 'fmt-hint', textContent: t('Drag shapes from the left panel, or click one to insert it. Hover a shape and drag from its blue points to connect it.') }),
     )
   }
 
@@ -146,24 +146,23 @@ export class FormatPanel {
     const items: HTMLElement[] = []
     if (vertices.length) {
       items.push(
-        row('Fill', this.colorButton(str(s.fillColor), (c) => this.set('fillColor', c ?? 'none', vertices), 'No fill')),
-        row('Gradient', this.colorButton(str(s.gradientColor), (c) => this.set('gradientColor', c ?? 'none', vertices), 'No gradient')),
+        row(t('Fill'), this.colorButton(str(s.fillColor), (c) => this.set('fillColor', c ?? 'none', vertices), t('No fill'))),
+        row(t('Gradient'), this.colorButton(str(s.gradientColor), (c) => this.set('gradientColor', c ?? 'none', vertices), t('No gradient'))),
       )
     }
     items.push(
-      row('Line', this.colorButton(str(s.strokeColor), (c) => this.set('strokeColor', c ?? 'none'), 'No line')),
-      row('Line width', this.number(Number(s.strokeWidth ?? 1), 0, 50, 1, (v) => this.set('strokeWidth', v))),
-      row(
-        'Pattern',
+      row(t('Line'), this.colorButton(str(s.strokeColor), (c) => this.set('strokeColor', c ?? 'none'), t('No line'))),
+      row(t('Line width'), this.number(Number(s.strokeWidth ?? 1), 0, 50, 1, (v) => this.set('strokeWidth', v))),
+      row(t('Pattern'),
         this.select(PATTERNS, patternOf(s), (v) =>
           this.setMany(v === 'solid' ? { dashed: null, dashPattern: null } : v === 'dashed' ? { dashed: 1, dashPattern: null } : { dashed: 1, dashPattern: '1 4' }),
         ),
       ),
-      row('Opacity', this.number(Number(s.opacity ?? 100), 0, 100, 5, (v) => this.set('opacity', v >= 100 ? null : v))),
-      checkbox('Rounded', flag(s.rounded), (on) => this.set('rounded', on ? 1 : 0)),
-      checkbox('Shadow', flag(s.shadow), (on) => this.set('shadow', on ? 1 : null)),
+      row(t('Opacity'), this.number(Number(s.opacity ?? 100), 0, 100, 5, (v) => this.set('opacity', v >= 100 ? null : v))),
+      checkbox(t('Rounded'), flag(s.rounded), (on) => this.set('rounded', on ? 1 : 0)),
+      checkbox(t('Shadow'), flag(s.shadow), (on) => this.set('shadow', on ? 1 : null)),
       // draw.io's per-cell hand-drawn style.
-      checkbox('Sketch', flag(s.sketch), (on) =>
+      checkbox(t('Sketch'), flag(s.sketch), (on) =>
         this.setMany(Object.fromEntries(Object.entries(SKETCH_DEFAULTS).map(([k, v]) => [k, on ? v : null]))),
       ),
     )
@@ -171,18 +170,18 @@ export class FormatPanel {
     if (flag(s.sketch) && vertices.length && fill && fill !== 'none') {
       const fillStyle = str(s.fillStyle) || 'auto'
       const options = SKETCH_FILL_STYLES.some(([v]) => v === fillStyle) ? SKETCH_FILL_STYLES : [...SKETCH_FILL_STYLES, [fillStyle, fillStyle] as [string, string]]
-      items.push(row('Fill style', this.select(options, fillStyle, (v) => this.set('fillStyle', v === 'auto' ? null : v, vertices))))
+      items.push(row(t('Fill style'), this.select(options, fillStyle, (v) => this.set('fillStyle', v === 'auto' ? null : v, vertices))))
     }
     if (vertices.length) {
       items.push(
-        checkbox('Glass', flag(s.glass), (on) => this.set('glass', on ? 1 : null, vertices)),
-        checkbox('Container', str(s.container) === '1', (on) => this.set('container', on ? 1 : null, vertices)),
+        checkbox(t('Glass'), flag(s.glass), (on) => this.set('glass', on ? 1 : null, vertices)),
+        checkbox(t('Container'), str(s.container) === '1', (on) => this.set('container', on ? 1 : null, vertices)),
       )
     }
-    const edit = el('button', { type: 'button', class: 'fmt-btn', textContent: 'Edit style…' })
+    const edit = el('button', { type: 'button', class: 'fmt-btn', textContent: t('Edit style…') })
     edit.addEventListener('click', () => this.actions.editStyle())
     items.push(el('div', { class: 'fmt-row' }, edit))
-    return section('Style', ...items)
+    return section(t('Style'), ...items)
   }
 
   private edgeSection(edges: Cell[]): HTMLElement {
@@ -204,14 +203,13 @@ export class FormatPanel {
       const [marker, fill] = value.split('|')
       this.setMany({ [`${end}Arrow`]: marker, [`${end}Fill`]: fill === '0' ? 0 : null }, edges)
     }
-    return section(
-      'Connector',
-      row('Waypoints', this.select(EDGE_STYLES.map(([v, label]) => [v, label]), current, (v) => {
+    return section(t('Connector'),
+      row(t('Waypoints'), this.select(EDGE_STYLES.map(([v, label]) => [v, label]), current, (v) => {
         const values = EDGE_STYLES.find(([id]) => id === v)![2]
         this.setMany(values, edges)
       })),
-      row('Line start', this.select(MARKERS, markerValue('start'), (v) => setMarker('start', v))),
-      row('Line end', this.select(MARKERS, markerValue('end'), (v) => setMarker('end', v))),
+      row(t('Line start'), this.select(MARKERS, markerValue('start'), (v) => setMarker('start', v))),
+      row(t('Line end'), this.select(MARKERS, markerValue('end'), (v) => setMarker('end', v))),
     )
   }
 
@@ -224,36 +222,35 @@ export class FormatPanel {
     const styleButtons = el(
       'div',
       { class: 'fmt-toggles' },
-      toggle('B', 'Bold', (fontStyle & 1) !== 0, () => toggleBit(1)),
-      toggle('I', 'Italic', (fontStyle & 2) !== 0, () => toggleBit(2)),
-      toggle('U', 'Underline', (fontStyle & 4) !== 0, () => toggleBit(4)),
-      toggle('S', 'Strikethrough', (fontStyle & 8) !== 0, () => toggleBit(8)),
+      toggle('B', t('Bold'), (fontStyle & 1) !== 0, () => toggleBit(1)),
+      toggle('I', t('Italic'), (fontStyle & 2) !== 0, () => toggleBit(2)),
+      toggle('U', t('Underline'), (fontStyle & 4) !== 0, () => toggleBit(4)),
+      toggle('S', t('Strikethrough'), (fontStyle & 8) !== 0, () => toggleBit(8)),
     )
     const align = str(s.align) || 'center'
     const valign = str(s.verticalAlign) || 'middle'
     const alignButtons = el(
       'div',
       { class: 'fmt-toggles' },
-      toggle('⯇', 'Align left', align === 'left', () => this.set('align', 'left')),
-      toggle('≡', 'Center', align === 'center', () => this.set('align', 'center')),
-      toggle('⯈', 'Align right', align === 'right', () => this.set('align', 'right')),
-      toggle('⯅', 'Top', valign === 'top', () => this.set('verticalAlign', 'top')),
-      toggle('◆', 'Middle', valign === 'middle', () => this.set('verticalAlign', 'middle')),
-      toggle('⯆', 'Bottom', valign === 'bottom', () => this.set('verticalAlign', 'bottom')),
+      toggle('⯇', t('Align left'), align === 'left', () => this.set('align', 'left')),
+      toggle('≡', t('Center'), align === 'center', () => this.set('align', 'center')),
+      toggle('⯈', t('Align right'), align === 'right', () => this.set('align', 'right')),
+      toggle('⯅', t('Top'), valign === 'top', () => this.set('verticalAlign', 'top')),
+      toggle('◆', t('Middle'), valign === 'middle', () => this.set('verticalAlign', 'middle')),
+      toggle('⯆', t('Bottom'), valign === 'bottom', () => this.set('verticalAlign', 'bottom')),
     )
-    return section(
-      'Text',
+    return section(t('Text'),
       // A font change drops draw.io's web font URL, which belongs to the previous family.
-      row('Font', this.select(fonts.map((f) => [f, f]), family, (v) => this.setMany({ fontFamily: v, fontSource: null }))),
-      checkbox('Hand-drawn font', family === SKETCH_FONT_FAMILY, (on) =>
+      row(t('Font'), this.select(fonts.map((f) => [f, f]), family, (v) => this.setMany({ fontFamily: v, fontSource: null }))),
+      checkbox(t('Hand-drawn font'), family === SKETCH_FONT_FAMILY, (on) =>
         this.setMany({ fontFamily: on ? SKETCH_FONT_FAMILY : null, fontSource: on ? SKETCH_FONT_SOURCE : null }),
       ),
-      row('Size', this.number(Number(s.fontSize ?? 12), 1, 400, 1, (v) => this.set('fontSize', v))),
+      row(t('Size'), this.number(Number(s.fontSize ?? 12), 1, 400, 1, (v) => this.set('fontSize', v))),
       el('div', { class: 'fmt-row' }, styleButtons),
       el('div', { class: 'fmt-row' }, alignButtons),
-      row('Color', this.colorButton(str(s.fontColor), (c) => this.set('fontColor', c ?? '#000000'), 'Default')),
-      row('Background', this.colorButton(str(s.labelBackgroundColor), (c) => this.set('labelBackgroundColor', c ?? 'none'), 'None')),
-      checkbox('Word wrap', str(s.whiteSpace) === 'wrap', (on) => this.setMany({ whiteSpace: on ? 'wrap' : null, html: 1 })),
+      row(t('Color'), this.colorButton(str(s.fontColor), (c) => this.set('fontColor', c ?? '#000000'), t('Default'))),
+      row(t('Background'), this.colorButton(str(s.labelBackgroundColor), (c) => this.set('labelBackgroundColor', c ?? 'none'), t('None'))),
+      checkbox(t('Word wrap'), str(s.whiteSpace) === 'wrap', (on) => this.setMany({ whiteSpace: on ? 'wrap' : null, html: 1 })),
     )
   }
 
@@ -274,38 +271,38 @@ export class FormatPanel {
             { class: 'fmt-grid' },
             labeled('X', this.number(geo.x, -1e6, 1e6, 1, (v) => setGeo('x', v))),
             labeled('Y', this.number(geo.y, -1e6, 1e6, 1, (v) => setGeo('y', v))),
-            labeled('Width', this.number(geo.width, 1, 1e6, 1, (v) => setGeo('width', v))),
-            labeled('Height', this.number(geo.height, 1, 1e6, 1, (v) => setGeo('height', v))),
+            labeled(t('Width'), this.number(geo.width, 1, 1e6, 1, (v) => setGeo('width', v))),
+            labeled(t('Height'), this.number(geo.height, 1, 1e6, 1, (v) => setGeo('height', v))),
           ),
         )
       }
       const s = this.style()
-      items.push(row('Rotation', this.number(Number(s.rotation ?? 0), -360, 360, 15, (v) => this.set('rotation', v % 360 || null, vertices))))
+      items.push(row(t('Rotation'), this.number(Number(s.rotation ?? 0), -360, 360, 15, (v) => this.set('rotation', v % 360 || null, vertices))))
       items.push(
         el(
           'div',
           { class: 'fmt-buttons' },
-          button('Flip H', () => this.set('flipH', flag(s.flipH) ? null : 1, vertices)),
-          button('Flip V', () => this.set('flipV', flag(s.flipV) ? null : 1, vertices)),
+          button(t('Flip H'), () => this.set('flipH', flag(s.flipH) ? null : 1, vertices)),
+          button(t('Flip V'), () => this.set('flipV', flag(s.flipV) ? null : 1, vertices)),
         ),
       )
     }
     items.push(
-      el('div', { class: 'fmt-buttons' }, button('To front', this.actions.toFront), button('To back', this.actions.toBack)),
-      el('div', { class: 'fmt-buttons' }, button('Group', this.actions.group), button('Ungroup', this.actions.ungroup)),
+      el('div', { class: 'fmt-buttons' }, button(t('To front'), this.actions.toFront), button(t('To back'), this.actions.toBack)),
+      el('div', { class: 'fmt-buttons' }, button(t('Group'), this.actions.group), button(t('Ungroup'), this.actions.ungroup)),
     )
     if (vertices.length > 1) {
       const a = this.actions
       items.push(
-        el('div', { class: 'fmt-subtitle', textContent: 'Align' }),
-        el('div', { class: 'fmt-buttons' }, button('Left', () => a.align('left')), button('Center', () => a.align('center')), button('Right', () => a.align('right'))),
-        el('div', { class: 'fmt-buttons' }, button('Top', () => a.align('top')), button('Middle', () => a.align('middle')), button('Bottom', () => a.align('bottom'))),
+        el('div', { class: 'fmt-subtitle', textContent: t('Align') }),
+        el('div', { class: 'fmt-buttons' }, button(t('Left'), () => a.align('left')), button(t('Center'), () => a.align('center')), button(t('Right'), () => a.align('right'))),
+        el('div', { class: 'fmt-buttons' }, button(t('Top'), () => a.align('top')), button(t('Middle'), () => a.align('middle')), button(t('Bottom'), () => a.align('bottom'))),
       )
       if (vertices.length > 2) {
-        items.push(el('div', { class: 'fmt-buttons' }, button('Distribute H', () => a.distribute(true)), button('Distribute V', () => a.distribute(false))))
+        items.push(el('div', { class: 'fmt-buttons' }, button(t('Distribute H'), () => a.distribute(true)), button(t('Distribute V'), () => a.distribute(false))))
       }
     }
-    return section('Arrange', ...items)
+    return section(t('Arrange'), ...items)
   }
 
   // ---------- Controls ----------
@@ -315,7 +312,7 @@ export class FormatPanel {
     const none = !current || current === 'none'
     swatch.style.background = none ? 'transparent' : current
     swatch.classList.toggle('none', none)
-    const b = el('button', { type: 'button', class: 'fmt-color' }, swatch, el('span', { textContent: none ? 'None' : current }))
+    const b = el('button', { type: 'button', class: 'fmt-color' }, swatch, el('span', { textContent: none ? t('None') : current }))
     b.addEventListener('click', () => openPopover(b, colorPalette(apply, resetLabel)))
     return b
   }

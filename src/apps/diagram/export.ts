@@ -2,6 +2,7 @@
 
 import { ImageExport, Rectangle, SvgCanvas2D, type AbstractGraph, type Cell } from '@maxgraph/core'
 import { embedSketchFont } from './shapes/sketch'
+import { t } from '../../core/i18n'
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
@@ -81,6 +82,6 @@ export async function svgToPng(svg: SVGSVGElement, pixelRatio = 2): Promise<Blob
   ctx.scale(pixelRatio, pixelRatio)
   ctx.drawImage(img, 0, 0, w, h)
   return new Promise<Blob>((resolve, reject) =>
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('PNG export failed'))), 'image/png'),
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error(t('PNG export failed')))), 'image/png'),
   )
 }

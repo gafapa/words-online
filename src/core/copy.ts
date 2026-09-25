@@ -74,7 +74,7 @@ export async function copyFromLink(route: CopyLinkRoute, onStatus: (message: str
         const stalled = window.setTimeout(
           () =>
             onStatus(
-              t("The document has not arrived yet. The browser of the person who shared it (or of someone who has it open) must be online with this document. Keep this page open: the copy is made as soon as it arrives."),
+              t('The document has not arrived yet. The browser of the person who shared it (or of someone who has it open) must be online with this document. Keep this page open: the copy is made as soon as it arrives.'),
               true,
             ),
           TIMEOUT_MS,

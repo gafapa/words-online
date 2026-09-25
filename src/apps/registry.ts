@@ -2,6 +2,7 @@
 
 import type { Session, SubmitFile } from '../core/session'
 import type { DocType } from '../core/store'
+import { t } from '../core/i18n'
 
 export interface AppModule {
   mount(session: Session): void | Promise<void>
@@ -18,6 +19,7 @@ export interface AppModule {
 export interface AppInfo {
   type: DocType
   name: string // e.g. "Document"
+  plural: string // e.g. "Documents"
   newLabel: string
   untitled: string
   letter: string
@@ -31,9 +33,10 @@ export interface AppInfo {
 export const APPS: AppInfo[] = [
   {
     type: 'writer',
-    name: 'Document',
-    newLabel: 'New document',
-    untitled: 'Untitled document',
+    name: t('Document'),
+    plural: t('Documents'),
+    newLabel: t('New document'),
+    untitled: t('Untitled document'),
     letter: 'W',
     color: '#1a73e8',
     accept: '.docx,.odt,.html,.htm,.txt,.md',
@@ -41,9 +44,10 @@ export const APPS: AppInfo[] = [
   },
   {
     type: 'sheet',
-    name: 'Spreadsheet',
-    newLabel: 'New spreadsheet',
-    untitled: 'Untitled spreadsheet',
+    name: t('Spreadsheet'),
+    plural: t('Spreadsheets'),
+    newLabel: t('New spreadsheet'),
+    untitled: t('Untitled spreadsheet'),
     letter: 'S',
     color: '#188038',
     accept: '.xlsx,.ods,.csv,.tsv',
@@ -51,9 +55,10 @@ export const APPS: AppInfo[] = [
   },
   {
     type: 'draw',
-    name: 'Drawing',
-    newLabel: 'New drawing',
-    untitled: 'Untitled drawing',
+    name: t('Drawing'),
+    plural: t('Drawings'),
+    newLabel: t('New drawing'),
+    untitled: t('Untitled drawing'),
     letter: 'D',
     color: '#e8710a',
     accept: '.excalidraw',
@@ -61,9 +66,10 @@ export const APPS: AppInfo[] = [
   },
   {
     type: 'diagram',
-    name: 'Diagram',
-    newLabel: 'New diagram',
-    untitled: 'Untitled diagram',
+    name: t('Diagram'),
+    plural: t('Diagrams'),
+    newLabel: t('New diagram'),
+    untitled: t('Untitled diagram'),
     letter: 'G',
     color: '#9334e6',
     accept: '.drawio,.xml',
@@ -71,9 +77,10 @@ export const APPS: AppInfo[] = [
   },
   {
     type: 'slides',
-    name: 'Presentation',
-    newLabel: 'New presentation',
-    untitled: 'Untitled presentation',
+    name: t('Presentation'),
+    plural: t('Presentations'),
+    newLabel: t('New presentation'),
+    untitled: t('Untitled presentation'),
     letter: 'P',
     color: '#d24726',
     accept: '.pptx',

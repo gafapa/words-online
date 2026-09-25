@@ -4,7 +4,7 @@
 
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
-import { t } from '../core/i18n'
+import { language, t } from '../core/i18n'
 
 export interface EquationValue {
   latex: string
@@ -71,18 +71,18 @@ function escape(s: string): string {
 
 // Common constructs, inserted into the math field at the caret (#0 is the selection, #? a placeholder).
 const TEMPLATES: [string, string, string][] = [
-  ['\\frac{#0}{#?}', '\\frac{a}{b}', 'Fraction'],
-  ['#0^{#?}', 'x^{n}', 'Power'],
-  ['#0_{#?}', 'x_{i}', 'Subscript'],
-  ['\\sqrt{#0}', '\\sqrt{x}', 'Square root'],
-  ['\\sqrt[#?]{#0}', '\\sqrt[n]{x}', 'Root'],
-  ['\\left(#0\\right)', '(x)', 'Parentheses'],
-  ['\\sum_{#?}^{#?}', '\\sum', 'Sum'],
-  ['\\int_{#?}^{#?}', '\\int', 'Integral'],
-  ['\\lim_{#?\\to#?}', '\\lim', 'Limit'],
-  ['\\begin{pmatrix}#?&#?\\\\#?&#?\\end{pmatrix}', '\\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}', 'Matrix'],
-  ['\\vec{#0}', '\\vec{v}', 'Vector'],
-  ['\\overline{#0}', '\\overline{x}', 'Bar'],
+  ['\\frac{#0}{#?}', '\\frac{a}{b}', t('Fraction')],
+  ['#0^{#?}', 'x^{n}', t('Power')],
+  ['#0_{#?}', 'x_{i}', t('Subscript')],
+  ['\\sqrt{#0}', '\\sqrt{x}', t('Square root')],
+  ['\\sqrt[#?]{#0}', '\\sqrt[n]{x}', t('Root')],
+  ['\\left(#0\\right)', '(x)', t('Parentheses')],
+  ['\\sum_{#?}^{#?}', '\\sum', t('Sum')],
+  ['\\int_{#?}^{#?}', '\\int', t('Integral')],
+  ['\\lim_{#?\\to#?}', '\\lim', t('Limit')],
+  ['\\begin{pmatrix}#?&#?\\\\#?&#?\\end{pmatrix}', '\\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}', t('Matrix')],
+  ['\\vec{#0}', '\\vec{v}', t('Vector')],
+  ['\\overline{#0}', '\\overline{x}', t('Bar')],
 ]
 const SYMBOLS = ['\\pi', '\\alpha', '\\beta', '\\theta', '\\lambda', '\\Delta', '\\infty', '\\pm', '\\times', '\\div', '\\cdot', '\\le', '\\ge', '\\ne', '\\approx', '\\to', '\\in', '\\degree']
 
@@ -129,12 +129,82 @@ interface VirtualKeyboard {
   hide(options?: { animate?: boolean }): void
 }
 
+// MathLive's own strings in Galician.
+const MATHLIVE_GL: Record<string, string> = {
+  'keyboard.tooltip.symbols': 'Símbolos',
+  'keyboard.tooltip.greek': 'Letras gregas',
+  'keyboard.tooltip.numeric': 'Numérico',
+  'keyboard.tooltip.alphabetic': 'Letras romanas',
+  'tooltip.copy to clipboard': 'Copiar no portapapeis',
+  'tooltip.redo': 'Refacer',
+  'tooltip.toggle virtual keyboard': 'Mostrar ou ocultar o teclado virtual',
+  'tooltip.undo': 'Desfacer',
+  'menu.insert matrix': 'Inserir matriz',
+  'menu.borders': 'Delimitadores da matriz',
+  'menu.array.add row above': 'Engadir fila enriba',
+  'menu.array.add row below': 'Engadir fila debaixo',
+  'menu.array.add column after': 'Engadir columna despois',
+  'menu.array.add column before': 'Engadir columna antes',
+  'menu.array.delete row': 'Eliminar fila',
+  'menu.array.delete rows': 'Eliminar as filas seleccionadas',
+  'menu.array.delete column': 'Eliminar columna',
+  'menu.array.delete columns': 'Eliminar as columnas seleccionadas',
+  'menu.mode': 'Modo',
+  'menu.mode-math': 'Matemáticas',
+  'menu.mode-text': 'Texto',
+  'menu.mode-latex': 'LaTeX',
+  'tooltip.blackboard': 'Encerado',
+  'tooltip.bold': 'Negra',
+  'tooltip.italic': 'Cursiva',
+  'tooltip.fraktur': 'Fraktur',
+  'tooltip.script': 'Manuscrita',
+  'tooltip.caligraphic': 'Caligráfica',
+  'tooltip.typewriter': 'Máquina de escribir',
+  'tooltip.roman-upright': 'Romana vertical',
+  'tooltip.row-by-col': '%@ × %@',
+  'menu.font-style': 'Estilo de letra',
+  'menu.accent': 'Acento',
+  'menu.decoration': 'Decoración',
+  'menu.color': 'Cor',
+  'menu.background-color': 'Fondo',
+  'menu.evaluate': 'Avaliar',
+  'menu.simplify': 'Simplificar',
+  'menu.solve': 'Resolver',
+  'menu.solve-for': 'Resolver para %@',
+  'menu.cut': 'Cortar',
+  'menu.copy': 'Copiar',
+  'menu.copy-as-latex': 'Copiar como LaTeX',
+  'menu.copy-as-ascii-math': 'Copiar como ASCII Math',
+  'menu.copy-as-mathml': 'Copiar como MathML',
+  'menu.paste': 'Pegar',
+  'menu.select-all': 'Seleccionar todo',
+  'color.red': 'Vermello',
+  'color.orange': 'Laranxa',
+  'color.yellow': 'Amarelo',
+  'color.lime': 'Lima',
+  'color.green': 'Verde',
+  'color.teal': 'Verde azulado',
+  'color.cyan': 'Cian',
+  'color.blue': 'Azul',
+  'color.indigo': 'Índigo',
+  'color.purple': 'Morado',
+  'color.magenta': 'Maxenta',
+  'color.black': 'Negro',
+  'color.dark-grey': 'Gris escuro',
+  'color.grey': 'Gris',
+  'color.light-grey': 'Gris claro',
+  'color.white': 'Branco',
+}
+
 async function loadMathLive(): Promise<{ create: () => MathField; keyboard: () => VirtualKeyboard | undefined } | null> {
   try {
     const ml = await import('mathlive')
     // Fonts come from the KaTeX stylesheet (same families, bundled); no sounds.
     ml.MathfieldElement.fontsDirectory = null
     ml.MathfieldElement.soundsDirectory = null
+    // Menus and keyboard tooltips in the suite's language (MathLive has no Galician: ours).
+    if (language === 'gl') ml.MathfieldElement.strings = { gl: MATHLIVE_GL }
+    ml.MathfieldElement.locale = language
     return {
       create: () => new ml.MathfieldElement() as unknown as MathField,
       keyboard: () => (window as unknown as { mathVirtualKeyboard?: VirtualKeyboard }).mathVirtualKeyboard,
@@ -209,7 +279,7 @@ export async function editEquation(options: EquationDialogOptions = {}): Promise
       latexInput.focus()
     }
   }
-  for (const [latex, sample, label] of TEMPLATES) palette.append(paletteButton(sample, t(label), () => insert(latex)))
+  for (const [latex, sample, label] of TEMPLATES) palette.append(paletteButton(sample, label, () => insert(latex)))
   for (const sym of SYMBOLS) palette.append(paletteButton(sym, sym, () => insert(sym)))
   form.append(palette)
 

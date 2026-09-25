@@ -10,7 +10,7 @@ import { Plugin, PluginKey, type EditorState } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import { Check, EllipsisVertical, RotateCcw, X } from 'lucide'
 import type { Session } from '../../core/session'
-import { t } from '../../core/i18n'
+import { locale, t } from '../../core/i18n'
 import { el, icon, showContextMenu, toast } from '../../ui/widgets'
 import { commentsMapOf, PENDING_COMMENTS, userIdOf, type Access } from './collab'
 import { collectSuggestions, type Suggestion } from './editor/suggestions'
@@ -564,6 +564,6 @@ function formatTime(time: number): string {
   const today = new Date()
   const sameDay = d.toDateString() === today.toDateString()
   return sameDay
-    ? d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-    : d.toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    ? d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+    : d.toLocaleString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 }

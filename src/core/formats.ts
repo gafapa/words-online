@@ -1,3 +1,4 @@
+import { t } from './i18n'
 // Helpers shared by importers and exporters.
 
 // Accepts #rgb, #rrggbb and rgb(r, g, b); returns #rrggbb or undefined.
@@ -92,6 +93,6 @@ export function attr(el: Element | null | undefined, localName: string): string 
 
 export function parseXml(text: string): Document {
   const doc = new DOMParser().parseFromString(text, 'application/xml')
-  if (doc.getElementsByTagName('parsererror').length) throw new Error('Invalid XML in document')
+  if (doc.getElementsByTagName('parsererror').length) throw new Error(t('Invalid XML in document'))
   return doc
 }

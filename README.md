@@ -236,6 +236,33 @@ whole suite; nothing changes in the documents themselves.
   pop-ups, and focus returns to the document. Dialogs, menus and toolbar buttons
   carry ARIA roles and names.
 
+## Languages
+
+The whole suite is available in **Spanish** (Spain), **Galician** (following
+the RAG norms) and **English**.
+
+- The language is the one chosen in the language selector (home screen bar, or
+  *Accessibility → Interface language*), saved in this browser; otherwise the
+  browser's languages decide: Galician for `gl`, Spanish for any Spanish locale
+  and for the other languages of Spain (Catalan, Basque…), English otherwise.
+  Changing it reloads the page. `<html lang>` follows it.
+- UI strings are written in English in the code and wrapped with `t('…')`
+  (`src/core/i18n.ts`; `{name}` placeholders, `tn()` for singular / plural).
+  The catalogs (`src/core/locales/es.ts`, `gl.ts`) are keyed by the English
+  text and loaded on demand with a top-level `await`, so `t()` is ready before
+  any module runs; missing entries fall back to English.
+- Third-party editors get the same language: Excalidraw (`es-ES`, `gl-ES`),
+  MathLive (Spanish built in, Galician strings added by us) and Univer (Spanish;
+  Univer has no Galician, so Galician users get its Spanish interface). Dates and
+  numbers are formatted with `Intl` in the chosen language.
+- Shape names of the built-in diagram libraries are translated; the draw.io
+  libraries of *More shapes* keep their original (mostly product) names, only
+  their groups are translated. Template content has its own Spanish / Galician
+  switch, which follows the interface language by default.
+- Existing document content is never translated. The first page, slide and
+  sheet of a new document keep fixed names ("Page-1", "Slide 1", "Sheet1") so
+  that collaborators who create it at the same time agree on them.
+
 ## Offline and installable
 
 Words Online is a Progressive Web App: install it from the browser (address bar
@@ -352,6 +379,7 @@ src/
     handin.ts        Hand in (ZIP), printing
     idb.ts           Small IndexedDB key-value store (signed logs)
     formats.ts       Format helpers: XML, colors, units, images
+    i18n.ts          UI language, t() translations; locales/ holds the Spanish and Galician catalogs
   ui/                Shared UI so every app looks the same
     shell.ts         App frame: app bar, menu bar, toolbar row, status bar
     chrome.ts        Title, presence, connection status, share dialog + QR, hand in

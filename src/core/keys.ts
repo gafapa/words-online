@@ -1,3 +1,4 @@
+import { t } from './i18n'
 // Permission keys carried by document links, and Ed25519 signing.
 //
 // A protected document has two key pairs, both derived from random seeds:
@@ -83,12 +84,12 @@ export function keysForAccess(keys: LinkKeys, access: Access): LinkKeys {
 // (e.g. a secret that does not match the public key it came with).
 export async function resolveKeys(input: LinkKeys): Promise<DocKeys> {
   if (!hasKeys(input)) return { access: 'edit', signed: false, link: {} }
-  if (!cryptoAvailable()) throw new Error('Protected documents need a secure (https) connection')
+  if (!cryptoAvailable()) throw new Error(t('Protected documents need a secure (https) connection'))
   const link: LinkKeys = {}
   const out: DocKeys = { access: 'view', signed: true, link }
   if (input.edit) {
     const edit = await signerFromSeed(fromBase64Url(input.edit))
-    if (input.verify && input.verify !== edit.pub) throw new Error('The edit key does not belong to this document')
+    if (input.verify && input.verify !== edit.pub) throw new Error(t('The edit key does not belong to this document'))
     link.edit = input.edit
     link.verify = edit.pub
     out.editSigner = edit.key
@@ -100,7 +101,7 @@ export async function resolveKeys(input: LinkKeys): Promise<DocKeys> {
   const commentSeed = link.comment ?? input.comment
   if (commentSeed) {
     const comment = await signerFromSeed(fromBase64Url(commentSeed))
-    if (input.cverify && input.cverify !== comment.pub) throw new Error('The comment key does not belong to this document')
+    if (input.cverify && input.cverify !== comment.pub) throw new Error(t('The comment key does not belong to this document'))
     link.comment = commentSeed
     link.cverify = comment.pub
     out.commentSigner = comment.key
@@ -108,7 +109,7 @@ export async function resolveKeys(input: LinkKeys): Promise<DocKeys> {
   } else {
     link.cverify = input.cverify
   }
-  if (!link.verify || !link.cverify) throw new Error('The link is incomplete')
+  if (!link.verify || !link.cverify) throw new Error(t('The link is incomplete'))
   out.editVerifier = await importVerifier(link.verify)
   out.commentVerifier = await importVerifier(link.cverify)
   return out
@@ -132,7 +133,7 @@ export async function mergeKeys(stored: LinkKeys | null, fromLink: LinkKeys): Pr
 }
 
 async function signerFromSeed(seed: Uint8Array): Promise<{ key: CryptoKey; pub: string }> {
-  if (seed.length !== 32) throw new Error('Invalid key')
+  if (seed.length !== 32) throw new Error(t('Invalid key'))
   const pkcs8 = new Uint8Array(PKCS8_PREFIX.length + 32)
   pkcs8.set(PKCS8_PREFIX)
   pkcs8.set(seed, PKCS8_PREFIX.length)

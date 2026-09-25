@@ -2,7 +2,7 @@
 // language (Spanish / Galician), click a card to create and open the document.
 
 import { appInfo } from '../apps/registry'
-import { t } from '../core/i18n'
+import { language, t } from '../core/i18n'
 import type { DocType } from '../core/store'
 import { el, toast } from '../ui/widgets'
 import { TEMPLATES } from './catalog'
@@ -17,17 +17,11 @@ function initialLang(): Lang {
     const saved = localStorage.getItem(LANG_KEY)
     if (saved === 'es' || saved === 'gl') return saved
   } catch {
-    // Storage may be unavailable (private mode); fall back to the browser language.
+    // Storage may be unavailable (private mode); fall back to the default.
   }
+  // The interface language, or Galician when the browser prefers it.
+  if (language === 'gl' || language === 'es') return language
   return (navigator.languages ?? [navigator.language]).some((l) => l.toLowerCase().startsWith('gl')) ? 'gl' : 'es'
-}
-
-const APP_LABELS: Partial<Record<DocType, () => string>> = {
-  writer: () => t('Documents'),
-  sheet: () => t('Spreadsheets'),
-  diagram: () => t('Diagrams'),
-  draw: () => t('Drawings'),
-  slides: () => t('Presentations'),
 }
 
 export function mountTemplates(container: HTMLElement): void {
@@ -70,7 +64,7 @@ export function mountTemplates(container: HTMLElement): void {
   const renderFilters = () =>
     filters.replaceChildren(
       ...(['all', ...apps] as (DocType | 'all')[]).map((value) => {
-        const label = value === 'all' ? t('All') : (APP_LABELS[value]?.() ?? appInfo(value).name)
+        const label = value === 'all' ? t('All') : appInfo(value).plural
         const b = el('button', { type: 'button', class: `chip${filter === value ? ' active' : ''}`, textContent: label })
         b.setAttribute('role', 'tab')
         b.setAttribute('aria-selected', String(filter === value))
@@ -103,7 +97,7 @@ export function mountTemplates(container: HTMLElement): void {
     const app = appInfo(tpl.app)
     const thumb = el('span', { class: 'tpl-thumb' })
     thumb.innerHTML = tpl.thumb()
-    const badge = el('span', { class: 'tpl-app' }, el('span', { class: 'app-icon small', textContent: app.letter }), el('span', { textContent: APP_LABELS[tpl.app]?.() ?? app.name }))
+    const badge = el('span', { class: 'tpl-app' }, el('span', { class: 'app-icon small', textContent: app.letter }), el('span', { textContent: app.name }))
     ;(badge.firstChild as HTMLElement).style.background = app.color
     const button = el(
       'button',

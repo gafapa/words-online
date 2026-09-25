@@ -3,6 +3,7 @@
 import JSZip from 'jszip'
 import type { IBorderData, IBorderStyleData, ICellData, IRange, IStyleData, IWorkbookData, IWorksheetData } from '@univerjs/presets'
 import { attr, child, children, parseXml, toHex } from '../../../core/formats'
+import { t } from '../../../core/i18n'
 
 // Limits against huge repeats (LibreOffice pads sheets to 1M rows × 16K columns).
 const MAX_ROWS = 100_000
@@ -46,7 +47,7 @@ export async function importOds(buf: ArrayBuffer): Promise<Partial<IWorkbookData
     return f ? parseXml(await f.async('string')) : null
   }
   const content = await read('content.xml')
-  if (!content) throw new Error('Not an OpenDocument spreadsheet (content.xml missing)')
+  if (!content) throw new Error(t('Not an OpenDocument spreadsheet (content.xml missing)'))
   return convertOds(content, await read('styles.xml'), await read('settings.xml'))
 }
 
@@ -55,7 +56,7 @@ export function convertOds(content: Document, stylesDoc: Document | null, settin
   const styles = new StyleResolver(content, stylesDoc)
   const view = readViewSettings(settings)
   const spreadsheet = child(child(content.documentElement, 'body'), 'spreadsheet')
-  if (!spreadsheet) throw new Error('The document is not a spreadsheet')
+  if (!spreadsheet) throw new Error(t('The document is not a spreadsheet'))
 
   const sheetOrder: string[] = []
   const sheets: IWorkbookData['sheets'] = {}

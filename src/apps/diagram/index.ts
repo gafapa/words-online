@@ -6,6 +6,7 @@ import { DIAGRAM_ACCEPT, mountDiagram } from './app'
 import { renderSvg, svgToPng, svgToString } from './export'
 import { buildCells, createGraph } from './graph'
 import { DiagramSync } from './sync'
+import { t } from '../../core/i18n'
 import './diagram.css'
 
 export const accept = DIAGRAM_ACCEPT
@@ -27,7 +28,7 @@ export async function importFile(file: File): Promise<string> {
 export async function submitFiles(session: Session): Promise<SubmitFile[]> {
   const { serializeDrawio, orderCells } = await import('./formats/drawio')
   const pages = DiagramSync.readPages(session.doc)
-  const title = String(session.doc.getMap('meta').get('title') || 'Untitled diagram')
+  const title = String(session.doc.getMap('meta').get('title') || t('Untitled diagram'))
   const files: SubmitFile[] = [{ name: `${title}.drawio`, blob: new Blob([serializeDrawio(pages)], { type: 'application/vnd.jgraph.mxfile' }) }]
   for (const [i, svg] of (await renderPages(pages.map((p) => orderCells(p.cells)))).entries()) {
     const name = pages.length > 1 ? `${title} - ${i + 1} ${pages[i].name}` : title

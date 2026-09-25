@@ -59,13 +59,13 @@ export const FONTS = [
 const FONT_SIZES = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72]
 const LINE_HEIGHTS = ['1', '1.15', '1.5', '2', '2.5', '3']
 const STYLES: [ParagraphStyle, string][] = [
-  ['normal', 'Normal text'],
-  ['title', 'Title'],
-  ['subtitle', 'Subtitle'],
-  ['h1', 'Heading 1'],
-  ['h2', 'Heading 2'],
-  ['h3', 'Heading 3'],
-  ['h4', 'Heading 4'],
+  ['normal', t('Normal text')],
+  ['title', t('Title')],
+  ['subtitle', t('Subtitle')],
+  ['h1', t('Heading 1')],
+  ['h2', t('Heading 2')],
+  ['h3', t('Heading 3')],
+  ['h4', t('Heading 4')],
 ]
 const ZOOMS = [0.5, 0.75, 0.9, 1, 1.25, 1.5, 2]
 
@@ -138,58 +138,58 @@ export function buildMenus(ctx: WriterContext, container: HTMLElement): void {
 
   createMenuBar(container, [
     {
-      label: 'File',
+      label: t('File'),
       items: [
-        { label: 'New document', run: ctx.newDocument },
-        { label: 'All documents', run: () => (location.href = homePath()) },
-        { label: 'Open file…', shortcut: mod('O'), run: ctx.openFile },
-        { label: 'My documents…', run: () => dialogs().then((d) => d.openDocuments(ctx)) },
+        { label: t('New document'), run: ctx.newDocument },
+        { label: t('All documents'), run: () => (location.href = homePath()) },
+        { label: t('Open file…'), shortcut: mod('O'), run: ctx.openFile },
+        { label: t('My documents…'), run: () => dialogs().then((d) => d.openDocuments(ctx)) },
         '-',
-        { label: 'Share…', run: () => document.getElementById('btn-share')!.click() },
+        { label: t('Share…'), run: () => document.getElementById('btn-share')!.click() },
         {
-          label: 'Download',
+          label: t('Download'),
           submenu: [
-            { label: 'Word document (.docx)', run: () => ctx.download('docx') },
-            { label: 'OpenDocument text (.odt)', run: () => ctx.download('odt') },
-            { label: 'PDF (via Print)', run: ctx.print },
-            { label: 'Web page (.html)', run: () => ctx.download('html') },
-            { label: 'Plain text (.txt)', run: () => ctx.download('txt') },
+            { label: t('Word document (.docx)'), run: () => ctx.download('docx') },
+            { label: t('OpenDocument text (.odt)'), run: () => ctx.download('odt') },
+            { label: t('PDF (via Print)'), run: ctx.print },
+            { label: t('Web page (.html)'), run: () => ctx.download('html') },
+            { label: t('Plain text (.txt)'), run: () => ctx.download('txt') },
           ],
         },
         '-',
         ...documentMenuItems(ctx.session),
         '-',
-        { label: 'Page setup…', run: () => dialogs().then((d) => d.pageSetup(ctx)), enabled: editable },
-        { label: 'Print', shortcut: mod('P'), run: ctx.print },
+        { label: t('Page setup…'), run: () => dialogs().then((d) => d.pageSetup(ctx)), enabled: editable },
+        { label: t('Print'), shortcut: mod('P'), run: ctx.print },
       ],
     },
     {
-      label: 'Edit',
+      label: t('Edit'),
       items: [
-        { label: 'Undo', shortcut: mod('Z'), run: run((e) => e.chain().focus().undo().run()), enabled: () => editable() && editor.can().undo() },
-        { label: 'Redo', shortcut: mod('Y'), run: run((e) => e.chain().focus().redo().run()), enabled: () => editable() && editor.can().redo() },
+        { label: t('Undo'), shortcut: mod('Z'), run: run((e) => e.chain().focus().undo().run()), enabled: () => editable() && editor.can().undo() },
+        { label: t('Redo'), shortcut: mod('Y'), run: run((e) => e.chain().focus().redo().run()), enabled: () => editable() && editor.can().redo() },
         '-',
-        { label: 'Cut', shortcut: mod('X'), run: () => clipboardCommand(editor, 'cut'), enabled: editable },
-        { label: 'Copy', shortcut: mod('C'), run: () => clipboardCommand(editor, 'copy') },
-        { label: 'Paste', shortcut: mod('V'), run: () => dialogs().then((d) => d.pasteHint()), enabled: editable },
+        { label: t('Cut'), shortcut: mod('X'), run: () => clipboardCommand(editor, 'cut'), enabled: editable },
+        { label: t('Copy'), shortcut: mod('C'), run: () => clipboardCommand(editor, 'copy') },
+        { label: t('Paste'), shortcut: mod('V'), run: () => dialogs().then((d) => d.pasteHint()), enabled: editable },
         '-',
-        { label: 'Select all', shortcut: mod('A'), run: run((e) => e.chain().focus().selectAll().run()) },
+        { label: t('Select all'), shortcut: mod('A'), run: run((e) => e.chain().focus().selectAll().run()) },
         '-',
-        { label: 'Find', shortcut: mod('F'), run: () => ctx.find.open(false) },
-        { label: 'Find and replace', shortcut: mod('H'), run: () => ctx.find.open(true), enabled: editable },
+        { label: t('Find'), shortcut: mod('F'), run: () => ctx.find.open(false) },
+        { label: t('Find and replace'), shortcut: mod('H'), run: () => ctx.find.open(true), enabled: editable },
       ],
     },
     {
-      label: 'View',
+      label: t('View'),
       items: [
         {
-          label: 'Zoom',
+          label: t('Zoom'),
           submenu: [
             ...ZOOMS.map((z) => ({ label: `${z * 100}%`, run: () => ctx.setZoom(z), active: () => ctx.getZoom() === z })),
-            { label: 'Fit to width', run: () => ctx.setZoom(0), active: () => ctx.getZoom() === 0 },
+            { label: t('Fit to width'), run: () => ctx.setZoom(0), active: () => ctx.getZoom() === 0 },
           ],
         },
-        { label: 'Word count…', run: () => dialogs().then((d) => d.wordCount(ctx)) },
+        { label: t('Word count…'), run: () => dialogs().then((d) => d.wordCount(ctx)) },
         '-',
         { label: t('Show authorship'), run: () => ctx.authorship.toggle(), active: () => ctx.authorship.enabled },
         { label: t('Contributions…'), run: ctx.showContributions },
@@ -197,7 +197,7 @@ export function buildMenus(ctx: WriterContext, container: HTMLElement): void {
       ],
     },
     {
-      label: 'Insert',
+      label: t('Insert'),
       items: [
         { label: t('Comment'), shortcut: isMac ? '⌥⌘M' : 'Ctrl+Alt+M', run: comment, enabled: canComment },
         '-',
@@ -206,39 +206,39 @@ export function buildMenus(ctx: WriterContext, container: HTMLElement): void {
             { label: t('Equation…'), run: () => ctx.insertEquation(false) },
             { label: t('Display equation…'), run: () => ctx.insertEquation(true) },
             '-',
-            { label: 'Image from file…', run: () => pickImage(editor) },
-            { label: 'Image from URL…', run: () => dialogs().then((d) => d.imageFromUrl(ctx)) },
-            { label: 'Table…', run: () => dialogs().then((d) => d.insertTableDialog(ctx)) },
-            { label: 'Link…', shortcut: mod('K'), run: () => dialogs().then((d) => d.editLink(ctx)) },
+            { label: t('Image from file…'), run: () => pickImage(editor) },
+            { label: t('Image from URL…'), run: () => dialogs().then((d) => d.imageFromUrl(ctx)) },
+            { label: t('Table…'), run: () => dialogs().then((d) => d.insertTableDialog(ctx)) },
+            { label: t('Link…'), shortcut: mod('K'), run: () => dialogs().then((d) => d.editLink(ctx)) },
             '-',
-            { label: 'Footnote…', shortcut: isMac ? '⌥⌘F' : 'Ctrl+Alt+F', run: () => dialogs().then((d) => d.insertFootnote(ctx)) },
-            { label: 'Header and footer…', run: () => dialogs().then((d) => d.editHeaderFooter(ctx)) },
+            { label: t('Footnote…'), shortcut: isMac ? '⌥⌘F' : 'Ctrl+Alt+F', run: () => dialogs().then((d) => d.insertFootnote(ctx)) },
+            { label: t('Header and footer…'), run: () => dialogs().then((d) => d.editHeaderFooter(ctx)) },
             '-',
-            { label: 'Page break', shortcut: mod('Enter'), run: run((e) => e.chain().focus().setPageBreak().run()) },
-            { label: 'Horizontal line', run: run((e) => e.chain().focus().setHorizontalRule().run()) },
-            { label: 'Special character…', run: () => dialogs().then((d) => d.specialCharacters(ctx)) },
+            { label: t('Page break'), shortcut: mod('Enter'), run: run((e) => e.chain().focus().setPageBreak().run()) },
+            { label: t('Horizontal line'), run: run((e) => e.chain().focus().setHorizontalRule().run()) },
+            { label: t('Special character…'), run: () => dialogs().then((d) => d.specialCharacters(ctx)) },
           ],
           editable,
         ),
       ],
     },
     {
-      label: 'Format',
+      label: t('Format'),
       items: guard([
         {
-          label: 'Text',
+          label: t('Text'),
           submenu: [
-            { label: 'Bold', shortcut: mod('B'), run: run((e) => e.chain().focus().toggleBold().run()), active: () => editor.isActive('bold') },
-            { label: 'Italic', shortcut: mod('I'), run: run((e) => e.chain().focus().toggleItalic().run()), active: () => editor.isActive('italic') },
-            { label: 'Underline', shortcut: mod('U'), run: run((e) => e.chain().focus().toggleUnderline().run()), active: () => editor.isActive('underline') },
-            { label: 'Strikethrough', shortcut: mod('Shift+S'), run: run((e) => e.chain().focus().toggleStrike().run()), active: () => editor.isActive('strike') },
-            { label: 'Superscript', shortcut: mod('.'), run: run((e) => e.chain().focus().toggleSuperscript().run()), active: () => editor.isActive('superscript') },
-            { label: 'Subscript', shortcut: mod(','), run: run((e) => e.chain().focus().toggleSubscript().run()), active: () => editor.isActive('subscript') },
-            { label: 'Code', shortcut: mod('E'), run: run((e) => e.chain().focus().toggleCode().run()), active: () => editor.isActive('code') },
+            { label: t('Bold'), shortcut: mod('B'), run: run((e) => e.chain().focus().toggleBold().run()), active: () => editor.isActive('bold') },
+            { label: t('Italic'), shortcut: mod('I'), run: run((e) => e.chain().focus().toggleItalic().run()), active: () => editor.isActive('italic') },
+            { label: t('Underline'), shortcut: mod('U'), run: run((e) => e.chain().focus().toggleUnderline().run()), active: () => editor.isActive('underline') },
+            { label: t('Strikethrough'), shortcut: mod('Shift+S'), run: run((e) => e.chain().focus().toggleStrike().run()), active: () => editor.isActive('strike') },
+            { label: t('Superscript'), shortcut: mod('.'), run: run((e) => e.chain().focus().toggleSuperscript().run()), active: () => editor.isActive('superscript') },
+            { label: t('Subscript'), shortcut: mod(','), run: run((e) => e.chain().focus().toggleSubscript().run()), active: () => editor.isActive('subscript') },
+            { label: t('Code'), shortcut: mod('E'), run: run((e) => e.chain().focus().toggleCode().run()), active: () => editor.isActive('code') },
           ],
         },
         {
-          label: 'Paragraph styles',
+          label: t('Paragraph styles'),
           submenu: STYLES.map(([id, label]) => ({
             label,
             run: run((e) => e.commands.setParagraphStyle(id)),
@@ -246,57 +246,57 @@ export function buildMenus(ctx: WriterContext, container: HTMLElement): void {
           })),
         },
         {
-          label: 'Align',
+          label: t('Align'),
           submenu: (['left', 'center', 'right', 'justify'] as const).map((a) => ({
-            label: a[0].toUpperCase() + a.slice(1),
+            label: { left: t('Left'), center: t('Center'), right: t('Right'), justify: t('Justified') }[a],
             shortcut: mod(`Shift+${{ left: 'L', center: 'E', right: 'R', justify: 'J' }[a]}`),
             run: run((e) => e.chain().focus().setTextAlign(a).run()),
             active: () => editor.isActive({ textAlign: a }),
           })),
         },
         {
-          label: 'Line spacing',
+          label: t('Line spacing'),
           submenu: LINE_HEIGHTS.map((h) => ({
-            label: h === '1' ? 'Single' : h === '2' ? 'Double' : h,
+            label: h === '1' ? t('Single') : h === '2' ? t('Double') : h,
             run: run((e) => e.chain().focus().setLineHeight(h === '1.15' ? null : h).run()),
             active: () => (editor.getAttributes('paragraph').lineHeight ?? editor.getAttributes('heading').lineHeight ?? '1.15') === h,
           })),
         },
         {
-          label: 'Lists',
+          label: t('Lists'),
           submenu: [
-            { label: 'Bulleted list', shortcut: mod('Shift+8'), run: run((e) => e.chain().focus().toggleBulletList().run()), active: () => editor.isActive('bulletList') },
-            { label: 'Numbered list', shortcut: mod('Shift+7'), run: run((e) => e.chain().focus().toggleOrderedList().run()), active: () => editor.isActive('orderedList') },
-            { label: 'Checklist', shortcut: mod('Shift+9'), run: run((e) => e.chain().focus().toggleTaskList().run()), active: () => editor.isActive('taskList') },
+            { label: t('Bulleted list'), shortcut: mod('Shift+8'), run: run((e) => e.chain().focus().toggleBulletList().run()), active: () => editor.isActive('bulletList') },
+            { label: t('Numbered list'), shortcut: mod('Shift+7'), run: run((e) => e.chain().focus().toggleOrderedList().run()), active: () => editor.isActive('orderedList') },
+            { label: t('Checklist'), shortcut: mod('Shift+9'), run: run((e) => e.chain().focus().toggleTaskList().run()), active: () => editor.isActive('taskList') },
           ],
         },
-        { label: 'Increase indent', shortcut: 'Tab', run: () => indent(editor, 1) },
-        { label: 'Decrease indent', shortcut: 'Shift+Tab', run: () => indent(editor, -1) },
+        { label: t('Increase indent'), shortcut: 'Tab', run: () => indent(editor, 1) },
+        { label: t('Decrease indent'), shortcut: 'Shift+Tab', run: () => indent(editor, -1) },
         '-',
-        { label: 'Quote', run: run((e) => e.chain().focus().toggleBlockquote().run()), active: () => editor.isActive('blockquote') },
-        { label: 'Code block', run: run((e) => e.chain().focus().toggleCodeBlock().run()), active: () => editor.isActive('codeBlock') },
+        { label: t('Quote'), run: run((e) => e.chain().focus().toggleBlockquote().run()), active: () => editor.isActive('blockquote') },
+        { label: t('Code block'), run: run((e) => e.chain().focus().toggleCodeBlock().run()), active: () => editor.isActive('codeBlock') },
         '-',
-        { label: 'Clear formatting', shortcut: mod('\\'), run: () => { clearFormatting(editor); editor.chain().focus().clearNodes().run() } },
+        { label: t('Clear formatting'), shortcut: mod('\\'), run: () => { clearFormatting(editor); editor.chain().focus().clearNodes().run() } },
       ], editable),
     },
     {
-      label: 'Table',
+      label: t('Table'),
       items: guard([
-        { label: 'Insert table…', run: () => dialogs().then((d) => d.insertTableDialog(ctx)), enabled: () => !inTable() },
+        { label: t('Insert table…'), run: () => dialogs().then((d) => d.insertTableDialog(ctx)), enabled: () => !inTable() },
         '-',
-        { label: 'Insert row above', run: run((e) => e.chain().focus().addRowBefore().run()), enabled: inTable },
-        { label: 'Insert row below', run: run((e) => e.chain().focus().addRowAfter().run()), enabled: inTable },
-        { label: 'Insert column left', run: run((e) => e.chain().focus().addColumnBefore().run()), enabled: inTable },
-        { label: 'Insert column right', run: run((e) => e.chain().focus().addColumnAfter().run()), enabled: inTable },
+        { label: t('Insert row above'), run: run((e) => e.chain().focus().addRowBefore().run()), enabled: inTable },
+        { label: t('Insert row below'), run: run((e) => e.chain().focus().addRowAfter().run()), enabled: inTable },
+        { label: t('Insert column left'), run: run((e) => e.chain().focus().addColumnBefore().run()), enabled: inTable },
+        { label: t('Insert column right'), run: run((e) => e.chain().focus().addColumnAfter().run()), enabled: inTable },
         '-',
-        { label: 'Delete row', run: run((e) => e.chain().focus().deleteRow().run()), enabled: inTable },
-        { label: 'Delete column', run: run((e) => e.chain().focus().deleteColumn().run()), enabled: inTable },
-        { label: 'Delete table', run: run((e) => e.chain().focus().deleteTable().run()), enabled: inTable },
+        { label: t('Delete row'), run: run((e) => e.chain().focus().deleteRow().run()), enabled: inTable },
+        { label: t('Delete column'), run: run((e) => e.chain().focus().deleteColumn().run()), enabled: inTable },
+        { label: t('Delete table'), run: run((e) => e.chain().focus().deleteTable().run()), enabled: inTable },
         '-',
-        { label: 'Merge cells', run: run((e) => e.chain().focus().mergeCells().run()), enabled: can((c) => c.mergeCells()) },
-        { label: 'Split cell', run: run((e) => e.chain().focus().splitCell().run()), enabled: can((c) => c.splitCell()) },
-        { label: 'Header row', run: run((e) => e.chain().focus().toggleHeaderRow().run()), enabled: inTable },
-        { label: 'Cell background…', run: () => dialogs().then((d) => d.cellBackground(ctx)), enabled: inTable },
+        { label: t('Merge cells'), run: run((e) => e.chain().focus().mergeCells().run()), enabled: can((c) => c.mergeCells()) },
+        { label: t('Split cell'), run: run((e) => e.chain().focus().splitCell().run()), enabled: can((c) => c.splitCell()) },
+        { label: t('Header row'), run: run((e) => e.chain().focus().toggleHeaderRow().run()), enabled: inTable },
+        { label: t('Cell background…'), run: () => dialogs().then((d) => d.cellBackground(ctx)), enabled: inTable },
       ], editable),
     },
     {
@@ -316,10 +316,10 @@ export function buildMenus(ctx: WriterContext, container: HTMLElement): void {
       ],
     },
     {
-      label: 'Help',
+      label: t('Help'),
       items: [
-        { label: 'Keyboard shortcuts', shortcut: mod('/'), run: () => dialogs().then((d) => d.shortcuts()) },
-        { label: 'About Words Online', run: () => dialogs().then((d) => d.about()) },
+        { label: t('Keyboard shortcuts'), shortcut: mod('/'), run: () => dialogs().then((d) => d.shortcuts()) },
+        { label: t('About Words Online'), run: () => dialogs().then((d) => d.about()) },
       ],
     },
   ] as { label: string; items: MenuEntry[] }[])
@@ -408,27 +408,27 @@ export function buildToolbar(ctx: WriterContext, container: HTMLElement): void {
   }
 
   group(
-    button(Undo2, `Undo (${mod('Z')})`, () => editor.chain().focus().undo().run(), undefined, () => editor.isEditable && editor.can().undo()),
-    button(Redo2, `Redo (${mod('Y')})`, () => editor.chain().focus().redo().run(), undefined, () => editor.isEditable && editor.can().redo()),
-    button(Printer, `Print (${mod('P')})`, ctx.print),
-    button(Search, `Find and replace (${mod('F')})`, () => ctx.find.open(true)),
+    button(Undo2, `${t('Undo')} (${mod('Z')})`, () => editor.chain().focus().undo().run(), undefined, () => editor.isEditable && editor.can().undo()),
+    button(Redo2, `${t('Redo')} (${mod('Y')})`, () => editor.chain().focus().redo().run(), undefined, () => editor.isEditable && editor.can().redo()),
+    button(Printer, `${t('Print')} (${mod('P')})`, ctx.print),
+    button(Search, `${t('Find and replace')} (${mod('F')})`, () => ctx.find.open(true)),
   )
 
   group(
     select(
-      'Zoom',
-      [...ZOOMS.map((z) => [String(z), `${z * 100}%`] as [string, string]), ['0', 'Fit']],
+      t('Zoom'),
+      [...ZOOMS.map((z) => [String(z), `${z * 100}%`] as [string, string]), ['0', t('Fit')]],
       () => String(ctx.getZoom()),
       (v) => ctx.setZoom(Number(v)),
       'tb-zoom',
     ),
   )
 
-  group(select('Paragraph style', STYLES, () => currentStyle(editor), (v) => editor.commands.setParagraphStyle(v), 'tb-style'))
+  group(select(t('Paragraph style'), STYLES, () => currentStyle(editor), (v) => editor.commands.setParagraphStyle(v), 'tb-style'))
 
   const fontOptions = FONTS.map((f) => [f, f] as [string, string])
   const fontSelect = select(
-    'Font',
+    t('Font'),
     fontOptions,
     () => editor.getAttributes('textStyle').fontFamily ?? DEFAULT_FONT,
     (v) => (v === DEFAULT_FONT ? editor.chain().focus().unsetFontFamily().run() : editor.chain().focus().setFontFamily(v).run()),
@@ -441,8 +441,8 @@ export function buildToolbar(ctx: WriterContext, container: HTMLElement): void {
   })
   group(fontSelect)
 
-  const sizeInput = el('input', { class: 'tb-size', title: 'Font size', inputMode: 'decimal' })
-  sizeInput.setAttribute('aria-label', 'Font size')
+  const sizeInput = el('input', { class: 'tb-size', title: t('Font size'), inputMode: 'decimal' })
+  sizeInput.setAttribute('aria-label', t('Font size'))
   const sizeList = el('datalist', { id: 'font-sizes' })
   FONT_SIZES.forEach((s) => sizeList.append(el('option', { value: String(s) })))
   sizeInput.setAttribute('list', 'font-sizes')
@@ -454,7 +454,7 @@ export function buildToolbar(ctx: WriterContext, container: HTMLElement): void {
   updaters.push(() => {
     if (document.activeElement !== sizeInput) sizeInput.value = String(currentFontSize(editor))
   })
-  group(button(Minus, 'Decrease font size', () => stepFontSize(editor, -1)), sizeInput, sizeList, button(Plus, 'Increase font size', () => stepFontSize(editor, 1)))
+  group(button(Minus, t('Decrease font size'), () => stepFontSize(editor, -1)), sizeInput, sizeList, button(Plus, t('Increase font size'), () => stepFontSize(editor, 1)))
 
   const colorButton = (node: IconNode, title: string, current: () => string | undefined, apply: (c: string | null) => void, resetLabel: string) => {
     const b = el('button', { type: 'button', class: 'tb-btn tb-color', title }, icon(node), el('span', { class: 'tb-color-bar' }), icon(ChevronDown, 12))
@@ -467,50 +467,50 @@ export function buildToolbar(ctx: WriterContext, container: HTMLElement): void {
   }
 
   group(
-    button(Bold, `Bold (${mod('B')})`, () => editor.chain().focus().toggleBold().run(), () => editor.isActive('bold')),
-    button(Italic, `Italic (${mod('I')})`, () => editor.chain().focus().toggleItalic().run(), () => editor.isActive('italic')),
-    button(Underline, `Underline (${mod('U')})`, () => editor.chain().focus().toggleUnderline().run(), () => editor.isActive('underline')),
-    button(Strikethrough, 'Strikethrough', () => editor.chain().focus().toggleStrike().run(), () => editor.isActive('strike')),
+    button(Bold, `${t('Bold')} (${mod('B')})`, () => editor.chain().focus().toggleBold().run(), () => editor.isActive('bold')),
+    button(Italic, `${t('Italic')} (${mod('I')})`, () => editor.chain().focus().toggleItalic().run(), () => editor.isActive('italic')),
+    button(Underline, `${t('Underline')} (${mod('U')})`, () => editor.chain().focus().toggleUnderline().run(), () => editor.isActive('underline')),
+    button(Strikethrough, t('Strikethrough'), () => editor.chain().focus().toggleStrike().run(), () => editor.isActive('strike')),
     colorButton(
       Baseline,
-      'Text color',
+      t('Text color'),
       () => editor.getAttributes('textStyle').color ?? '#000000',
       (c) => (c ? editor.chain().focus().setColor(c).run() : editor.chain().focus().unsetColor().run()),
-      'Automatic',
+      t('Automatic'),
     ),
     colorButton(
       Highlighter,
-      'Highlight color',
+      t('Highlight color'),
       () => editor.getAttributes('highlight').color,
       (c) => (c ? editor.chain().focus().setHighlight({ color: c }).run() : editor.chain().focus().unsetHighlight().run()),
-      'None',
+      t('None'),
     ),
   )
 
-  const tableButton = el('button', { type: 'button', class: 'tb-btn', title: 'Insert table' }, icon(Table))
+  const tableButton = el('button', { type: 'button', class: 'tb-btn', title: t('Insert table') }, icon(Table))
   tableButton.addEventListener('mousedown', (e) => e.preventDefault())
   tableButton.addEventListener('click', () =>
     openPopover(tableButton, tableGrid((rows, cols) => editor.chain().focus().insertTable({ rows, cols, withHeaderRow: false }).run())),
   )
   group(
-    button(Link, `Insert link (${mod('K')})`, () => dialogs().then((d) => d.editLink(ctx)), () => editor.isActive('link')),
-    button(ImageIcon, 'Insert image', () => pickImage(editor)),
+    button(Link, `${t('Insert link')} (${mod('K')})`, () => dialogs().then((d) => d.editLink(ctx)), () => editor.isActive('link')),
+    button(ImageIcon, t('Insert image'), () => pickImage(editor)),
     tableButton,
   )
 
   group(
-    button(TextAlignStart, 'Align left', () => editor.chain().focus().setTextAlign('left').run(), () => editor.isActive({ textAlign: 'left' })),
-    button(TextAlignCenter, 'Center', () => editor.chain().focus().setTextAlign('center').run(), () => editor.isActive({ textAlign: 'center' })),
-    button(TextAlignEnd, 'Align right', () => editor.chain().focus().setTextAlign('right').run(), () => editor.isActive({ textAlign: 'right' })),
-    button(TextAlignJustify, 'Justify', () => editor.chain().focus().setTextAlign('justify').run(), () => editor.isActive({ textAlign: 'justify' })),
+    button(TextAlignStart, t('Align left'), () => editor.chain().focus().setTextAlign('left').run(), () => editor.isActive({ textAlign: 'left' })),
+    button(TextAlignCenter, t('Center'), () => editor.chain().focus().setTextAlign('center').run(), () => editor.isActive({ textAlign: 'center' })),
+    button(TextAlignEnd, t('Align right'), () => editor.chain().focus().setTextAlign('right').run(), () => editor.isActive({ textAlign: 'right' })),
+    button(TextAlignJustify, t('Justify'), () => editor.chain().focus().setTextAlign('justify').run(), () => editor.isActive({ textAlign: 'justify' })),
   )
 
-  const spacingButton = el('button', { type: 'button', class: 'tb-btn tb-text', title: 'Line spacing', textContent: '↕' })
+  const spacingButton = el('button', { type: 'button', class: 'tb-btn tb-text', title: t('Line spacing'), textContent: '↕' })
   spacingButton.addEventListener('mousedown', (e) => e.preventDefault())
   spacingButton.addEventListener('click', () => {
     const list = el('div', { class: 'menu-list' })
     for (const h of LINE_HEIGHTS) {
-      const item = el('button', { type: 'button', class: 'menu-row', textContent: h === '1' ? 'Single' : h === '2' ? 'Double' : h })
+      const item = el('button', { type: 'button', class: 'menu-row', textContent: h === '1' ? t('Single') : h === '2' ? t('Double') : h })
       item.addEventListener('mousedown', (e) => e.preventDefault())
       item.addEventListener('click', () => {
         closePopover()
@@ -523,14 +523,14 @@ export function buildToolbar(ctx: WriterContext, container: HTMLElement): void {
 
   group(
     spacingButton,
-    button(List, 'Bulleted list', () => editor.chain().focus().toggleBulletList().run(), () => editor.isActive('bulletList')),
-    button(ListOrdered, 'Numbered list', () => editor.chain().focus().toggleOrderedList().run(), () => editor.isActive('orderedList')),
-    button(ListChecks, 'Checklist', () => editor.chain().focus().toggleTaskList().run(), () => editor.isActive('taskList')),
-    button(ListIndentDecrease, 'Decrease indent', () => indent(editor, -1)),
-    button(ListIndentIncrease, 'Increase indent', () => indent(editor, 1)),
+    button(List, t('Bulleted list'), () => editor.chain().focus().toggleBulletList().run(), () => editor.isActive('bulletList')),
+    button(ListOrdered, t('Numbered list'), () => editor.chain().focus().toggleOrderedList().run(), () => editor.isActive('orderedList')),
+    button(ListChecks, t('Checklist'), () => editor.chain().focus().toggleTaskList().run(), () => editor.isActive('taskList')),
+    button(ListIndentDecrease, t('Decrease indent'), () => indent(editor, -1)),
+    button(ListIndentIncrease, t('Increase indent'), () => indent(editor, 1)),
   )
 
-  group(button(RemoveFormatting, `Clear formatting (${mod('\\')})`, () => clearFormatting(editor)))
+  group(button(RemoveFormatting, `${t('Clear formatting')} (${mod('\\')})`, () => clearFormatting(editor)))
 
   group(
     button(Sigma, t('Insert equation'), () => ctx.insertEquation(false)),
@@ -577,7 +577,7 @@ export function setupContextMenu(ctx: WriterContext): void {
       const sel = window.getSelection()
       const hasText = !editor.state.selection.empty || (!!sel && !sel.isCollapsed)
       showContextMenu(e.clientX, e.clientY, [
-        { label: 'Copy', shortcut: mod('C'), run: () => clipboardCommand(editor, 'copy'), enabled: () => hasText },
+        { label: t('Copy'), shortcut: mod('C'), run: () => clipboardCommand(editor, 'copy'), enabled: () => hasText },
         { label: t('Comment'), shortcut: isMac ? '⌥⌘M' : 'Ctrl+Alt+M', run: () => ctx.review.startComment(), enabled: () => hasText && ctx.access !== 'view' },
       ])
       return
@@ -585,32 +585,32 @@ export function setupContextMenu(ctx: WriterContext): void {
     const items: MenuEntry[] = [
       { label: t('Comment'), shortcut: isMac ? '⌥⌘M' : 'Ctrl+Alt+M', run: () => ctx.review.startComment(), enabled: () => !editor.state.selection.empty },
       '-',
-      { label: 'Cut', shortcut: mod('X'), run: () => clipboardCommand(editor, 'cut'), enabled: () => !editor.state.selection.empty },
-      { label: 'Copy', shortcut: mod('C'), run: () => clipboardCommand(editor, 'copy'), enabled: () => !editor.state.selection.empty },
-      { label: 'Paste', shortcut: mod('V'), run: () => dialogs().then((d) => d.pasteHint()) },
+      { label: t('Cut'), shortcut: mod('X'), run: () => clipboardCommand(editor, 'cut'), enabled: () => !editor.state.selection.empty },
+      { label: t('Copy'), shortcut: mod('C'), run: () => clipboardCommand(editor, 'copy'), enabled: () => !editor.state.selection.empty },
+      { label: t('Paste'), shortcut: mod('V'), run: () => dialogs().then((d) => d.pasteHint()) },
       '-',
       editor.isActive('link')
-        ? { label: 'Edit link…', run: () => dialogs().then((d) => d.editLink(ctx)) }
-        : { label: 'Insert link…', shortcut: mod('K'), run: () => dialogs().then((d) => d.editLink(ctx)) },
-      ...(editor.isActive('link') ? [{ label: 'Remove link', run: () => editor.chain().focus().extendMarkRange('link').unsetLink().run() }] : []),
-      { label: 'Insert footnote…', run: () => dialogs().then((d) => d.insertFootnote(ctx)) },
+        ? { label: t('Edit link…'), run: () => dialogs().then((d) => d.editLink(ctx)) }
+        : { label: t('Insert link…'), shortcut: mod('K'), run: () => dialogs().then((d) => d.editLink(ctx)) },
+      ...(editor.isActive('link') ? [{ label: t('Remove link'), run: () => editor.chain().focus().extendMarkRange('link').unsetLink().run() }] : []),
+      { label: t('Insert footnote…'), run: () => dialogs().then((d) => d.insertFootnote(ctx)) },
     ]
     if (editor.isActive('table')) {
       items.push(
         '-',
-        { label: 'Insert row above', run: () => editor.chain().focus().addRowBefore().run() },
-        { label: 'Insert row below', run: () => editor.chain().focus().addRowAfter().run() },
-        { label: 'Insert column left', run: () => editor.chain().focus().addColumnBefore().run() },
-        { label: 'Insert column right', run: () => editor.chain().focus().addColumnAfter().run() },
-        { label: 'Delete row', run: () => editor.chain().focus().deleteRow().run() },
-        { label: 'Delete column', run: () => editor.chain().focus().deleteColumn().run() },
-        { label: 'Merge cells', run: () => editor.chain().focus().mergeCells().run(), enabled: () => editor.can().mergeCells() },
-        { label: 'Split cell', run: () => editor.chain().focus().splitCell().run(), enabled: () => editor.can().splitCell() },
-        { label: 'Cell background…', run: () => dialogs().then((d) => d.cellBackground(ctx)) },
-        { label: 'Delete table', run: () => editor.chain().focus().deleteTable().run() },
+        { label: t('Insert row above'), run: () => editor.chain().focus().addRowBefore().run() },
+        { label: t('Insert row below'), run: () => editor.chain().focus().addRowAfter().run() },
+        { label: t('Insert column left'), run: () => editor.chain().focus().addColumnBefore().run() },
+        { label: t('Insert column right'), run: () => editor.chain().focus().addColumnAfter().run() },
+        { label: t('Delete row'), run: () => editor.chain().focus().deleteRow().run() },
+        { label: t('Delete column'), run: () => editor.chain().focus().deleteColumn().run() },
+        { label: t('Merge cells'), run: () => editor.chain().focus().mergeCells().run(), enabled: () => editor.can().mergeCells() },
+        { label: t('Split cell'), run: () => editor.chain().focus().splitCell().run(), enabled: () => editor.can().splitCell() },
+        { label: t('Cell background…'), run: () => dialogs().then((d) => d.cellBackground(ctx)) },
+        { label: t('Delete table'), run: () => editor.chain().focus().deleteTable().run() },
       )
     }
-    items.push('-', { label: 'Clear formatting', shortcut: mod('\\'), run: () => clearFormatting(editor) })
+    items.push('-', { label: t('Clear formatting'), shortcut: mod('\\'), run: () => clearFormatting(editor) })
     showContextMenu(e.clientX, e.clientY, items)
   })
 }

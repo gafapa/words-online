@@ -8,6 +8,7 @@ import { DEFAULT_FONT, DEFAULT_FONT_SIZE_PT, DEFAULT_PAGE, PAGE_SIZES_MM, type C
 import { attr, bytesToDataUrl, child, children, mimeFromPath, parseXml, toHex } from '../../../core/formats'
 import { mathmlToLatex } from './math'
 import { authorColor } from './review'
+import { t } from '../../../core/i18n'
 
 const INDENT_CM = 1.27
 const PX_PER_CM = 96 / 2.54
@@ -90,7 +91,7 @@ interface Fmt {
 export async function importOdt(file: ArrayBuffer): Promise<ImportedDocument> {
   const zip = await JSZip.loadAsync(file)
   const contentXml = await zip.file('content.xml')?.async('text')
-  if (!contentXml) throw new Error('Not an OpenDocument text file')
+  if (!contentXml) throw new Error(t('Not an OpenDocument text file'))
   const stylesXml = await zip.file('styles.xml')?.async('text')
   const content = parseXml(contentXml).documentElement
   const stylesRoot = stylesXml ? parseXml(stylesXml).documentElement : null

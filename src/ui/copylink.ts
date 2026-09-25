@@ -13,7 +13,7 @@ export async function runCopyLink(root: HTMLElement, route: CopyLinkRoute): Prom
   const box = el(
     'div',
     { class: 'copy-wait', role: 'status' },
-    el('h1', { textContent: t('Making your own copy of this {kind}', { kind: info.name.toLowerCase() }) }),
+    el('h1', { textContent: t('Making your own copy ({kind})', { kind: info.name.toLowerCase() }) }),
     el('div', { class: 'spinner' }),
     message,
     el('p', { class: 'hint', textContent: t('The copy is private: it is saved in this browser and only you can edit it until you share it.') }),
