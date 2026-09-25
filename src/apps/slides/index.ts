@@ -43,12 +43,16 @@ export async function submitFiles(session: Session): Promise<SubmitFile[]> {
   const data = readPresentation(session)
   const title = String(session.doc.getMap('meta').get('title') || 'Untitled presentation')
   const renderer = new SlideRenderer(() => data.theme)
-  const { exportPptx } = await import('./formats/pptx')
-  const files: SubmitFile[] = [{ name: `${title}.pptx`, blob: await exportPptx(data, renderer) }]
-  for (const [i, slide] of data.slides.entries()) {
-    await renderer.prepare(slide.cells)
-    const svg = renderer.render({ cells: slide.cells, background: parseBackground(slide.background, data.theme) }, data.width, data.height)
-    files.push({ name: `${title} - ${String(i + 1).padStart(2, '0')}.png`, blob: await svgToPng(svg, 2) })
+  try {
+    const { exportPptx } = await import('./formats/pptx')
+    const files: SubmitFile[] = [{ name: `${title}.pptx`, blob: await exportPptx(data, renderer) }]
+    for (const [i, slide] of data.slides.entries()) {
+      await renderer.prepare(slide.cells)
+      const svg = renderer.render({ cells: slide.cells, background: parseBackground(slide.background, data.theme) }, data.width, data.height)
+      files.push({ name: `${title} - ${String(i + 1).padStart(2, '0')}.png`, blob: await svgToPng(svg, 2) })
+    }
+    return files
+  } finally {
+    renderer.destroy()
   }
-  return files
 }

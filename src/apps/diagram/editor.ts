@@ -599,6 +599,7 @@ export function createDiagramEditor(session: Session, options: EditorOptions) {
     if (!ZOOMS.some((z) => Math.round(z * 100) === pct)) zoomSelect.prepend(el('option', { value: String(view.scale), textContent: `${pct}%` }))
     zoomSelect.value = String(ZOOMS.find((z) => Math.round(z * 100) === pct) ?? view.scale)
   }
+  for (const event of [InternalEvent.SCALE, InternalEvent.SCALE_AND_TRANSLATE]) view.addListener(event, syncZoomSelect)
   zoomSelect.addEventListener('change', () => {
     if (zoomSelect.value === 'fit') fit()
     else zoomAt(Number(zoomSelect.value))

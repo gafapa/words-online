@@ -99,13 +99,20 @@ export class SlideRenderer {
   readonly graph: Graph
   private loaded: CellRecord[] | null = null
 
+  private readonly host: HTMLElement
+
   constructor(getTheme: () => Theme) {
-    const host = document.createElement('div')
+    const host = (this.host = document.createElement('div'))
     host.className = 'sidebar-thumb-host'
     document.body.append(host)
     this.graph = new Graph(host, undefined, [])
     applyLook(this.graph)
     installTheme(this.graph, getTheme, false)
+  }
+
+  destroy(): void {
+    this.graph.destroy()
+    this.host.remove()
   }
 
   // Loads the stencils and shape code the cells need (library shapes); null when nothing is missing.
