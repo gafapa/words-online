@@ -4,7 +4,7 @@
 // and shape code that cells on the page use (whatever added them: a file, a
 // remote edit, a paste or the shape panel).
 
-import { Cell, InternalEvent, ShapeRegistry, StencilShapeRegistry, type EventObject, type Graph } from '@maxgraph/core'
+import { InternalEvent, ShapeRegistry, StencilShapeRegistry, type Cell, type EventObject, type Graph } from '@maxgraph/core'
 import { el, showDialog, toast } from '../../ui/widgets'
 import { LIBS_BASE } from './graph'
 import type { PaletteItem, PaletteLibrary } from './palette'
@@ -34,6 +34,7 @@ export interface Catalog {
 const STORAGE_KEY = 'diagram-libraries'
 
 let catalog: Promise<Catalog | null> | null = null
+let loadedCatalog: Catalog | null = null
 let stencilNames = new Set<string>()
 
 // The catalog, or null when it is unavailable (not built, or offline before first use).
@@ -44,6 +45,7 @@ export function loadCatalog(): Promise<Catalog | null> {
     .then((cat) => {
       if (!cat) catalog = null
       else {
+        loadedCatalog = cat
         stencilNames = new Set(cat.stencils)
         void dropOldCaches(cat.build)
       }
@@ -79,6 +81,7 @@ function filesFor(cat: Catalog, name: string): string[] {
 const isKnown = (name: string) => !!ShapeRegistry.get(name) || !!StencilShapeRegistry.get(name)
 
 const loads = new Map<string, Promise<void>>()
+const loaded = new Set<string>()
 
 function loadFile(file: string): Promise<void> {
   let load = loads.get(file)
@@ -89,14 +92,26 @@ function loadFile(file: string): Promise<void> {
           if (!r.ok) throw new Error(`${r.status} ${r.statusText}`)
           registerStencilSet(await r.text())
         })
-    load = load.catch((e) => {
-      // Tried again the next time a cell needs it.
-      loads.delete(file)
-      console.warn(`Could not load ${file}:`, e)
-    })
+    load = load.then(
+      () => void loaded.add(file),
+      (e) => {
+        // Tried again the next time a cell needs it.
+        loads.delete(file)
+        console.warn(`Could not load ${file}:`, e)
+      },
+    )
     loads.set(file, load)
   }
   return load
+}
+
+// Whether a name still needs files: unknown so far, or its library is halfway
+// loaded (e.g. the shape code is there but not the stencils it draws).
+function needsLoad(name: string): boolean {
+  if (!name) return false
+  const files = loadedCatalog ? filesFor(loadedCatalog, name) : []
+  if (files.some((f) => loads.has(f) && !loaded.has(f))) return true
+  return !isKnown(name) && (!loadedCatalog || files.some((f) => !loaded.has(f)))
 }
 
 // Shape-like values of a style: its shape, markers and stencil references (e.g. resIcon=mxgraph.aws4.lambda).
@@ -122,7 +137,7 @@ function parseStyleNames(style: string, out: Set<string>) {
 
 // Loads what the given names need; resolves true if anything new was loaded.
 async function ensureNames(names: Set<string>): Promise<boolean> {
-  const unknown = [...names].filter((n) => n && !isKnown(n))
+  const unknown = [...names].filter(needsLoad)
   if (!unknown.length) return false
   const cat = await loadCatalog()
   if (!cat) return false
@@ -147,7 +162,7 @@ export function prepareItems(items: PaletteItem[]): Promise<boolean> | null {
     parseStyleNames(item.style, names)
     item.cells?.forEach((c) => c.style && parseStyleNames(c.style, names))
   }
-  return [...names].some((n) => n && !isKnown(n)) ? ensureNames(names) : null
+  return [...names].some(needsLoad) ? ensureNames(names) : null
 }
 
 // Keeps the graph's cells rendered with their draw.io shapes: whenever cells
@@ -165,7 +180,7 @@ export function watchGraph(graph: Graph): void {
       for (let i = 0; i < cell.getChildCount(); i++) visit(cell.getChildAt(i))
     }
     cells.forEach(visit)
-    if (![...names].some((n) => n && !isKnown(n))) return
+    if (![...names].some(needsLoad)) return
     pending++
     void ensureNames(names).then((loaded) => {
       loadedAny ||= loaded

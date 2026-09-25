@@ -77,8 +77,9 @@ const write = (name, data) => {
 
 // ---------- Stencils ----------
 
-// Removes comments and whitespace between tags.
-const minifyXml = (xml) => xml.replace(/<!--[\s\S]*?-->/g, '').replace(/<\?xml[^>]*\?>/, '').replace(/>\s+</g, '><').trim()
+// Removes comments and whitespace between tags, and rounds coordinates to 1/100 px.
+const minifyXml = (xml) =>
+  xml.replace(/<!--[\s\S]*?-->/g, '').replace(/<\?xml[^>]*\?>/, '').replace(/>\s+</g, '><').replace(/="(-?\d*\.\d{2})\d+"/g, '="$1"').trim()
 
 const attr = (tag, name) => {
   const m = new RegExp(`\\s${name}="([^"]*)"`).exec(tag)
@@ -106,7 +107,6 @@ for (const name of src.files.filter((n) => n.startsWith('stencils/') && n.endsWi
   }
   stencilFiles.set(name, { xml, shapes })
 }
-
 
 // ---------- Palettes: draw.io's sidebar code in a sandbox ----------
 
@@ -253,9 +253,66 @@ function cellsToRecords(cells) {
   return out
 }
 
+// Moves edges into the nearest common ancestor of their terminals, as the graph
+// model does when cells are added (maxGraph fails when it has to do it itself).
+function normalizeEdgeParents(records) {
+  const byId = new Map(records.map((r) => [r.id, r]))
+  const ancestors = (id) => {
+    const out = []
+    for (let r = byId.get(id); r; r = r.parent ? byId.get(r.parent) : null) out.push(r.id)
+    return out
+  }
+  const origin = (id) => {
+    let x = 0
+    let y = 0
+    for (let r = id ? byId.get(id) : null; r; r = r.parent ? byId.get(r.parent) : null) {
+      const g = r.geometry ? JSON.parse(r.geometry) : null
+      if (g && !g.relative && !r.edge) {
+        x += g.x
+        y += g.y
+      }
+    }
+    return [x, y]
+  }
+  for (const rec of records) {
+    if (!rec.edge || !rec.source || !rec.target) continue
+    // Like mxGraphModel.updateEdgeParent: ports (relative geometry) stand for
+    // their parent, then the nearest common ancestor.
+    const port = (id) => {
+      let r = byId.get(id)
+      while (r && r.vertex && r.parent && r.geometry && JSON.parse(r.geometry).relative) r = byId.get(r.parent)
+      return r?.id
+    }
+    const [source, target] = [port(rec.source), port(rec.target)]
+    let common
+    if (source === target) common = byId.get(source)?.parent
+    else {
+      const [a, b] = [ancestors(source), ancestors(target)]
+      const [shallow, deep] = a.length <= b.length ? [a, b] : [b, a]
+      const strict = new Set(deep.slice(1))
+      common = shallow.find((id) => strict.has(id))
+    }
+    if ((common ?? undefined) === rec.parent) continue
+    const [ox, oy] = origin(rec.parent)
+    const [nx, ny] = origin(common)
+    if (rec.geometry) {
+      const g = JSON.parse(rec.geometry)
+      const move = (p) => [round(p[0] + ox - nx), round(p[1] + oy - ny)]
+      if (g.points) g.points = g.points.map(move)
+      if (g.sourcePoint) g.sourcePoint = move(g.sourcePoint)
+      if (g.targetPoint) g.targetPoint = move(g.targetPoint)
+      rec.geometry = JSON.stringify(g)
+    }
+    if (common) rec.parent = common
+    else delete rec.parent
+  }
+  return records
+}
+
 // A palette item (see PaletteItem in src/apps/diagram/palette.ts) from template records.
 function toItem(records, width, height, title, tags) {
   if (!records.length) return null
+  normalizeEdgeParents(records)
   const label = title || ''
   const item = { label }
   const first = records[0]
@@ -386,17 +443,14 @@ async function extractPalettes() {
     currentSearchEntryLibrary: null,
   })
   const palettes = []
-  const make = (cells, width, height, title, edge) => {
-    const records = cellsToRecords(cells ?? [])
-    return { __item: true, records, width, height, title, edge }
-  }
+  const make = (cells, width, height, title) => ({ __item: true, records: cellsToRecords(cells ?? []), width, height, title })
   sb.addEntry = (tags, fn) => {
     fn.tags = tags
     return fn
   }
   sb.createItem = (cells, title, showLabel, showTitle, width, height) => make(cells, width, height, title)
   sb.createVertexTemplateFromCells = (cells, width, height, title) => make(cells, width, height, title)
-  sb.createEdgeTemplateFromCells = (cells, width, height, title) => make(cells, width, height, title, true)
+  sb.createEdgeTemplateFromCells = (cells, width, height, title) => make(cells, width, height, title)
   sb.createVertexTemplateFromData = (data, width, height, title) => ({ __item: true, records: modelToRecords(decompress(data)), width, height, title })
   sb.setDeferredPaletteSize = () => {}
   sb.addSearchPalette = () => {}
@@ -405,7 +459,7 @@ async function extractPalettes() {
   sb.addPalette = (id, title, expanded, onInit) => {
     const items = []
     const content = { appendChild: (x) => (x && x.__item ? items.push(x) : null), style: {} }
-    const palette = { id, title, items: [], errors: 0 }
+    const palette = { id, title, raw: items, errors: 0 }
     palettes.push(palette)
     try {
       onInit?.call(sb, content, { style: {} })
@@ -413,7 +467,6 @@ async function extractPalettes() {
       palette.errors++
       palette.error = String(e)
     }
-    palette.raw = items
     return { style: {} }
   }
   sb.addPaletteFunctions = (id, title, expanded, fns) => {
@@ -479,7 +532,6 @@ console.log(`${extracted.palettes.length} palettes, ${extracted.palettes.reduce(
 const BUILT_IN = new Set(['general', 'flowchart', 'uml', 'er', 'basic'])
 const byId = new Map(extracted.palettes.filter((p) => p.items.length).map((p) => [p.id, p]))
 const groups = []
-const paletteEntries = new Map()
 for (const group of extracted.entries) {
   const entries = []
   for (const entry of group.entries) {
@@ -491,7 +543,6 @@ for (const group of extracted.entries) {
     const data = libs.map((p) => ({ id: p.id, name: p.title, items: p.items }))
     const json = JSON.stringify(data)
     write(`palettes/${entry.id}.json`, json)
-    paletteEntries.set(entry.id, data)
     entries.push({ id: entry.id, title: entry.title, libraries: libs.map((p) => ({ id: p.id, name: p.title, count: p.items.length })), bytes: json.length })
   }
   if (entries.length) groups.push({ title: group.title, entries })

@@ -6,6 +6,7 @@
 // draw.io AG, Apache-2.0.
 
 import {
+  AbstractCanvas2D,
   ActorShape,
   ArrowConnectorShape,
   ArrowShape,
@@ -28,6 +29,7 @@ import {
   RectangleShape,
   RhombusShape,
   Shape,
+  SvgCanvas2D,
   ShapeRegistry,
   StencilShapeRegistry,
   SwimlaneShape,
@@ -85,6 +87,7 @@ Object.assign(mxEllipse.prototype, { constraints: ellipsePoints.map(([x, y]) => 
 // draw.io constructors registered by name (also those whose name maxGraph or
 // our own ports already provide, which keep precedence).
 const legacyShapes = new Map<string, LegacyCtor>()
+const failed = new Set<string>()
 
 function registerShape(name: string, ctor: LegacyCtor) {
   legacyShapes.set(name, ctor)
@@ -94,6 +97,15 @@ function registerShape(name: string, ctor: LegacyCtor) {
     constructor() {
       super()
       ctor.call(this)
+    }
+    // A failing draw.io shape leaves an empty shape instead of breaking the whole view.
+    paint(c: AbstractCanvas2D) {
+      try {
+        ;(ctor.prototype as Shape).paint.call(this, c)
+      } catch (e) {
+        if (!failed.has(name)) console.warn(`draw.io shape ${name}:`, e)
+        failed.add(name)
+      }
     }
   }
   Object.setPrototypeOf(Wrapped.prototype, ctor.prototype)
@@ -158,9 +170,35 @@ const mxStyleRegistry = {
   getValue: (name: string) => PerimeterRegistry.get(name) ?? EdgeStyleRegistry.get(name),
 }
 
+// mxGraph's canvas accepted numeric strings (draw.io passes style values
+// through); maxGraph's does arithmetic on them, so they are converted first.
+const NUMERIC_ARGS: Record<string, number[]> = {
+  moveTo: [0, 1], lineTo: [0, 1], quadTo: [0, 1, 2, 3], curveTo: [0, 1, 2, 3, 4, 5], arcTo: [0, 1, 2, 3, 4, 5, 6],
+  rect: [0, 1, 2, 3], roundrect: [0, 1, 2, 3, 4, 5], ellipse: [0, 1, 2, 3], image: [0, 1, 2, 3], text: [0, 1, 2, 3, 11],
+  translate: [0, 1], scale: [0], rotate: [0, 3, 4], setGradient: [2, 3, 4, 5, 7, 8],
+  setFontSize: [0], setStrokeWidth: [0], setAlpha: [0], setFillAlpha: [0], setStrokeAlpha: [0], setMiterLimit: [0],
+}
+let canvasPatched = false
+function acceptNumericStrings() {
+  if (canvasPatched) return
+  canvasPatched = true
+  const toNumber = (v: unknown) => (typeof v === 'string' && v.trim() !== '' && !isNaN(Number(v)) ? Number(v) : v)
+  for (const proto of [AbstractCanvas2D.prototype, SvgCanvas2D.prototype] as unknown as Record<string, (...a: unknown[]) => unknown>[]) {
+    for (const [name, indexes] of Object.entries(NUMERIC_ARGS)) {
+      if (!Object.hasOwn(proto, name)) continue
+      const fn = proto[name]
+      proto[name] = function (this: unknown, ...args: unknown[]) {
+        for (const i of indexes) args[i] = toNumber(args[i])
+        return fn.apply(this, args)
+      }
+    }
+  }
+}
+
 // The namespace draw.io's shape files run against; files also add their own
 // top-level declarations to it (later files may use them).
 function createNamespace(base: string, constants: Record<string, unknown>): Record<string, unknown> {
+  acceptNumericStrings()
   return {
     // draw.io's paths, relative to the generated folder.
     GRAPH_IMAGE_PATH: base + 'img',

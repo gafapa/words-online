@@ -182,7 +182,7 @@ export class ShapeSidebar {
   // Cached SVG markup of a palette item, rendered by an offscreen graph.
   private thumbnail(item: PaletteItem): string {
     const cached = this.thumbs.get(item)
-    if (cached) return cached
+    if (cached !== undefined) return cached
     if (!this.thumbGraph) {
       const host = el('div', { class: 'sidebar-thumb-host' })
       document.body.append(host)
@@ -193,22 +193,27 @@ export class ShapeSidebar {
     const model = graph.getDataModel()
     const cells = createItemCells(item)
     let svg: SVGSVGElement
-    model.beginUpdate()
     try {
-      graph.addCells(cells, graph.getDefaultParent())
-    } finally {
-      model.endUpdate()
-    }
-    try {
-      const scale = Math.min(THUMB / Math.max(item.width, 1), THUMB / Math.max(item.height, 1), 1)
-      svg = renderSvg(graph, { scale, border: 1, background: null })
-    } finally {
       model.beginUpdate()
       try {
-        cells.forEach((cell) => model.remove(cell))
+        graph.addCells(cells, graph.getDefaultParent())
       } finally {
         model.endUpdate()
       }
+      const scale = Math.min(THUMB / Math.max(item.width, 1), THUMB / Math.max(item.height, 1), 1)
+      svg = renderSvg(graph, { scale, border: 1, background: null })
+    } catch (e) {
+      // A template that cannot be drawn keeps an empty button (and the others still render).
+      console.warn(`Could not draw the "${item.label}" shape:`, e)
+      model.clear()
+      this.thumbs.set(item, '')
+      return ''
+    }
+    model.beginUpdate()
+    try {
+      cells.forEach((cell) => model.remove(cell))
+    } finally {
+      model.endUpdate()
     }
     const markup = new XMLSerializer().serializeToString(svg)
     this.thumbs.set(item, markup)

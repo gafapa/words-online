@@ -101,7 +101,36 @@ function resolveColors(graph: Graph, cell: Cell, style: CellStateStyle): CellSta
     const comma = image.indexOf(',')
     if (comma > 0) s.image = `${image.slice(0, comma)};base64,${image.slice(comma + 1)}`
   } else if (typeof image === 'string' && LIB_IMAGE.test(image)) s.image = LIBS_BASE + image
+  // Gradients only apply to filled shapes.
+  if (!s.fillColor || s.fillColor === 'none') delete s.gradientColor
   return style
+}
+
+// draw.io placeholders: with placeholders=1, %name% in a label shows the
+// attribute "name" of the cell's (or an ancestor's) user object data.
+function placeholderLabels(graph: Graph): void {
+  const renderer = graph.cellRenderer
+  const getLabelValue = renderer.getLabelValue.bind(renderer)
+  const dataOf = (cell: Cell | null): Record<string, string> => {
+    try {
+      return JSON.parse((cell as DataCell | null)?.woData ?? '{}') as Record<string, string>
+    } catch {
+      return {}
+    }
+  }
+  renderer.getLabelValue = (state: CellState) => {
+    const value = getLabelValue(state)
+    if (!value || !value.includes('%')) return value
+    const own = dataOf(state.cell)
+    if (String(own.placeholders ?? (state.style as Record<string, unknown>).placeholders ?? '') !== '1') return value
+    return value.replace(/%([\w.-]+)%/g, (match, name: string) => {
+      for (let cell: Cell | null = state.cell; cell; cell = cell.getParent()) {
+        const data = dataOf(cell)
+        if (name in data && name !== 'placeholders') return data[name]
+      }
+      return match
+    })
+  }
 }
 
 // Rendering like draw.io: its stylesheet, HTML labels only with html=1, theme colors.
@@ -113,6 +142,7 @@ export function applyLook(graph: Graph): void {
   graph.setHtmlLabels(true)
   graph.isHtmlLabel = (cell: Cell) => String((cell.getStyle() as Record<string, unknown>)?.html ?? '') === '1'
   labelAndTerminalTweaks(graph)
+  placeholderLabels(graph)
   const getCellStyle = graph.getCellStyle.bind(graph)
   graph.getCellStyle = (cell: Cell) => resolveColors(graph, cell, getCellStyle(cell))
   // draw.io's label spacing (maxGraph uses 0).
@@ -217,7 +247,7 @@ export function createGraph(container: HTMLElement): EditorGraph {
   }
   graph.isCellFoldable = (cell: Cell) => {
     const style = graph.getCellStyle(cell) as Record<string, unknown>
-    return cell.getChildCount() > 0 && String(style.collapsible ?? '1') !== '0'
+    return (cell.getChildCount() > 0 || graph.isSwimlane(cell)) && String(style.collapsible ?? '1') !== '0'
   }
 
   graph.getAllConnectionConstraints = (terminal: CellState | null) => {

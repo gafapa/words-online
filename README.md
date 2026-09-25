@@ -89,6 +89,9 @@ replicas the same log order, so replaying it always yields the same workbook.
   when it is enabled, the stencils and shape code of a diagram when it is
   opened (so files using them render as in draw.io). Everything used once is
   cached and keeps working offline.
+- **Hand-drawn style** (draw.io's `sketch=1`, drawn with rough.js with the same
+  per-shape seed, fill styles such as hachure or zigzag) and a hand-drawn font,
+  both available offline.
 - Connection points, orthogonal/elbow/curved/entity-relation connectors, guides,
   rotation, grouping, containers, alignment and distribution, automatic layouts
   (tree, hierarchical, circle, organic), multiple pages, in-place label editing.
@@ -235,8 +238,7 @@ The build uses relative paths, so any static host or subfolder works.
   available render as rectangles but are kept in the file. Shape-specific
   editing handles (e.g. dragging a BPMN or mockup parameter) are not available
   for library shapes. Library images are not embedded in SVG/PNG downloads.
-  No Visio import; no hand-drawn (sketch) style; math and custom
-  fonts are not rendered.
+  No Visio import; math and custom web fonts are not rendered.
 - Credits: the "More shapes" libraries are draw.io's (JGraph Ltd / draw.io AG):
   the code and palettes are Apache-2.0; the stencils and icons carry an extra
   restriction (they may not be used in, or distributed for, Atlassian products
