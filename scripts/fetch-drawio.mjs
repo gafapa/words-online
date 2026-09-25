@@ -8,11 +8,11 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import JSZip from 'jszip'
 
-const VERSION = '31.5.2'
-const SHA256 = 'abd58ad15baef57f43acb79a56350ba8900a8b6fabe94391d8906148fe64e264'
+const root = join(dirname(fileURLToPath(import.meta.url)), '..')
+// Pinned release, shared with vite.config.ts (offline cache name).
+const { version: VERSION, sha256: SHA256 } = JSON.parse(readFileSync(join(root, 'scripts', 'drawio.json'), 'utf8'))
 const URL = `https://github.com/jgraph/drawio/releases/download/v${VERSION}/draw.war`
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const target = join(root, 'public', 'drawio')
 const stamp = join(target, '.version')
 // Server-side or cloud-integration files that a static, offline copy never needs.

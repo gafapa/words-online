@@ -35,12 +35,16 @@ const PARAMS = new URLSearchParams({
   db: '0',
 })
 
+export function drawioUrl(): string {
+  return `${import.meta.env.BASE_URL}drawio/index.html?${PARAMS}`
+}
+
 // `loadXml` is called when draw.io is ready and must return the initial mxfile XML.
 export function mountDrawio(container: HTMLElement, loadXml: (win: DrawioWindow) => string): Promise<DrawioHost> {
   const iframe = document.createElement('iframe')
   iframe.className = 'drawio-frame'
   iframe.title = 'Diagram editor'
-  iframe.src = `${import.meta.env.BASE_URL}drawio/index.html?${PARAMS}`
+  iframe.src = drawioUrl()
   container.append(iframe)
 
   const waiters = new Map<string, ((data: Record<string, any>) => void)[]>()

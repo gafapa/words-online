@@ -4,7 +4,10 @@
 import './ui/base.css'
 import { appInfo } from './apps/registry'
 import { docPath, parseRoute } from './core/router'
+import { registerServiceWorker } from './core/offline'
 import { openSession } from './core/session'
+
+registerServiceWorker()
 
 const root = document.getElementById('root')!
 const route = parseRoute()

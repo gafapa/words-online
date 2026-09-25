@@ -3,6 +3,7 @@
 
 import { ALL_ACCEPT, APPS, appForFile, appInfo, type AppInfo } from '../apps/registry'
 import { docPath, newDocPath } from '../core/router'
+import { isDiagramsReady, isOfflineCapable, prepareDiagramsOffline } from '../core/offline'
 import * as store from '../core/store'
 import { el, showContextMenu, toast } from '../ui/widgets'
 import './home.css'
@@ -149,6 +150,7 @@ export function mountHome(root: HTMLElement): void {
         el('span', { class: 'home-logo', textContent: 'W' }),
         el('h1', { textContent: 'Words Online' }),
         el('span', { class: 'spacer' }),
+        offlineControl(),
         nameInput,
       ),
       el(
@@ -176,6 +178,7 @@ export function mountHome(root: HTMLElement): void {
   )
   renderFilters()
   renderList()
+  handleLaunchedFiles()
   // Titles and new documents from other tabs.
   window.addEventListener('storage', renderList)
 }
@@ -192,4 +195,57 @@ function formatDate(time: number): string {
   if (date.toDateString() === now.toDateString()) return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
   const sameYear = date.getFullYear() === now.getFullYear()
   return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }) })
+}
+
+// Offline status: the suite is precached; diagrams (draw.io) are cached on
+// first use or ahead of time with this button.
+function offlineControl(): HTMLElement {
+  const wrap = el('span', { class: 'offline-control' })
+  if (!isOfflineCapable()) return wrap
+  const render = (state: 'ready' | 'partial' | 'working') => {
+    wrap.replaceChildren()
+    if (state === 'ready') {
+      wrap.append(el('span', { class: 'offline-ready', textContent: '✓ Available offline', title: 'All apps work without a connection' }))
+      return
+    }
+    const button = el('button', {
+      type: 'button',
+      class: 'home-open',
+      textContent: state === 'working' ? 'Preparing…' : 'Make diagrams available offline',
+      title: 'Documents, spreadsheets and drawings already work offline. Diagrams need a one-time download (~10 MB).',
+      disabled: state === 'working',
+    })
+    button.addEventListener('click', async () => {
+      render('working')
+      try {
+        await prepareDiagramsOffline()
+        render('ready')
+        toast('All apps are now available offline')
+      } catch (err) {
+        render('partial')
+        toast(`Could not prepare offline use: ${(err as Error).message}`)
+      }
+    })
+    wrap.append(button)
+  }
+  render(isDiagramsReady() ? 'ready' : 'partial')
+  return wrap
+}
+
+// Files opened with the installed app from the operating system ("Open with").
+function handleLaunchedFiles(): void {
+  const launchQueue = (window as unknown as { launchQueue?: { setConsumer(cb: (params: { files: FileSystemFileHandle[] }) => void): void } }).launchQueue
+  launchQueue?.setConsumer(async ({ files }) => {
+    const handle = files?.[0]
+    if (!handle) return
+    try {
+      const file = await handle.getFile()
+      const target = await appForFile(file)
+      if (!target) return toast('This file type is not supported yet')
+      toast('Opening…')
+      location.href = await target.module.importFile(file)
+    } catch (err) {
+      toast(`Could not open the file: ${(err as Error).message}`)
+    }
+  })
 }

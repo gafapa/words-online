@@ -56,3 +56,7 @@ body:has(.home) { overflow: auto; }
   .doc-type, .doc-date { display: none; }
   .home-section-title { flex-wrap: wrap; }
 }
+
+.offline-control { display: flex; align-items: center; }
+.offline-ready { color: var(--ok); font-size: 13px; white-space: nowrap; }
+@media (max-width: 640px) { .offline-control .home-open { font-size: 12px; padding: 4px 8px; } }

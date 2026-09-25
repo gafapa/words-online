@@ -84,6 +84,22 @@ replicas the same log order, so replaying it always yields the same workbook.
   per field (e.g. one person moves a shape while another recolors it). draw.io's
   own `diffPages`/`patch` bridge local and remote changes, keeping undo history.
 
+## Offline and installable
+
+Words Online is a Progressive Web App: install it from the browser (address bar
+or menu → *Install*) and it works without a connection for individual work.
+
+- A service worker precaches the suite and every app (writer, spreadsheet,
+  drawing). The diagram editor (draw.io, ~10 MB) is cached the first time a
+  diagram is opened, or ahead of time with **Make diagrams available offline** on
+  the home screen.
+- Documents always live in the browser (IndexedDB), so creating, editing,
+  opening and downloading files needs no network. Collaboration resumes by itself
+  when peers are reachable again, and offline edits merge automatically.
+- When installed, the app registers as a handler for `.docx`, `.odt`, `.xlsx`,
+  `.ods`, `.csv`, `.drawio` and `.excalidraw` files ("Open with").
+- Updates are picked up automatically on the next visit.
+
 ## How collaboration works
 
 1. Click **Share** and send the link (or show the QR code).
@@ -116,6 +132,7 @@ To use your own Nostr relays, add them to the URL (share links keep it):
 src/
   main.ts            Router: home screen or app, loaded with dynamic import()
   core/              Shared, UI-free building blocks
+    offline.ts       Service worker registration and offline preparation
     router.ts        #app=…&doc=…&key=… parsing and links
     session.ts       Y.Doc + IndexedDB + awareness + P2P room for a document
     network.ts       Yjs sync/awareness provider over Trystero (WebRTC + Nostr)
