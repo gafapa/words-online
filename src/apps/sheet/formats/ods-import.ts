@@ -25,8 +25,18 @@ const T_NUMBER = 2
 const T_BOOLEAN = 3
 const T_FORCE_STRING = 4
 const B = {
-  NONE: 0, THIN: 1, HAIR: 2, DOTTED: 3, DASHED: 4, DASH_DOT: 5, DASH_DOT_DOT: 6, DOUBLE: 7,
-  MEDIUM: 8, MEDIUM_DASHED: 9, MEDIUM_DASH_DOT: 10, MEDIUM_DASH_DOT_DOT: 11, THICK: 13,
+  THIN: 1,
+  HAIR: 2,
+  DOTTED: 3,
+  DASHED: 4,
+  DASH_DOT: 5,
+  DASH_DOT_DOT: 6,
+  DOUBLE: 7,
+  MEDIUM: 8,
+  MEDIUM_DASHED: 9,
+  MEDIUM_DASH_DOT: 10,
+  MEDIUM_DASH_DOT_DOT: 11,
+  THICK: 13,
 } as const
 
 export async function importOds(buf: ArrayBuffer): Promise<Partial<IWorkbookData>> {
@@ -91,6 +101,7 @@ function readTable(table: Element, id: string, styles: StyleResolver, view: View
   let maxRow = -1
   let maxCol = -1
   let styledCells = 0
+  let sheetStyle: string | undefined
 
   let c = 0
   for (const col of walk(table, 'table-column', ['table-column-group', 'table-header-columns', 'table-columns'])) {
@@ -100,9 +111,14 @@ function readTable(table: Element, id: string, styles: StyleResolver, view: View
     const w = styles.columnWidth(attr(col, 'style-name'))
     const hd = attr(col, 'visibility') === 'collapse' || attr(col, 'visibility') === 'filter'
     const defName = attr(col, 'default-cell-style-name')
-    const def = styles.cellStyleId(defName)
+    let def = styles.cellStyleId(defName)
+    // A style on the columns up to the sheet's end becomes the sheet default.
+    if (def && c + n >= 1024 && n >= FILLER_RUN) {
+      sheetStyle = def
+      def = undefined
+    }
     if (w !== undefined || hd || def) colMeta.push({ ...span, w, hd, s: def })
-    if (def) colDefault.push({ ...span, name: defName! })
+    if (defName && (def || sheetStyle)) colDefault.push({ ...span, name: defName })
     if (n < FILLER_RUN && (w !== undefined || hd || def)) maxCol = Math.max(maxCol, span.end)
     c += n
   }
@@ -159,7 +175,7 @@ function readTable(table: Element, id: string, styles: StyleResolver, view: View
             const s = styles.cellStyleId(p.styleName ?? columnStyle(cc), p.fallback)
             if (!p.cell) {
               // Style-only cell: skip unstyled ones and those already covered by the column style.
-              if (!s || styledCells > MAX_STYLED_CELLS || (!p.styleName && !p.fallback)) continue
+              if (!s || s === rowStyle || styledCells > MAX_STYLED_CELLS || (!p.styleName && !p.fallback)) continue
               styledCells++
             }
             const cell: ICellData = p.cell ? { ...p.cell } : {}
@@ -217,6 +233,7 @@ function readTable(table: Element, id: string, styles: StyleResolver, view: View
     freeze: { xSplit, ySplit, startRow: ySplit > 0 ? ySplit : -1, startColumn: xSplit > 0 ? xSplit : -1 },
   }
   if (tableStyle.tabColor) sheet.tabColor = tableStyle.tabColor
+  if (sheetStyle) sheet.defaultStyle = sheetStyle
   return sheet
 }
 
@@ -538,6 +555,10 @@ class StyleResolver {
     if (this.cellCache.has(cacheKey)) return this.cellCache.get(cacheKey)
     const { style, pattern } = name ? this.resolve(name, 0) : { style: {}, pattern: undefined }
     const full: IStyleData = { ...style }
+    // "Off" values only matter while inheriting; the resolved style drops them.
+    if (full.ul?.s === 0) delete full.ul
+    if (full.st?.s === 0) delete full.st
+    if (full.tb === 1) delete full.tb
     if (pattern || fallback) full.n = { pattern: (pattern || fallback)! }
     let id: string | undefined
     if (Object.keys(full).length) {
@@ -665,7 +686,11 @@ function cellStyleProps(el: Element, fonts: Map<string, string>): IStyleData {
     const va = attr(cell, 'vertical-align')
     if (va) s.vt = va === 'top' ? 1 : va === 'middle' ? 2 : va === 'bottom' ? 3 : 0
     const angle = parseFloat(attr(cell, 'rotation-angle') || '')
-    if (Number.isFinite(angle) && angle !== 0) s.tr = { a: angle > 180 ? angle - 360 : angle }
+    // ODF angles are counter-clockwise; Univer's positive angles rotate clockwise ("angle down").
+    if (Number.isFinite(angle) && angle % 360 !== 0) {
+      const ccw = ((angle % 360) + 360) % 360
+      s.tr = { a: ccw > 180 ? 360 - ccw : -ccw }
+    }
     if (attr(cell, 'direction') === 'ttb') s.tr = { a: 0, v: 1 }
   }
   const para = child(el, 'paragraph-properties')

@@ -20,7 +20,7 @@
 // checkpoint is the same on every replica (Y.Map conflict resolution).
 
 import * as Y from 'yjs'
-import { ICommandService, type IWorkbookData, type Univer } from '@univerjs/presets'
+import { ICommandService, LocaleType, type IWorkbookData, type Univer } from '@univerjs/presets'
 import type { FUniver } from '@univerjs/presets'
 import { emptyWorkbook, WORKBOOK_ID } from './univer'
 import { structuralOf, transform } from './transform'
@@ -110,7 +110,8 @@ export class SheetSync {
 
   // Stores an initial snapshot (e.g. an imported file) as the shared base.
   static setBase(doc: Y.Doc, data: Partial<IWorkbookData>): void {
-    doc.getMap('sheet').set('base', JSON.stringify({ ...data, id: WORKBOOK_ID }))
+    // Univer formats dates and numbers with the workbook locale; default to English.
+    doc.getMap('sheet').set('base', JSON.stringify({ locale: LocaleType.EN_US, ...data, id: WORKBOOK_ID }))
   }
 
   private checkpoint(): Checkpoint | null {
@@ -139,7 +140,7 @@ export class SheetSync {
     const raw = this.state.get('base')
     if (typeof raw === 'string') {
       try {
-        return JSON.parse(raw)
+        return { locale: LocaleType.EN_US, ...JSON.parse(raw) }
       } catch {
         // Corrupt base: fall back to an empty workbook.
       }

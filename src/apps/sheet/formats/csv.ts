@@ -145,7 +145,7 @@ function parseValue(raw: string, delim: string): { data: ICellData; pattern?: st
     return { data: { v: days, t: 2 }, pattern: time[3] ? 'hh:mm:ss' : 'hh:mm' }
   }
   // Numeric-looking text is forced to stay text.
-  return { data: { v: raw, t: /^[+-]?[\d.,]+$/.test(v) ? 4 : 1 } }
+  return { data: { v: raw.replace(/\r\n?/g, '\n'), t: /^[+-]?[\d.,]+$/.test(v) ? 4 : 1 } }
 }
 
 // Exports one sheet (the first one by default). Formulas export their computed values.
@@ -173,7 +173,8 @@ export function exportCsv(data: IWorkbookData, sheetId?: string): string {
 function cellText(cell: ICellData | null | undefined, data: IWorkbookData): string {
   if (!cell) return ''
   let v = cell.v
-  if ((v === undefined || v === null) && cell.p) v = (cell.p.body?.dataStream ?? '').replace(/\r\n$/, '').replace(/\r/g, '\n')
+  const rich = (cell.p?.body?.dataStream ?? '').replace(/\r\n$/, '').replace(/\r/g, '\n')
+  if (rich && !cell.f) v = rich
   if (v === undefined || v === null) return ''
   if (cell.t === 3 || typeof v === 'boolean') return v === true || v === 1 || String(v).toUpperCase() === 'TRUE' ? 'TRUE' : 'FALSE'
   if (typeof v === 'number') {

@@ -140,25 +140,29 @@ class ContentWriter {
     // Columns: every column up to the sheet width, grouped into runs.
     const columnCount = Math.min(MAX_COLUMNS, Math.max(sheet.columnCount ?? 26, lastCol + 1, 1))
     let columns = ''
-    let run: { key: string; xml: string; n: number } | null = null
+    let run: { xml: string; n: number } | null = null
     const flushCol = () => {
       if (run) columns += run.xml.replace('/>', run.n > 1 ? ` table:number-columns-repeated="${run.n}"/>` : '/>')
     }
     const colStyles: Array<IStyleData | undefined> = []
-    for (let c = 0; c < columnCount; c++) {
-      const cd = columnData[c]
-      const width = cd?.w ?? defaultWidth
-      const colStyle = this.styleOf(cd?.s)
-      colStyles[c] = colStyle
-      const cellStyle = colStyle ? this.cellStyle(colStyle) : 'Default'
-      const xml =
-        `<table:table-column table:style-name="${this.colStyle(width)}"` +
-        (cd?.hd ? ` table:visibility="collapse"` : '') +
-        ` table:default-cell-style-name="${cellStyle}"/>`
-      if (run && run.key === xml) run.n++
+    const sheetStyle = this.styleOf(sheet.defaultStyle as ICellData['s'])
+    const columnXml = (width: number, hidden: boolean, style: IStyleData | undefined) =>
+      `<table:table-column table:style-name="${this.colStyle(width)}"` +
+      (hidden ? ` table:visibility="collapse"` : '') +
+      ` table:default-cell-style-name="${style ? this.cellStyle(style) : 'Default'}"/>`
+    const plainColumn = columnXml(defaultWidth, false, sheetStyle)
+    // With a sheet default style, the columns run to the sheet's end so it covers them all.
+    const columnEnd = sheetStyle ? MAX_COLUMNS : columnCount
+    for (let c = 0; c < columnEnd; c++) {
+      const cd = c < columnCount ? columnData[c] : undefined
+      const own = this.styleOf(cd?.s)
+      const colStyle = sheetStyle && own ? { ...sheetStyle, ...own } : (own ?? sheetStyle)
+      if (c < columnCount) colStyles[c] = colStyle
+      const xml = cd ? columnXml(cd.w ?? defaultWidth, !!cd.hd, colStyle) : plainColumn
+      if (run && run.xml === xml) run.n++
       else {
         flushCol()
-        run = { key: xml, xml, n: 1 }
+        run = { xml, n: 1 }
       }
     }
     flushCol()
@@ -174,11 +178,12 @@ class ContentWriter {
     const colSpan = Math.max(lastCol + 1, 1)
     for (let r = 0; r <= lastRow; r++) {
       const rd = rowData[r]
-      const rowStyle = this.styleOf(rd?.s)
-      const h = rd?.h && Math.abs(rd.h - defaultHeight) >= 0.5 ? rd.h : undefined
+      const ownRowStyle = this.styleOf(rd?.s)
+      const rowStyle = ownRowStyle && sheetStyle ? { ...sheetStyle, ...ownRowStyle } : ownRowStyle
+      // Manual heights only (ia = 1 means the row follows its content).
+      const h = rd?.h && rd.ia !== 1 && Math.abs(rd.h - defaultHeight) >= 0.5 ? rd.h : undefined
       let attrs = h ? ` table:style-name="${this.rowStyle(h)}"` : ''
       if (rd?.hd) attrs += ` table:visibility="collapse"`
-      if (rowStyle) attrs += ` table:default-cell-style-name="${this.cellStyle(rowStyle)}"`
 
       const row = cellData[r] ?? {}
       let cells = ''
@@ -195,8 +200,9 @@ class ContentWriter {
         if (covered.has(key)) xml = '<table:covered-table-cell/>'
         else {
           // Univer layers cell styles over row and column styles; ODF cell styles replace them.
+          // Row styles are written on each cell (LibreOffice mishandles row default styles).
           const own = this.styleOf(cell?.s)
-          const style = own && (rowStyle || colStyles[c]) ? { ...colStyles[c], ...rowStyle, ...own } : own
+          const style = own && (rowStyle || colStyles[c]) ? { ...colStyles[c], ...rowStyle, ...own } : own || (rowStyle && { ...colStyles[c], ...rowStyle })
           xml = this.cell(cell, style, spans.get(key))
         }
         if (pending && pending.xml === xml && !xml.includes('<text:p')) pending.n++
@@ -208,6 +214,8 @@ class ContentWriter {
       // Trailing empty cells carry no information.
       if (pending && (pending as { xml: string }).xml === '<table:table-cell/>') pending = null
       flushCell()
+      // A styled row extends to the sheet's end, as LibreOffice writes it.
+      if (rowStyle) cells += `<table:table-cell table:style-name="${this.cellStyle(rowStyle)}" table:number-columns-repeated="${MAX_COLUMNS - colSpan}"/>`
       const xml = `<table:table-row${attrs}>${cells || '<table:table-cell/>'}</table:table-row>`
       if (rowRun && rowRun.xml === xml && !xml.includes('office:value') && !xml.includes('<text:p')) rowRun.n++
       else {
@@ -226,8 +234,10 @@ class ContentWriter {
     let content = ''
     const pattern = style?.n?.pattern
     const formula = typeof cell?.f === 'string' && cell.f.startsWith('=') ? cell.f : null
+    // Rich text cells keep their content in `p`.
     let v = cell?.v
-    if ((v === undefined || v === null) && cell?.p) v = richText(cell.p)
+    const rich = cell?.p ? richText(cell.p) : ''
+    if (rich && !formula) v = rich
     let dataStyle: string | undefined
 
     if (formula) attrs += ` table:formula="${escapeXml('of:' + excelFormulaToOdf(formula))}"`
@@ -305,7 +315,7 @@ class ContentWriter {
     const vt = { 1: 'top', 2: 'middle', 3: 'bottom' }[s.vt as number]
     if (vt) cellProps.push(`style:vertical-align="${vt}"`)
     if (s.tr?.v) cellProps.push('style:direction="ttb"')
-    else if (s.tr?.a) cellProps.push(`style:rotation-angle="${((s.tr.a % 360) + 360) % 360}"`)
+    else if (s.tr?.a) cellProps.push(`style:rotation-angle="${((-s.tr.a % 360) + 360) % 360}"`)
     const ht = { 1: 'start', 2: 'center', 3: 'end', 4: 'justify', 5: 'justify', 6: 'justify' }[s.ht as number]
     if (ht) {
       cellProps.push('style:text-align-source="fix"', 'style:repeat-content="false"')
