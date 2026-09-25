@@ -1,6 +1,7 @@
 // SVG and PNG rendering of the diagram (downloads, printing, palette thumbnails).
 
 import { ImageExport, SvgCanvas2D, type AbstractGraph, type Cell } from '@maxgraph/core'
+import { embedSketchFont } from './shapes/sketch'
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
@@ -53,6 +54,7 @@ export function renderSvg(graph: AbstractGraph, options: SvgOptions = {}): SVGSV
     const root = view.getState(graph.getDataModel().getRoot()!)
     if (root) exporter.drawState(root, canvas)
   }
+  embedSketchFont(svg)
   return svg
 }
 

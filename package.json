@@ -4,15 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prepare:assets": "node scripts/copy-excalidraw-assets.mjs",
-    "predev": "node scripts/copy-excalidraw-assets.mjs",
+    "prepare:assets": "node scripts/copy-excalidraw-assets.mjs && node scripts/build-diagram-libs.mjs",
+    "predev": "npm run prepare:assets",
     "dev": "vite --host",
-    "prebuild": "node scripts/copy-excalidraw-assets.mjs",
+    "prebuild": "npm run prepare:assets",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host"
   },
   "dependencies": {
     "@excalidraw/excalidraw": "^0.18.1",
+    "@fontsource/architects-daughter": "^5.3.0",
     "@maxgraph/core": "^0.24.0",
     "@tiptap/core": "^3.31.3",
     "@tiptap/extension-collaboration": "^3.31.3",
@@ -49,6 +50,7 @@
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "roughjs": "^4.6.6",
     "y-indexeddb": "^9.0.12",
     "y-protocols": "^1.0.7",
     "yjs": "^13.6.33"

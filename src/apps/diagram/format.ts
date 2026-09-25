@@ -4,6 +4,7 @@
 import type { Cell } from '@maxgraph/core'
 import { colorPalette, el, openPopover } from '../../ui/widgets'
 import { setStyleKey, type EditorGraph } from './graph'
+import { SKETCH_DEFAULTS, SKETCH_FILL_STYLES, SKETCH_FONT_FAMILY, SKETCH_FONT_SOURCE } from './shapes/sketch'
 
 export interface FormatActions {
   toFront(): void
@@ -78,8 +79,10 @@ export class FormatPanel {
   schedule(): void {
     cancelAnimationFrame(this.frame)
     this.frame = requestAnimationFrame(() => {
-      // Do not rebuild the field being typed in.
-      if (this.element.contains(document.activeElement) && document.activeElement !== document.body) return
+      // Do not rebuild the field being typed in (checkboxes rebuild, e.g. Sketch adds Fill style).
+      const active = document.activeElement
+      const typing = active instanceof HTMLTextAreaElement || (active instanceof HTMLInputElement && active.type !== 'checkbox')
+      if (typing && this.element.contains(active)) return
       this.render()
     })
   }
@@ -157,7 +160,17 @@ export class FormatPanel {
       row('Opacity', this.number(Number(s.opacity ?? 100), 0, 100, 5, (v) => this.set('opacity', v >= 100 ? null : v))),
       checkbox('Rounded', flag(s.rounded), (on) => this.set('rounded', on ? 1 : 0)),
       checkbox('Shadow', flag(s.shadow), (on) => this.set('shadow', on ? 1 : null)),
+      // draw.io's per-cell hand-drawn style.
+      checkbox('Sketch', flag(s.sketch), (on) =>
+        this.setMany(Object.fromEntries(Object.entries(SKETCH_DEFAULTS).map(([k, v]) => [k, on ? v : null]))),
+      ),
     )
+    const fill = str(s.fillColor)
+    if (flag(s.sketch) && vertices.length && fill && fill !== 'none') {
+      const fillStyle = str(s.fillStyle) || 'auto'
+      const options = SKETCH_FILL_STYLES.some(([v]) => v === fillStyle) ? SKETCH_FILL_STYLES : [...SKETCH_FILL_STYLES, [fillStyle, fillStyle] as [string, string]]
+      items.push(row('Fill style', this.select(options, fillStyle, (v) => this.set('fillStyle', v === 'auto' ? null : v, vertices))))
+    }
     if (vertices.length) {
       items.push(
         checkbox('Glass', flag(s.glass), (on) => this.set('glass', on ? 1 : null, vertices)),
@@ -228,7 +241,11 @@ export class FormatPanel {
     )
     return section(
       'Text',
-      row('Font', this.select(fonts.map((f) => [f, f]), family, (v) => this.set('fontFamily', v))),
+      // A font change drops draw.io's web font URL, which belongs to the previous family.
+      row('Font', this.select(fonts.map((f) => [f, f]), family, (v) => this.setMany({ fontFamily: v, fontSource: null }))),
+      checkbox('Hand-drawn font', family === SKETCH_FONT_FAMILY, (on) =>
+        this.setMany({ fontFamily: on ? SKETCH_FONT_FAMILY : null, fontSource: on ? SKETCH_FONT_SOURCE : null }),
+      ),
       row('Size', this.number(Number(s.fontSize ?? 12), 1, 400, 1, (v) => this.set('fontSize', v))),
       el('div', { class: 'fmt-row' }, styleButtons),
       el('div', { class: 'fmt-row' }, alignButtons),

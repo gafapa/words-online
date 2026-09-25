@@ -27,7 +27,13 @@ import {
   type InternalMouseEvent,
 } from '@maxgraph/core'
 import { configureDrawioStylesheet } from './shapes'
+import { installSketch } from './shapes/sketch'
 import { newCellId, parseGeometry, type CellRecord, type GeometryRecord } from './model'
+
+// Generated draw.io shape libraries (scripts/build-diagram-libs.mjs, see libraries.ts).
+export const LIBS_BASE = `${import.meta.env.BASE_URL}diagram-libs/`
+// draw.io's library images, referenced by files as img/lib/…, are served from there.
+const LIB_IMAGE = /^img\/(lib|clipart)\//
 
 export const DEFAULT_EDGE_STYLE = 'edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;'
 const SELECTION_COLOR = '#29b6f2'
@@ -94,16 +100,19 @@ function resolveColors(graph: Graph, cell: Cell, style: CellStateStyle): CellSta
   if (typeof image === 'string' && image.startsWith('data:') && !image.includes(';base64,')) {
     const comma = image.indexOf(',')
     if (comma > 0) s.image = `${image.slice(0, comma)};base64,${image.slice(comma + 1)}`
-  }
+  } else if (typeof image === 'string' && LIB_IMAGE.test(image)) s.image = LIBS_BASE + image
   return style
 }
 
 // Rendering like draw.io: its stylesheet, HTML labels only with html=1, theme colors.
 export function applyLook(graph: Graph): void {
   configureDrawioStylesheet(graph.getStylesheet())
+  // Hand-drawn shapes (sketch=1), like draw.io.
+  installSketch()
   StyleDefaultsConfig.shadowOpacity = 0.25
   graph.setHtmlLabels(true)
   graph.isHtmlLabel = (cell: Cell) => String((cell.getStyle() as Record<string, unknown>)?.html ?? '') === '1'
+  labelAndTerminalTweaks(graph)
   const getCellStyle = graph.getCellStyle.bind(graph)
   graph.getCellStyle = (cell: Cell) => resolveColors(graph, cell, getCellStyle(cell))
   // draw.io's label spacing (maxGraph uses 0).
@@ -120,6 +129,25 @@ export function applyLook(graph: Graph): void {
     pts.push(edge.absolutePoints[edge.absolutePoints.length - 1]!)
     edge.absolutePoints = pts
   }
+}
+
+// Like draw.io: whiteSpace=wrap also wraps labels without html=1 (rendered as
+// escaped HTML), and edges end at the center of centerPerimeter terminals (waypoints).
+function labelAndTerminalTweaks(graph: Graph): void {
+  const isHtml = graph.isHtmlLabel
+  const wraps = (cell: Cell) => (cell.getStyle() as Record<string, unknown> | null)?.whiteSpace === 'wrap'
+  graph.isHtmlLabel = (cell: Cell) => isHtml(cell) || wraps(cell)
+  const renderer = graph.cellRenderer
+  const getLabelValue = renderer.getLabelValue.bind(renderer)
+  renderer.getLabelValue = (state: CellState) => {
+    const value = getLabelValue(state)
+    if (value == null || isHtml(state.cell) || !wraps(state.cell)) return value
+    return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+  }
+  const view = graph.view
+  const getFixedTerminalPoint = view.getFixedTerminalPoint.bind(view)
+  view.getFixedTerminalPoint = (edge, terminal, source, constraint) =>
+    terminal?.style.perimeter === 'centerPerimeter' ? new Point(terminal.getCenterX(), terminal.getCenterY()) : getFixedTerminalPoint(edge, terminal, source, constraint)
 }
 
 class DrawioTextShape extends TextShape {
@@ -196,8 +224,15 @@ export function createGraph(container: HTMLElement): EditorGraph {
     if (!terminal?.cell || !terminal.cell.isVertex()) return null
     const style = terminal.style as Record<string, unknown>
     if (String(style.points ?? '') === '[]') return null
-    const shape = terminal.shape as unknown as { stencil?: { constraints?: ConnectionConstraint[] }; constraints?: ConnectionConstraint[] } | null
-    return shape?.stencil?.constraints ?? shape?.constraints ?? DEFAULT_CONSTRAINTS
+    const shape = terminal.shape as unknown as {
+      stencil?: { constraints?: ConnectionConstraint[] }
+      constraints?: ConnectionConstraint[]
+      getConstraints?: (style: CellStateStyle, w: number, h: number) => ConnectionConstraint[] | null
+    } | null
+    // draw.io shapes may compute their points from the style and size.
+    const s = graph.view.scale
+    const computed = shape?.getConstraints?.(terminal.style, terminal.width / s, terminal.height / s)
+    return computed ?? shape?.stencil?.constraints ?? shape?.constraints ?? DEFAULT_CONSTRAINTS
   }
 
   // Guides while moving, like draw.io.

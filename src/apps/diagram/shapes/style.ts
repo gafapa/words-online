@@ -56,6 +56,8 @@ const VERTEX: Record<string, string | number> = {
   fillColor: '#ffffff',
   strokeColor: '#000000',
   fontColor: '#000000',
+  // draw.io's default (maxGraph uses east).
+  gradientDirection: 'south',
 }
 
 const EDGE: Record<string, string | number> = {

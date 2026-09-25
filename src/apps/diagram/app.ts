@@ -47,6 +47,7 @@ import {
   styleFromString,
   styleToString,
 } from './graph'
+import { chooseLibraries, loadEnabledLibraries, prepareItems, watchGraph } from './libraries'
 import type { CellRecord } from './model'
 import { PALETTE } from './palette'
 import { DiagramPresence } from './presence'
@@ -79,6 +80,8 @@ export function mountDiagram(session: Session, root: HTMLElement): void {
   document.body.append(printArea, fileInput)
 
   const graph = createGraph(canvas)
+  // Loads draw.io stencils and shape code for the cells that need them.
+  watchGraph(graph)
   const model = graph.getDataModel()
   const view = graph.view
   const sync = new DiagramSync(session.doc, graph)
@@ -594,6 +597,7 @@ export function mountDiagram(session: Session, root: HTMLElement): void {
       items: [
         { label: 'Shapes', run: () => togglePanel(sidebar.element), active: () => !sidebar.element.hidden },
         { label: 'Format', run: () => togglePanel(format.element), active: () => !format.element.hidden },
+        { label: 'More shapes…', run: () => void moreShapes() },
         { label: 'Grid', run: () => setGridVisible(!gridVisible), active: () => gridVisible },
         '-',
         { label: 'Zoom in', shortcut: mod('+'), run: () => zoomStep(1) },
@@ -717,7 +721,12 @@ export function mountDiagram(session: Session, root: HTMLElement): void {
 
   // ---------- Layout ----------
 
-  const sidebar = new ShapeSidebar(graph, PALETTE, insertCells, insertAtCenter)
+  const sidebar = new ShapeSidebar(graph, PALETTE, insertCells, insertAtCenter, { more: () => void moreShapes(), prepare: prepareItems })
+  const moreShapes = async () => {
+    const ids = await chooseLibraries()
+    if (ids) sidebar.setExtraLibraries(await loadEnabledLibraries(ids))
+  }
+  void loadEnabledLibraries().then((libs) => libs.length && sidebar.setExtraLibraries(libs))
   const format = new FormatPanel(graph, {
     toFront,
     toBack,

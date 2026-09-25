@@ -1,5 +1,14 @@
+import { createHash } from 'node:crypto'
+import { existsSync, readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
+
+// draw.io shape libraries (scripts/build-diagram-libs.mjs): only the catalog is
+// precached; a library is cached the first time it is used.
+const libsCatalog = 'public/diagram-libs/catalog.json'
+// Cache name per build of the libraries (the app deletes the others).
+const libsBuild = existsSync('public/diagram-libs/.version') ? readFileSync('public/diagram-libs/.version', 'utf8').trim() : 'none'
+const libsRevision = existsSync(libsCatalog) ? createHash('sha256').update(readFileSync(libsCatalog)).digest('hex').slice(0, 16) : null
 
 // Relative base so the build can be served from any static host or subpath.
 export default defineConfig({
@@ -42,7 +51,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,woff2,svg,png,ico,webmanifest}'],
-        globIgnores: ['excalidraw/fonts/Xiaolai/**'],
+        globIgnores: ['excalidraw/fonts/Xiaolai/**', 'diagram-libs/**'],
+        additionalManifestEntries: libsRevision ? [{ url: 'diagram-libs/catalog.json', revision: libsRevision }] : [],
         // The spreadsheet engine is a single large chunk.
         maximumFileSizeToCacheInBytes: 16 * 1024 * 1024,
         navigateFallback: 'index.html',
@@ -55,6 +65,12 @@ export default defineConfig({
             urlPattern: ({ url }) => url.pathname.includes('/excalidraw/fonts/'),
             handler: 'CacheFirst',
             options: { cacheName: 'excalidraw-fonts', cacheableResponse: { statuses: [0, 200] } },
+          },
+          {
+            // Stencils, shape code, palettes and images; the files of a draw.io release never change.
+            urlPattern: ({ url }) => url.pathname.includes('/diagram-libs/') && !url.pathname.endsWith('/catalog.json'),
+            handler: 'CacheFirst',
+            options: { cacheName: `diagram-libs-${libsBuild}`, cacheableResponse: { statuses: [0, 200] } },
           },
         ],
       },

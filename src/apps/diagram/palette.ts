@@ -3,6 +3,8 @@
 // Copyright (c) 2006-2025 JGraph Holdings Ltd / draw.io AG, Apache-2.0) so that
 // shapes look the same in both editors.
 
+import type { CellRecord } from './model'
+
 // A child cell of a template (geometry relative to its parent's origin).
 export interface PaletteCell {
   value?: string
@@ -26,6 +28,11 @@ export interface PaletteItem {
   edge?: boolean
   // Optional child cells (UML classes, ER tables, lists).
   children?: PaletteCell[]
+  // Templates with several cells (e.g. from draw.io's libraries): the cells to
+  // insert, top-level ones without parent; style/width/height then only describe the preview.
+  cells?: CellRecord[]
+  // Extra search words.
+  tags?: string
 }
 
 export interface PaletteLibrary {

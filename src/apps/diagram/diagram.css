@@ -46,6 +46,21 @@
 .sidebar-empty { color: var(--muted); padding: 12px; }
 .sidebar-thumb-host { position: absolute; left: -10000px; top: 0; width: 200px; height: 200px; overflow: hidden; visibility: hidden; }
 .sidebar-drag-preview { border: 1px dashed #29b6f2; background: rgb(41 182 242 / 0.08); }
+.sidebar-grid.loading { min-height: 44px; opacity: 0.5; }
+.sidebar-more {
+  flex: none; margin: 8px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 16px; background: var(--bg); color: var(--text);
+}
+.sidebar-more:hover { background: var(--hover); }
+
+/* More shapes dialog */
+.libs-dialog { display: flex; flex-direction: column; gap: 10px; }
+.libs-list { max-height: min(60vh, 520px); overflow-y: auto; columns: 2 220px; column-gap: 16px; }
+.libs-group { break-inside: avoid; margin-bottom: 10px; }
+.libs-group h3 { margin: 0 0 4px; font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.libs-entry { display: flex; align-items: center; gap: 6px; padding: 3px 0; cursor: pointer; }
+.libs-entry small { margin-left: auto; color: var(--muted); font-size: 11px; white-space: nowrap; }
+.libs-note { margin: 0; color: var(--muted); font-size: 12px; }
+.libs-entry[hidden], .libs-group[hidden] { display: none; }
 
 /* Format panel */
 .diagram-format {

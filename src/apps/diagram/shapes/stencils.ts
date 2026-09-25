@@ -11,7 +11,7 @@ const COLOR = /^(#|rgb|hsl)/i
 
 // draw.io stencils may name a style key as color (e.g. <fillcolor
 // color="accentColor" default="#ffff00"/>), plus "stroke"/"fill"/"font".
-class DrawioStencil extends StencilShape {
+export class DrawioStencil extends StencilShape {
   private color(shape: Shape, node: Element): string | null {
     const value = node.getAttribute('color')
     if (!value || value === 'none' || COLOR.test(value)) return value

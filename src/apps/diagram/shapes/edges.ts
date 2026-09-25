@@ -1,8 +1,8 @@
 // Edge shapes and markers ported from draw.io (grapheditor/Shapes.js,
 // shapes/er/mxER.js, mxgraph/src/shape/mxMarker.js), Copyright (c) 2006-2025
 // JGraph Holdings Ltd / draw.io AG, Apache-2.0.
-import { ArrowConnectorShape, EdgeMarkerRegistry, constants } from '@maxgraph/core'
-import type { AbstractCanvas2D, CellState, MarkerFactoryFunction, Point, ShapeConstructor } from '@maxgraph/core'
+import { ArrowConnectorShape, EdgeMarkerRegistry, EdgeStyleRegistry, Point, constants } from '@maxgraph/core'
+import type { AbstractCanvas2D, CellState, EdgeStyleFunction, MarkerFactoryFunction, ShapeConstructor } from '@maxgraph/core'
 import { num } from './util'
 
 const ARROW_SIZE = constants.ARROW_SIZE
@@ -323,4 +323,41 @@ export const EDGE_MARKERS: [string, MarkerFactoryFunction][] = [
 
 export function registerMarkers() {
   for (const [name, fn] of EDGE_MARKERS) EdgeMarkerRegistry.add(name, fn)
+  EdgeStyleRegistry.add('isometricEdgeStyle', isometricEdgeStyle, { handlerKind: 'elbow' })
+}
+
+// Isometric elbow (edgeStyle=isometricEdgeStyle, elbow=vertical): two segments
+// along the 30° isometric axes through the first waypoint (or the middle).
+const ISO_H = new Point(Math.cos(Math.PI / 6), -Math.sin(Math.PI / 6))
+const ISO_V = new Point(Math.cos((-150 * Math.PI) / 180), Math.sin((-150 * Math.PI) / 180))
+
+const isometricEdgeStyle: EdgeStyleFunction = (state, source, target, points, result) => {
+  const view = state.view
+  const pts = state.absolutePoints
+  let p0 = pts[0] ?? (source ? new Point(source.getCenterX(), source.getCenterY()) : null)
+  const pe = pts[pts.length - 1] ?? (target ? new Point(target.getCenterX(), target.getCenterY()) : null)
+  if (!p0 || !pe) return
+  const horizontal = String(state.style.elbow ?? 'horizontal') === 'horizontal'
+  const [a1, a2, b1, b2] = [ISO_H.x, ISO_H.y, ISO_V.x, ISO_V.y]
+  const lineTo = (x: number, y: number, first: boolean) => {
+    const c1 = x - p0!.x
+    const c2 = y - p0!.y
+    const h = (b2 * c1 - b1 * c2) / (a1 * b2 - a2 * b1)
+    const v = (a2 * c1 - a1 * c2) / (a2 * b1 - a1 * b2)
+    const along = (dx: number, dy: number) => {
+      p0 = new Point(p0!.x + dx, p0!.y + dy)
+      result.push(p0)
+    }
+    if (horizontal) {
+      if (first) along(a1 * h, a2 * h)
+      along(b1 * v, b2 * v)
+    } else {
+      if (first) along(b1 * v, b2 * v)
+      along(a1 * h, a2 * h)
+    }
+  }
+  const pt = points?.[0] ? view.transformControlPoint(state, points[0]) : new Point(p0.x + (pe.x - p0.x) / 2, p0.y + (pe.y - p0.y) / 2)
+  if (!pt) return
+  lineTo(pt.x, pt.y, true)
+  lineTo(pe.x, pe.y, false)
 }

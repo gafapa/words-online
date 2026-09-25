@@ -1042,7 +1042,18 @@ export class Arrows2ArrowShape extends Shape {
   }
 }
 
+// Junction dot (size) centered in its bounds, e.g. for electrical circuits.
+export class WaypointShape extends Shape {
+  paintVertexShape(c: AbstractCanvas2D, x: number, y: number, w: number, h: number) {
+    c.setFillColor(this.stroke)
+    const s = Math.max(0, num(styleOf(this), 'size', 6) - 2) + 2 * this.strokeWidth
+    c.ellipse(x + (w - s) * 0.5, y + (h - s) * 0.5, s, s)
+    c.fill()
+  }
+}
+
 export const BASIC_SHAPES: [string, ShapeConstructor][] = [
+  ['waypoint', WaypointShape],
   ['cube', CubeShape],
   ['isoCube2', IsoCube2Shape],
   ['datastore', DataStoreShape],

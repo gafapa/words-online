@@ -80,6 +80,15 @@ replicas the same log order, so replaying it always yields the same workbook.
 - Shapes and markers ported from draw.io (general, flowchart, UML, entity
   relation, basic, arrows and connectors) in a searchable shape panel; click
   to insert or drag onto the canvas or into a container.
+- **More shapes**: draw.io's other shape libraries (AWS, Azure, Google Cloud,
+  IBM, Cisco, Kubernetes, network, BPMN, ArchiMate, C4, SysML, UML 2.5, floor
+  plans, mockups, electrical, P&ID, racks, and more: 62 entries, about 14,000
+  shapes) can be enabled from *View → More shapes…* or the button under the
+  shape panel. They are generated at build time from the pinned draw.io release
+  (`scripts/build-diagram-libs.mjs`) and downloaded only when used: a library
+  when it is enabled, the stencils and shape code of a diagram when it is
+  opened (so files using them render as in draw.io). Everything used once is
+  cached and keeps working offline.
 - Connection points, orthogonal/elbow/curved/entity-relation connectors, guides,
   rotation, grouping, containers, alignment and distribution, automatic layouts
   (tree, hierarchical, circle, organic), multiple pages, in-place label editing.
@@ -161,9 +170,11 @@ src/
       sync.ts        Pages/cells/fields in Yjs <-> graph model
       presence.ts    Remote selections and pointers
       sidebar.ts     Shape panel; palette.ts holds the libraries
+      libraries.ts   draw.io's libraries on demand: "More shapes", stencils, shape code
       format.ts      Format panel
       export.ts      SVG / PNG rendering
-      shapes/        draw.io shapes, markers, perimeters, stencils and stylesheet
+      shapes/        draw.io shapes, markers, perimeters, stencils and stylesheet;
+                     compat.ts runs draw.io's shape code (mxGraph API) on maxGraph
       formats/       .drawio import and export (loaded on demand)
     sheet/           Spreadsheet
       app.ts         Univer in the shell: menus, file actions, presence, printing
@@ -187,7 +198,12 @@ Each app and each converter is a separate chunk, loaded only when used.
 ## Development
 
 `npm run dev` and `npm run build` first run `npm run prepare:assets`, which
-copies Excalidraw's fonts into `public/excalidraw` (generated, not committed).
+copies Excalidraw's fonts into `public/excalidraw` and builds draw.io's shape
+libraries into `public/diagram-libs` (both generated, not committed). The
+libraries come from the draw.io release pinned in `scripts/drawio.json`
+(downloaded once into `node_modules/.cache`, checked against its SHA-256);
+`DRAWIO_WAR_DIR=<unpacked draw.war>` uses a local copy instead, and `FORCE=1`
+rebuilds.
 
 ```bash
 npm install
@@ -214,10 +230,18 @@ The build uses relative paths, so any static host or subfolder works.
   Legacy `.doc` is not supported.
 - Documents created with the earlier Quill-based version are not migrated, nor
   diagrams made with the earlier embedded draw.io version.
-- Diagrams: a subset of draw.io's shape libraries (no cloud/network icon sets,
-  BPMN or floor plans yet; unknown shapes render as rectangles but are kept in
-  the file); no Visio import; no hand-drawn (sketch) style; math and custom
+- Diagrams: draw.io's shape libraries are included except the few that need
+  its editor (layout containers of *Advanced*); shapes whose code is not
+  available render as rectangles but are kept in the file. Shape-specific
+  editing handles (e.g. dragging a BPMN or mockup parameter) are not available
+  for library shapes. Library images are not embedded in SVG/PNG downloads.
+  No Visio import; no hand-drawn (sketch) style; math and custom
   fonts are not rendered.
+- Credits: the "More shapes" libraries are draw.io's (JGraph Ltd / draw.io AG):
+  the code and palettes are Apache-2.0; the stencils and icons carry an extra
+  restriction (they may not be used in, or distributed for, Atlassian products
+  or its marketplace; diagrams made with them are not affected). The generated
+  `diagram-libs/` folder keeps that `LICENSE` and a `NOTICE`.
 - Spreadsheet: the app bundle is large (~2 MB gzipped, loaded only when a sheet
   is opened). Univer's paid features (charts, pivot tables, native printing,
   official collaboration server) are not used. The mutation log is never
