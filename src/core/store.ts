@@ -1,13 +1,15 @@
 // Local, per-browser bookkeeping: document index and user identity.
 
 import { clearDocument } from 'y-indexeddb'
+import { kvDelete } from './idb'
+import type { Access, LinkKeys } from './keys'
 
 const DOCS_KEY = 'words-online:docs'
 const USER_KEY = 'words-online:user'
 const COLORS = ['#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#469990', '#f032e6', '#9a6324', '#800000', '#000075']
 
-export type DocType = 'writer' | 'sheet' | 'draw' | 'diagram'
-export const DOC_TYPES: DocType[] = ['writer', 'sheet', 'draw', 'diagram']
+export type DocType = 'writer' | 'sheet' | 'draw' | 'diagram' | 'slides'
+export const DOC_TYPES: DocType[] = ['writer', 'sheet', 'draw', 'diagram', 'slides']
 
 export interface DocEntry {
   id: string
@@ -16,6 +18,10 @@ export interface DocEntry {
   key: string
   title: string
   updated: number
+  // Permission keys of protected documents (absent: legacy, full edit).
+  keys?: LinkKeys
+  // What this browser may do, from the keys it holds (absent means 'edit').
+  access?: Access
 }
 
 export interface User {
@@ -24,6 +30,8 @@ export interface User {
 }
 
 export const dbName = (id: string) => `words-online:${id}`
+export const commentsDbName = (id: string) => `words-online:${id}:comments`
+export const signedLogKey = (id: string, channel: string) => `signed:${id}:${channel}`
 
 export const newDocId = () => randomToken(9)
 export const newDocKey = () => randomToken(18)
@@ -54,6 +62,9 @@ export function saveDoc(entry: Omit<DocEntry, 'updated'>): void {
 export async function deleteDoc(id: string): Promise<void> {
   write(DOCS_KEY, listDocs().filter((d) => d.id !== id))
   await clearDocument(dbName(id))
+  await clearDocument(commentsDbName(id))
+  await kvDelete(signedLogKey(id, 'yjs'))
+  await kvDelete(signedLogKey(id, 'cmt'))
 }
 
 export function loadUser(): User {

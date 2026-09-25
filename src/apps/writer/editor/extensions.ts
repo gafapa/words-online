@@ -13,6 +13,9 @@ import { TableKit } from '@tiptap/extension-table'
 import { TaskList, TaskItem } from '@tiptap/extension-list'
 import { CharacterCount, Placeholder } from '@tiptap/extensions'
 import { CellBackground, Footnote, PageBreak, PageBreakShortcut, PageNumber, ParagraphFormat } from './nodes'
+import { Equation } from './equation'
+import { Suggesting } from './suggestions'
+import { CommentRange } from './comment-range'
 
 // Stores the plain font name but renders it with a generic fallback, so documents
 // using fonts that are not installed still look close to the original.
@@ -89,6 +92,9 @@ export function bodyExtensions(options: Options = {}): AnyExtension[] {
     PageBreak,
     PageBreakShortcut,
     Footnote,
+    Equation,
+    Suggesting,
+    CommentRange,
     CharacterCount,
   ]
 }

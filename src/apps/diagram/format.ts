@@ -18,6 +18,8 @@ export interface FormatActions {
   setGridVisible(on: boolean): void
   pageName(): string
   renamePage(name: string): void
+  // Replaces the diagram options shown when nothing is selected (e.g. slide options).
+  emptySection?: () => HTMLElement
 }
 
 const FONTS = ['Helvetica', 'Arial', 'Verdana', 'Tahoma', 'Trebuchet MS', 'Georgia', 'Times New Roman', 'Garamond', 'Courier New', 'Comic Sans MS', 'Lucida Console']
@@ -115,7 +117,7 @@ export class FormatPanel {
     const root = this.element
     root.replaceChildren()
     if (!cells.length) {
-      root.append(this.diagramSection())
+      root.append(this.actions.emptySection?.() ?? this.diagramSection())
       return
     }
     const vertices = cells.filter((c) => c.isVertex())

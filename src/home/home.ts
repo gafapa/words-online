@@ -4,7 +4,9 @@
 import { ALL_ACCEPT, APPS, appForFile, appInfo, type AppInfo } from '../apps/registry'
 import { docPath, newDocPath } from '../core/router'
 import { isOfflineCapable, whenOfflineReady } from '../core/offline'
+import { t } from '../core/i18n'
 import * as store from '../core/store'
+import { accessibilityButton } from '../ui/accessibility'
 import { el, showContextMenu, toast } from '../ui/widgets'
 import './home.css'
 
@@ -73,6 +75,7 @@ export function mountHome(root: HTMLElement): void {
       ...filterOptions.map(([value, label]) => {
         const b = el('button', { type: 'button', class: `chip${filter === value ? ' active' : ''}`, textContent: label })
         b.setAttribute('role', 'tab')
+        b.setAttribute('aria-selected', String(filter === value))
         b.addEventListener('click', () => {
           filter = value
           renderFilters()
@@ -107,7 +110,13 @@ export function mountHome(root: HTMLElement): void {
           'a',
           { class: 'doc-row', href, role: 'listitem' },
           appIcon(app, 'small'),
-          el('span', { class: 'doc-name', textContent: d.title || app.untitled }),
+          el(
+            'span',
+            { class: 'doc-name', textContent: d.title || app.untitled },
+            d.access === 'view' || d.access === 'comment'
+              ? el('span', { class: 'access-tag', textContent: d.access === 'view' ? t('View only') : t('Can comment') })
+              : null,
+          ),
           el('span', { class: 'doc-type', textContent: app.name }),
           el('span', { class: 'doc-date', textContent: formatDate(d.updated), title: new Date(d.updated).toLocaleString() }),
           more,
@@ -151,6 +160,7 @@ export function mountHome(root: HTMLElement): void {
         el('h1', { textContent: 'Words Online' }),
         el('span', { class: 'spacer' }),
         offlineControl(),
+        accessibilityButton(true),
         nameInput,
       ),
       el(
@@ -158,6 +168,7 @@ export function mountHome(root: HTMLElement): void {
         { class: 'home-new' },
         el('div', { class: 'home-inner' }, el('div', { class: 'home-section-title' }, el('h2', { textContent: 'Start something new' }), openButton, fileInput), newCards),
       ),
+      templatesSection(),
       el(
         'section',
         { class: 'home-recent' },
@@ -181,6 +192,15 @@ export function mountHome(root: HTMLElement): void {
   handleLaunchedFiles()
   // Titles and new documents from other tabs.
   window.addEventListener('storage', renderList)
+}
+
+// Template gallery, loaded as a separate chunk (src/templates).
+function templatesSection(): HTMLElement {
+  const inner = el('div', { class: 'home-inner' })
+  import('../templates/gallery')
+    .then(({ mountTemplates }) => mountTemplates(inner))
+    .catch(() => inner.replaceChildren())
+  return el('section', { class: 'home-templates' }, inner)
 }
 
 function appIcon(app: AppInfo, size: 'small' | 'large'): HTMLElement {

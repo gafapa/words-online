@@ -3,7 +3,8 @@
 
 import './ui/base.css'
 import { appInfo } from './apps/registry'
-import { docPath, parseRoute } from './core/router'
+import { t } from './core/i18n'
+import { parseRoute } from './core/router'
 import { registerServiceWorker } from './core/offline'
 import { openSession } from './core/session'
 
@@ -15,17 +16,37 @@ const route = parseRoute()
 // Switching documents is done through the URL; a clean reload keeps state simple.
 window.addEventListener('hashchange', () => location.reload())
 
+const notice = (title: string, text: string) => {
+  root.innerHTML = '<div class="notice"><h1></h1><p class="text"></p><p><a href="#"></a></p></div>'
+  root.querySelector('h1')!.textContent = title
+  root.querySelector('.text')!.textContent = text
+  root.querySelector('a')!.textContent = t('Back to all documents')
+}
+
 if (route.kind === 'home') {
   const { mountHome } = await import('./home/home')
   mountHome(root)
+} else if (route.copy) {
+  // Template link: make a private copy, then open it.
+  const { runCopyLink } = await import('./ui/copylink')
+  await runCopyLink(root, route)
 } else {
   const info = appInfo(route.type)
   if (!info.load) {
-    root.innerHTML = `<div class="notice"><h1>${info.name}s are coming soon</h1><p><a href="#">Back to all documents</a></p></div>`
+    notice(`${info.name}s are coming soon`, '')
   } else {
-    // Normalize the URL (adds app/key when missing) without triggering a reload.
-    history.replaceState(null, '', docPath(route.type, route.id, route.key))
-    const [module, session] = await Promise.all([info.load(), openSession(route.type, route.id, route.key)])
-    await module.mount(session)
+    try {
+      const [module, session] = await Promise.all([info.load(), openSession(route.type, route.id, route.key, route.keys)])
+      // Normalize the URL (app, key and this browser's own permission keys) without a reload.
+      history.replaceState(null, '', session.shareUrl())
+      if (module.submitFiles) session.hooks.submitFiles = () => module.submitFiles!(session)
+      if (module.restoreVersion) session.hooks.restoreVersion = (state) => module.restoreVersion!(session, state)
+      // Handle for automated browser tests in development builds only.
+      if (import.meta.env.DEV) Object.assign(window, { session })
+      await module.mount(session)
+    } catch (err) {
+      console.error(err)
+      notice(t('This document cannot be opened'), (err as Error).message)
+    }
   }
 }

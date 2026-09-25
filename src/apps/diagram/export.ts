@@ -1,6 +1,6 @@
 // SVG and PNG rendering of the diagram (downloads, printing, palette thumbnails).
 
-import { ImageExport, SvgCanvas2D, type AbstractGraph, type Cell } from '@maxgraph/core'
+import { ImageExport, Rectangle, SvgCanvas2D, type AbstractGraph, type Cell } from '@maxgraph/core'
 import { embedSketchFont } from './shapes/sketch'
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
@@ -12,14 +12,19 @@ export interface SvgOptions {
   background?: string | null
   // Only these cells (and their descendants); default: the whole page.
   cells?: Cell[]
+  // A fixed area in graph coordinates (e.g. a slide); what lies outside is clipped.
+  area?: { x: number; y: number; width: number; height: number }
 }
 
 // Renders the graph (as currently laid out) into a standalone SVG element.
 export function renderSvg(graph: AbstractGraph, options: SvgOptions = {}): SVGSVGElement {
-  const { scale = 1, border = 10, background = '#ffffff', cells } = options
+  const { scale = 1, border = 10, background = '#ffffff', cells, area } = options
   const view = graph.view
   const vs = view.scale
-  const bounds = (cells ? graph.getBoundingBox(cells) : graph.getGraphBounds()) ?? null
+  const t = view.translate
+  const bounds = area
+    ? new Rectangle((area.x + t.x) * vs, (area.y + t.y) * vs, area.width * vs, area.height * vs)
+    : ((cells ? graph.getBoundingBox(cells) : graph.getGraphBounds()) ?? null)
   const width = bounds && bounds.width > 0 ? bounds.width : 0
   const height = bounds && bounds.height > 0 ? bounds.height : 0
   const w = Math.max(1, Math.ceil((width * scale) / vs + 2 * border))

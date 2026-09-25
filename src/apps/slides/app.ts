@@ -1,0 +1,935 @@
+// Presentations app: slides built on the diagram editor (maxGraph, draw.io
+// shapes, Yjs pages/cells sync, presence, shape and format panels). Each slide
+// is a diagram page with a fixed frame at (0, 0) of the slide size; what lies
+// outside the frame stays in the document but is not presented or exported.
+
+import { Cell, Geometry, InternalEvent, type EventObject } from '@maxgraph/core'
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  AArrowDown,
+  AArrowUp,
+  Baseline,
+  Bold,
+  ImagePlus,
+  Italic,
+  List,
+  ListOrdered,
+  PanelRight,
+  Play,
+  Plus,
+  Redo2,
+  Shapes,
+  Sigma,
+  Table,
+  Type,
+  Underline,
+  Undo2,
+} from 'lucide'
+import { appInfo } from '../registry'
+import { homePath, newDocPath } from '../../core/router'
+import type { Session } from '../../core/session'
+import { t } from '../../core/i18n'
+import { setupChrome } from '../../ui/chrome'
+import { renderShell } from '../../ui/shell'
+import { colorPalette, createMenuBar, el, icon, openPopover, showContextMenu, showDialog, tableGrid, toast, type MenuEntry } from '../../ui/widgets'
+import { sessionAccess } from '../diagram/app'
+import { createDiagramEditor, mod, showShortcuts } from '../diagram/editor'
+import { svgToPng } from '../diagram/export'
+import { setStyleKey, styleFromString } from '../diagram/graph'
+import { cellsKey } from '../diagram/sync'
+import {
+  LAYOUTS,
+  META_RATIO,
+  META_THEME,
+  TEXT_BOX_STYLE,
+  THEMES,
+  backgroundCss,
+  blankSlide,
+  layoutName,
+  layoutPlaceholders,
+  notesText,
+  parseBackground,
+  placeholderStyle,
+  presentationSize,
+  presentationTheme,
+  readSlideMeta,
+  slideCells,
+  slideMetaMap,
+  writeSlideMeta,
+  type LayoutId,
+  type PresentationData,
+  type Ratio,
+  type Role,
+} from './model'
+import { NotesEditor } from './notes'
+import { Presentation, presenters } from './present'
+import { SlideRenderer, editingCell, installTheme, svgDataUrl } from './render'
+import { SlideList } from './slidelist'
+
+export const SLIDES_ACCEPT = '.pptx'
+const THUMB_WIDTH = 176
+
+type Style = Record<string, unknown>
+
+export function mountSlides(session: Session, root: HTMLElement): void {
+  const info = appInfo('slides')
+  const shell = renderShell(info, root)
+  setupChrome(session, info.untitled)
+  const readOnly = sessionAccess(session) !== 'edit'
+  const doc = session.doc
+  const meta = doc.getMap<unknown>('meta')
+  let theme = presentationTheme(doc)
+  let size = presentationSize(doc)
+  const title = () => String(meta.get('title') || info.untitled).replace(/[\\/:*?"<>|]+/g, '_')
+
+  const canvas = el('div', { class: 'diagram-canvas slides-canvas' })
+  const frame = el('div', { class: 'slide-frame' })
+  const printArea = el('div', { class: 'slides-print' })
+  const fileInput = el('input', { type: 'file', accept: SLIDES_ACCEPT, hidden: true })
+  const imageInput = el('input', { type: 'file', accept: 'image/*', hidden: true })
+  document.body.append(printArea, fileInput, imageInput)
+
+  const openFile = async (file: File) => {
+    try {
+      toast(t('Opening…'))
+      const { importFile } = await import('./index')
+      location.href = await importFile(file)
+    } catch (err) {
+      toast(t('Could not open the file: {error}', { error: (err as Error).message }))
+    }
+  }
+
+  // The format panel renders once before the slide options below exist.
+  let ready = false
+  const editor = createDiagramEditor(session, {
+    canvas,
+    readOnly,
+    gridKey: 'slides-grid',
+    gridDefault: false,
+    fitBounds: () => ({ x: 0, y: 0, width: size.width, height: size.height }),
+    textStyle: TEXT_BOX_STYLE,
+    textSize: [320, 60],
+    formatEmpty: () => (ready ? slideSection() : el('div')),
+    openFile: (file) => void openFile(file),
+    print: () => void printPdf(),
+    onKey: (e) => onKey(e),
+    contextItems: (selected) => (selected ? [] : slideContextItems()),
+    onPagesChange: () => refreshList(),
+    onPageShown: () => pageShown(),
+    blankPage: blankSlide,
+  })
+  const { graph, sync, view } = editor
+  const editable = editor.editable
+  installTheme(graph, () => theme, true)
+  // Groups and tables scale their content when resized.
+  graph.setRecursiveResize(true)
+  canvas.prepend(frame)
+  const renderer = new SlideRenderer(() => theme)
+
+  // ---------- Slide frame ----------
+
+  const slideBackground = (id = sync.page) => parseBackground(readSlideMeta(doc, id).background, theme)
+  const updateFrame = () => {
+    const s = view.scale
+    const tr = view.translate
+    frame.style.left = `${tr.x * s}px`
+    frame.style.top = `${tr.y * s}px`
+    frame.style.width = `${size.width * s}px`
+    frame.style.height = `${size.height * s}px`
+    frame.style.background = backgroundCss(slideBackground())
+  }
+  for (const event of [InternalEvent.SCALE, InternalEvent.TRANSLATE, InternalEvent.SCALE_AND_TRANSLATE]) view.addListener(event, updateFrame)
+
+  // ---------- Slides ----------
+
+  const slides = () => sync.pageList()
+  const slideIndex = () => Math.max(0, slides().findIndex((p) => p.id === sync.page))
+  const showSlide = (id: string) => id !== sync.page && sync.showPage(id)
+  const go = (delta: number) => {
+    const list = slides()
+    const next = list[slideIndex() + delta]
+    if (next) showSlide(next.id)
+  }
+
+  const addSlide = (layout: LayoutId = 'titleContent', after = sync.page) => {
+    if (readOnly) return
+    const id = sync.addPage(t('Slide {n}', { n: slides().length + 1 }), slideCells(layout, size.width, size.height))
+    placeAfter(id, after)
+    writeSlideMeta(doc, id, { layout })
+    sync.showPage(id)
+  }
+  const placeAfter = (id: string, after: string) => {
+    const list = slides().filter((p) => p.id !== id)
+    const index = list.findIndex((p) => p.id === after)
+    if (index >= 0) sync.movePage(id, list[index + 1]?.id ?? null)
+  }
+  const duplicateSlide = (source = sync.page) => {
+    if (readOnly) return
+    const page = slides().find((p) => p.id === source)
+    if (!page) return
+    const id = sync.addPage(`${page.name} (${t('copy')})`, sync.pageRecords(source))
+    placeAfter(id, source)
+    const m = readSlideMeta(doc, source)
+    writeSlideMeta(doc, id, { layout: m.layout ?? null, background: m.background ?? null })
+    const notes = notesText(doc, source).toString()
+    if (notes) notesText(doc, id).insert(0, notes)
+    sync.showPage(id)
+  }
+  const hasContent = (id: string) => sync.pageRecords(id).some((r) => r.parent && r.value)
+  const deleteSlide = async (id = sync.page) => {
+    if (readOnly || slides().length <= 1) return
+    if (hasContent(id)) {
+      const ok = await showDialog(t('Delete slide'), el('p', { textContent: t('Delete this slide for everyone?') }), [
+        { label: t('Cancel'), value: 'cancel' },
+        { label: t('Delete'), value: 'ok', primary: true },
+      ])
+      if (ok !== 'ok') return
+    }
+    sync.deletePage(id)
+  }
+  const moveSlide = (dir: -1 | 1) => {
+    const list = slides()
+    const index = slideIndex()
+    if (dir < 0 && index > 0) sync.movePage(sync.page, list[index - 1].id)
+    if (dir > 0 && index < list.length - 1) sync.movePage(sync.page, list[index + 2]?.id ?? null)
+  }
+
+  // Applies a layout to the current slide: placeholders move to the layout's
+  // boxes, missing ones are added and empty ones the layout lacks are removed.
+  const applyLayout = (layout: LayoutId) => {
+    if (readOnly) return
+    const model = graph.getDataModel()
+    const parent = graph.getDefaultParent()
+    const boxes = layoutPlaceholders(layout, size.width, size.height)
+    const existing = new Map<Role, Cell>()
+    for (const cell of graph.getChildVertices(parent)) {
+      const role = (cell.getStyle() as Style | null)?.slidePh as Role | undefined
+      if (role && !existing.has(role)) existing.set(role, cell)
+    }
+    editor.inBatch(() => {
+      for (const box of boxes) {
+        const cell = existing.get(box.role)
+        const geo = new Geometry(Math.round(box.x), Math.round(box.y), Math.round(box.width), Math.round(box.height))
+        if (cell) {
+          model.setGeometry(cell, geo)
+          existing.delete(box.role)
+        } else {
+          const c = new Cell('', geo, styleFromString(placeholderStyle(box)))
+          c.setVertex(true)
+          graph.addCell(c, parent)
+        }
+      }
+      for (const cell of existing.values()) if (!cell.getValue()) model.remove(cell)
+    })
+    writeSlideMeta(doc, sync.page, { layout })
+  }
+
+  const setBackground = (color: string | null) => {
+    if (readOnly) return
+    sync.materialize()
+    writeSlideMeta(doc, sync.page, { background: color })
+  }
+  const setTheme = (id: string) => !readOnly && meta.set(META_THEME, id)
+  const setRatio = (ratio: Ratio) => !readOnly && meta.set(META_RATIO, ratio)
+
+  // ---------- Text formatting ----------
+
+  // While a label is being edited, commands apply to the selected text; otherwise to the selected boxes.
+  const editingText = () => graph.isEditing()
+  const textCells = () => (graph.isEditing() ? [editingCell(graph)!].filter(Boolean) : editor.selection().filter((c) => c.isVertex()))
+  const exec = (command: string, value?: string) => {
+    document.execCommand('styleWithCSS', false, 'true')
+    document.execCommand(command, false, value)
+  }
+  const toggleFontBit = (bit: number, command: string) => {
+    if (editingText()) return exec(command)
+    const cells = textCells()
+    if (!cells.length) return
+    const current = Number((graph.getCellStyle(cells[0]) as Style).fontStyle ?? 0)
+    setStyleKey(graph, cells, 'fontStyle', current & bit ? current & ~bit || null : current | bit)
+  }
+  const fontSizeStep = (dir: 1 | -1) => {
+    const cells = textCells()
+    if (!cells.length) return
+    const current = Number((graph.getCellStyle(cells[0]) as Style).fontSize ?? 12)
+    const steps = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 44, 48, 54, 60, 72, 88, 96, 120]
+    const next = dir > 0 ? (steps.find((s) => s > current) ?? current + 12) : ([...steps].reverse().find((s) => s < current) ?? Math.max(4, current - 2))
+    setStyleKey(graph, cells, 'fontSize', next)
+  }
+  const setTextColor = (color: string | null) => {
+    if (editingText()) return exec('foreColor', color ?? theme.bodyColor)
+    setStyleKey(graph, textCells(), 'fontColor', color)
+  }
+  const setAlign = (align: 'left' | 'center' | 'right') => setStyleKey(graph, textCells(), 'align', align)
+  const toggleList = (ordered: boolean) => {
+    if (editingText()) return exec(ordered ? 'insertOrderedList' : 'insertUnorderedList')
+    const cells = textCells()
+    if (!cells.length) return
+    const tag = ordered ? 'ol' : 'ul'
+    editor.inBatch(() => {
+      for (const cell of cells) {
+        const value = String(cell.getValue() ?? '')
+        const list = new RegExp(`^\\s*<${tag}[^>]*>`, 'i').test(value)
+        const html = list ? listToLines(value) : linesToList(value, tag)
+        graph.getDataModel().setValue(cell, html)
+        if ((cell.getStyle() as Style).html !== 1) setStyleKey(graph, [cell], 'html', 1)
+      }
+    })
+  }
+
+  // ---------- Insert ----------
+
+  const insertTextBox = () => {
+    if (readOnly) return
+    const cell = new Cell(t('Text'), new Geometry(0, 0, 320, 60), styleFromString(TEXT_BOX_STYLE))
+    cell.setVertex(true)
+    editor.insertAtCenter([cell])
+    graph.startEditingAtCell(cell)
+    document.execCommand('selectAll')
+  }
+  const insertTable = (rows: number, cols: number) => {
+    if (readOnly) return
+    const cw = Math.min(160, Math.floor((size.width - 96) / cols))
+    const rh = 40
+    const table = new Cell('', new Geometry(0, 0, cw * cols, rh * rows), styleFromString('group;slideTable=1;container=1;collapsible=0;'))
+    table.setVertex(true)
+    table.setConnectable(false)
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const header = r === 0
+        const style =
+          `rounded=0;whiteSpace=wrap;html=1;overflow=hidden;fontSize=16;align=center;verticalAlign=middle;slideCell=1;strokeColor=#9aa0a6;` +
+          (header ? `fillColor=${theme.accent};fontColor=#ffffff;fontStyle=1;` : `fillColor=#ffffff;fontColor=#202124;`)
+        const cell = new Cell('', new Geometry(c * cw, r * rh, cw, rh), styleFromString(style))
+        cell.setVertex(true)
+        cell.setConnectable(false)
+        table.insert(cell)
+      }
+    }
+    editor.insertAtCenter([table])
+  }
+  const insertEquation = async (cell?: Cell) => {
+    if (readOnly) return
+    const { editEquation, latexToMathML, measureEquation } = await import('../../ui/equation')
+    const data = cell ? parseData(cell) : {}
+    const value = await editEquation({ latex: String(data.latex ?? ''), display: true, displayChoice: false })
+    if (!value?.latex) return
+    const fontSize = cell ? Number((graph.getCellStyle(cell) as Style).fontSize ?? 28) : 28
+    const box = measureEquation(value.latex, true, fontSize * 0.75)
+    const html = latexToMathML(value.latex, true)
+    const w = Math.ceil(box.width + 24)
+    const h = Math.ceil(box.height + 16)
+    if (cell) {
+      editor.inBatch(() => {
+        graph.getDataModel().setValue(cell, html)
+        ;(cell as Cell & { woData?: string }).woData = JSON.stringify({ ...data, latex: value.latex })
+        const geo = cell.getGeometry()!.clone()
+        geo.width = w
+        geo.height = h
+        graph.getDataModel().setGeometry(cell, geo)
+      })
+    } else {
+      const c = new Cell(html, new Geometry(0, 0, w, h), styleFromString(`text;html=1;slideEq=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=${fontSize};`))
+      c.setVertex(true)
+      ;(c as Cell & { woData?: string }).woData = JSON.stringify({ latex: value.latex })
+      editor.insertAtCenter([c])
+    }
+  }
+  const isEquation = (cell: Cell | null) => !!cell && String((cell.getStyle() as Style | null)?.slideEq ?? '') === '1'
+  const isCellEditable = graph.isCellEditable.bind(graph)
+  graph.isCellEditable = (cell: Cell) => !isEquation(cell) && isCellEditable(cell)
+  graph.addListener(InternalEvent.DOUBLE_CLICK, (_sender: unknown, evt: EventObject) => {
+    const cell = evt.getProperty('cell') as Cell | null
+    if (isEquation(cell)) {
+      evt.consume()
+      void insertEquation(cell!)
+    }
+  })
+  imageInput.addEventListener('change', () => {
+    const file = imageInput.files?.[0]
+    imageInput.value = ''
+    if (file) editor.insertImage(file, size.width / 2, size.height / 2, 480)
+  })
+
+  // ---------- Panels ----------
+
+  const list = new SlideList(
+    {
+      show: showSlide,
+      move: (id, before) => sync.movePage(id, before),
+      menu: (_id, x, y) => showContextMenu(x, y, slideMenu()),
+      remove: (id) => void deleteSlide(id),
+      duplicate: (id) => duplicateSlide(id),
+    },
+    readOnly,
+  )
+  const notes = new NotesEditor(readOnly, () => sync.materialize())
+  const leftTabs = el('div', { class: 'slides-left-tabs', role: 'tablist' })
+  const left = el('aside', { class: 'slides-left' }, leftTabs, list.element, editor.sidebar.element)
+  const tabButton = (label: string, panel: 'slides' | 'shapes') => {
+    const b = el('button', { type: 'button', class: 'slides-left-tab', textContent: label, role: 'tab' })
+    b.addEventListener('click', () => showLeft(panel))
+    leftTabs.append(b)
+    return b
+  }
+  const slidesTab = tabButton(t('Slides'), 'slides')
+  const shapesTab = readOnly ? null : tabButton(t('Shapes'), 'shapes')
+  const showLeft = (panel: 'slides' | 'shapes') => {
+    left.hidden = false
+    list.element.hidden = panel !== 'slides'
+    editor.sidebar.element.hidden = panel !== 'shapes'
+    slidesTab.classList.toggle('active', panel === 'slides')
+    shapesTab?.classList.toggle('active', panel === 'shapes')
+    editor.updateToolbar()
+  }
+  showLeft('slides')
+  const toggleNotes = () => {
+    notes.element.hidden = !notes.element.hidden
+    requestAnimationFrame(() => editor.fit())
+  }
+  const toggleLeft = () => {
+    left.hidden = !left.hidden
+    requestAnimationFrame(() => editor.fit())
+  }
+
+  // ---------- Thumbnails ----------
+
+  const thumbKeys = new Map<string, string>()
+  const dirty = new Set<string>()
+  const observed = new Set<string>()
+  let thumbTimer = 0
+  const markDirty = (id?: string) => {
+    if (id) dirty.add(id)
+    else slides().forEach((p) => dirty.add(p.id))
+    clearTimeout(thumbTimer)
+    thumbTimer = window.setTimeout(drawThumbs, 250)
+  }
+  const drawThumbs = () => {
+    const ids = slides().map((p) => p.id)
+    const pending = ids.filter((id) => dirty.has(id) || !thumbKeys.has(id))
+    dirty.clear()
+    let i = 0
+    const step = () => {
+      const end = Math.min(i + 4, pending.length)
+      for (; i < end; i++) {
+        const id = pending[i]
+        const cells = sync.pageRecords(id)
+        const waiting = renderer.prepare(cells)
+        if (waiting) void waiting.then(() => markDirty(id))
+        const svg = renderer.render({ cells, background: slideBackground(id) }, size.width, size.height, THUMB_WIDTH / size.width)
+        list.setThumb(id, svgDataUrl(svg))
+        thumbKeys.set(id, '1')
+      }
+      if (i < pending.length) requestAnimationFrame(step)
+    }
+    step()
+  }
+  const observePages = () => {
+    for (const page of slides()) {
+      if (observed.has(page.id)) continue
+      observed.add(page.id)
+      doc.getMap(cellsKey(page.id)).observeDeep(() => {
+        markDirty(page.id)
+        presentation.refresh()
+      })
+    }
+  }
+  slideMetaMap(doc).observeDeep((events) => {
+    for (const e of events) {
+      const keys = e.path.length ? [String(e.path[0])] : [...(e as unknown as { keysChanged: Set<string> }).keysChanged]
+      keys.forEach((k) => markDirty(k))
+    }
+    updateFrame()
+    editor.format.render()
+    presentation.refresh()
+  })
+  meta.observe((e) => {
+    if (!e.keysChanged.has(META_THEME) && !e.keysChanged.has(META_RATIO)) return
+    theme = presentationTheme(doc)
+    size = presentationSize(doc)
+    list.setAspect(size.width, size.height)
+    graph.refresh()
+    updateFrame()
+    editor.fit()
+    editor.format.render()
+    markDirty()
+    presentation.refresh()
+  })
+
+  // ---------- Status, list and page changes ----------
+
+  const slideLabel = el('span', { class: 'slides-count' })
+  const refreshList = () => {
+    observePages()
+    const peers = editor.presence()?.pagesOfPeers() ?? new Map()
+    list.update(slides(), sync.page, peers)
+    slideLabel.textContent = t('Slide {n} of {total}', { n: slideIndex() + 1, total: slides().length })
+    markDirtyMissing()
+    updateFollow()
+  }
+  const markDirtyMissing = () => {
+    if (slides().some((p) => !thumbKeys.has(p.id))) markDirty()
+  }
+  const pageShown = () => {
+    notes.bind(notesText(doc, sync.page))
+    updateFrame()
+    refreshList()
+  }
+
+  // ---------- Presenting ----------
+
+  const presentation = new Presentation({
+    slides: () => slides(),
+    render: (id) => renderer.render({ cells: sync.pageRecords(id), background: slideBackground(id) }, size.width, size.height),
+    notes: (id) => notesText(doc, id).toString(),
+    size: () => size,
+    awareness: session.awareness,
+    clientId: doc.clientID,
+    onEnd: (id) => showSlide(id),
+  })
+  const present = (fromCurrent: boolean, presenterView = false) => {
+    graph.stopEditing(false)
+    presentation.start(fromCurrent ? slideIndex() : 0, presenterView)
+  }
+  const followBtn = el('button', { type: 'button', class: 'slides-follow', hidden: true })
+  const followPresenter = () => {
+    const [first] = presenters(session.awareness, doc.clientID)
+    if (!first) return toast(t('Nobody is presenting right now'))
+    presentation.follow(first.clientId)
+  }
+  followBtn.addEventListener('click', followPresenter)
+  let knownPresenters = new Set<number>()
+  const updateFollow = () => {
+    const list = presenters(session.awareness, doc.clientID)
+    followBtn.hidden = !list.length || presentation.isFollowing
+    if (list.length) followBtn.textContent = `▶ ${t('Follow {name}', { name: list[0].name })}`
+    const now = new Set(list.map((p) => p.clientId))
+    for (const p of list) if (!knownPresenters.has(p.clientId) && !presentation.active) toast(t('{name} is presenting: click “Follow” to watch', { name: p.name }))
+    knownPresenters = now
+  }
+
+  // ---------- Exports ----------
+
+  const presentationData = (): PresentationData => ({
+    width: size.width,
+    height: size.height,
+    ratio: size.ratio,
+    theme,
+    slides: slides().map((p) => {
+      const m = readSlideMeta(doc, p.id)
+      return { id: p.id, name: p.name, cells: sync.pageRecords(p.id), notes: notesText(doc, p.id).toString(), background: m.background, layout: m.layout }
+    }),
+  })
+  const download = (blob: Blob, name: string) => {
+    const a = el('a', { href: URL.createObjectURL(blob), download: name })
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+  }
+  const renderSlide = (id: string, scale = 1) => renderer.render({ cells: sync.pageRecords(id), background: slideBackground(id) }, size.width, size.height, scale)
+  const printPdf = async () => {
+    graph.stopEditing(false)
+    const style = el('style', { textContent: `@page { size: ${size.width}px ${size.height}px; margin: 0; }` })
+    document.head.append(style)
+    printArea.replaceChildren(
+      ...slides().map((p) => {
+        const svg = renderSlide(p.id)
+        svg.setAttribute('width', `${size.width}px`)
+        svg.setAttribute('height', `${size.height}px`)
+        return el('div', { class: 'slides-print-page' }, svg)
+      }),
+    )
+    printArea.style.setProperty('--w', `${size.width}px`)
+    printArea.style.setProperty('--h', `${size.height}px`)
+    await document.fonts.ready
+    window.print()
+    printArea.replaceChildren()
+    style.remove()
+  }
+  const downloadPng = async (all: boolean) => {
+    try {
+      if (!all) {
+        download(await svgToPng(renderSlide(sync.page), 2), `${title()} - ${slideIndex() + 1}.png`)
+        return
+      }
+      toast(t('Preparing images…'))
+      const { default: JSZip } = await import('jszip')
+      const zip = new JSZip()
+      let n = 0
+      for (const p of slides()) zip.file(`${title()} - ${String(++n).padStart(2, '0')}.png`, await svgToPng(renderSlide(p.id), 2))
+      download(await zip.generateAsync({ type: 'blob' }), `${title()}.zip`)
+    } catch (err) {
+      toast(t('PNG export failed: {error}', { error: (err as Error).message }))
+    }
+  }
+  const downloadPptx = async () => {
+    try {
+      toast(t('Preparing the presentation…'))
+      const { exportPptx } = await import('./formats/pptx')
+      download(await exportPptx(presentationData(), renderer), `${title()}.pptx`)
+    } catch (err) {
+      console.error(err)
+      toast(t('Export failed: {error}', { error: (err as Error).message }))
+    }
+  }
+  const downloadOdp = async () => {
+    try {
+      toast(t('Preparing the presentation…'))
+      const { exportOdp } = await import('./formats/odp')
+      download(await exportOdp(presentationData(), renderer), `${title()}.odp`)
+    } catch (err) {
+      console.error(err)
+      toast(t('Export failed: {error}', { error: (err as Error).message }))
+    }
+  }
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files?.[0]
+    fileInput.value = ''
+    if (file) void openFile(file)
+  })
+
+  // ---------- Menus ----------
+
+  const layoutMenu = (): MenuEntry[] =>
+    LAYOUTS.map((l) => ({ label: layoutName(l.id), run: () => applyLayout(l.id), active: () => readSlideMeta(doc, sync.page).layout === l.id, enabled: editable() }))
+  const newSlideMenu = (): MenuEntry[] => LAYOUTS.map((l) => ({ label: layoutName(l.id), run: () => addSlide(l.id), enabled: editable() }))
+  const themeMenu = (): MenuEntry[] => THEMES.map((th) => ({ label: t(th.name), run: () => setTheme(th.id), active: () => theme.id === th.id, enabled: editable() }))
+  const sizeMenu = (): MenuEntry[] => [
+    { label: t('Widescreen (16:9)'), run: () => setRatio('16:9'), active: () => size.ratio === '16:9', enabled: editable() },
+    { label: t('Standard (4:3)'), run: () => setRatio('4:3'), active: () => size.ratio === '4:3', enabled: editable() },
+  ]
+  const slideMenu = (): MenuEntry[] => [
+    { label: t('New slide'), shortcut: mod('M'), run: () => addSlide(), enabled: editable() },
+    { label: t('New slide with layout'), submenu: newSlideMenu(), enabled: editable() },
+    { label: t('Duplicate slide'), run: () => duplicateSlide(), enabled: editable() },
+    { label: t('Delete slide'), run: () => void deleteSlide(), enabled: editable(() => slides().length > 1) },
+    '-',
+    { label: t('Move slide up'), run: () => moveSlide(-1), enabled: editable(() => slideIndex() > 0) },
+    { label: t('Move slide down'), run: () => moveSlide(1), enabled: editable(() => slideIndex() < slides().length - 1) },
+    '-',
+    { label: t('Layout'), submenu: layoutMenu(), enabled: editable() },
+    { label: t('Background color…'), run: () => chooseBackground(), enabled: editable() },
+    { label: t('Reset background'), run: () => setBackground(null), enabled: editable(() => !!readSlideMeta(doc, sync.page).background) },
+  ]
+  const slideContextItems = (): MenuEntry[] => [
+    { label: t('New slide'), run: () => addSlide(), enabled: editable() },
+    { label: t('Layout'), submenu: layoutMenu(), enabled: editable() },
+    { label: t('Background color…'), run: () => chooseBackground(), enabled: editable() },
+  ]
+  const chooseBackground = () => openPopover(bgAnchor(), colorPalette((c) => setBackground(c), t('Theme background')))
+  const bgAnchor = () => (document.querySelector('.slides-bg-button') as HTMLElement | null) ?? shell.toolbar
+
+  createMenuBar(shell.menubar, [
+    {
+      label: t('File'),
+      items: [
+        { label: t('New presentation'), run: () => window.open(newDocPath('slides'), '_blank') },
+        { label: t('Open file (.pptx)…'), run: () => fileInput.click() },
+        { label: t('All documents'), run: () => (location.href = homePath()) },
+        { label: t('Share…'), run: () => document.getElementById('btn-share')!.click() },
+        '-',
+        { label: t('Download PowerPoint (.pptx)'), run: () => void downloadPptx() },
+        { label: t('Download OpenDocument (.odp)'), run: () => void downloadOdp() },
+        { label: t('Download PDF'), run: () => void printPdf() },
+        { label: t('Download slide as PNG'), run: () => void downloadPng(false) },
+        { label: t('Download all slides as PNG (.zip)'), run: () => void downloadPng(true) },
+        '-',
+        { label: t('Print'), shortcut: mod('P'), run: () => void printPdf() },
+      ],
+    },
+    { label: t('Edit'), items: editor.editMenu() },
+    {
+      label: t('View'),
+      items: [
+        { label: t('Slides panel'), run: toggleLeft, active: () => !left.hidden },
+        { label: t('Speaker notes'), run: toggleNotes, active: () => !notes.element.hidden },
+        ...editor.panelMenu().filter((item) => item === '-' || item.label !== t('Shapes')),
+        '-',
+        ...editor.zoomMenu(),
+      ],
+    },
+    {
+      label: t('Insert'),
+      items: [
+        { label: t('New slide'), shortcut: mod('M'), run: () => addSlide(), enabled: editable() },
+        { label: t('Text box'), run: insertTextBox, enabled: editable() },
+        { label: t('Image…'), run: () => imageInput.click(), enabled: editable() },
+        { label: t('Table…'), run: () => openPopover(tableButton, tableGrid(insertTable, 8)), enabled: editable() },
+        { label: t('Equation…'), run: () => void insertEquation(), enabled: editable() },
+        { label: t('Shapes'), run: () => showLeft('shapes'), enabled: editable() },
+      ],
+    },
+    {
+      label: t('Format'),
+      items: [
+        { label: t('Bold'), shortcut: mod('B'), run: () => toggleFontBit(1, 'bold'), enabled: editable() },
+        { label: t('Italic'), shortcut: mod('I'), run: () => toggleFontBit(2, 'italic'), enabled: editable() },
+        { label: t('Underline'), shortcut: mod('U'), run: () => toggleFontBit(4, 'underline'), enabled: editable() },
+        { label: t('Bulleted list'), run: () => toggleList(false), enabled: editable() },
+        { label: t('Numbered list'), run: () => toggleList(true), enabled: editable() },
+        { label: t('Bigger text'), shortcut: mod('Shift+>'), run: () => fontSizeStep(1), enabled: editable() },
+        { label: t('Smaller text'), shortcut: mod('Shift+<'), run: () => fontSizeStep(-1), enabled: editable() },
+        '-',
+        { label: t('Theme'), submenu: themeMenu(), enabled: editable() },
+        { label: t('Slide size'), submenu: sizeMenu(), enabled: editable() },
+        { label: t('Layout'), submenu: layoutMenu(), enabled: editable() },
+        { label: t('Background color…'), run: () => chooseBackground(), enabled: editable() },
+      ],
+    },
+    { label: t('Arrange'), items: editor.arrangeMenu(false) },
+    { label: t('Slide'), items: slideMenu() },
+    {
+      label: t('Present'),
+      items: [
+        { label: t('From the beginning'), shortcut: 'F5', run: () => present(false) },
+        { label: t('From the current slide'), shortcut: 'Shift+F5', run: () => present(true) },
+        { label: t('Presenter view'), run: () => present(true, true) },
+        '-',
+        { label: t('Follow the presenter'), run: followPresenter, enabled: () => presenters(session.awareness, doc.clientID).length > 0 },
+      ],
+    },
+    {
+      label: t('Help'),
+      items: [
+        {
+          label: t('Keyboard shortcuts'),
+          run: () =>
+            showShortcuts([
+              [t('New slide'), mod('M')],
+              [t('Next / previous slide'), t('Page Down / Page Up')],
+              [t('Present from the beginning / current slide'), 'F5 / Shift+F5'],
+              [t('While presenting'), t('Arrows, Space, click · L: laser · B: black screen · Esc')],
+            ]),
+        },
+      ],
+    },
+  ])
+
+  // ---------- Toolbar ----------
+
+  const tbGroup = (...items: HTMLElement[]) => shell.toolbar.append(el('div', { class: 'tb-group' }, ...items))
+  const { tbButton } = editor
+  const always = () => true
+  const tableButton = tbButton(Table, t('Insert table'), () => openPopover(tableButton, tableGrid(insertTable, 8)), editable(always))
+  const bgButton = el('button', { type: 'button', class: 'tb-btn tb-text slides-bg-button', textContent: t('Background') })
+  bgButton.addEventListener('click', () => !readOnly && chooseBackground())
+  const layoutSelect = el('select', { class: 'tb-select', title: t('Layout') })
+  layoutSelect.append(el('option', { value: '', textContent: t('Layout'), disabled: true }), ...LAYOUTS.map((l) => el('option', { value: l.id, textContent: layoutName(l.id) })))
+  layoutSelect.addEventListener('change', () => {
+    if (layoutSelect.value) applyLayout(layoutSelect.value as LayoutId)
+    layoutSelect.value = ''
+    canvas.focus()
+  })
+  layoutSelect.value = ''
+  const themeSelect = el('select', { class: 'tb-select', title: t('Theme') })
+  themeSelect.append(...THEMES.map((th) => el('option', { value: th.id, textContent: t(th.name) })))
+  themeSelect.addEventListener('change', () => {
+    setTheme(themeSelect.value)
+    canvas.focus()
+  })
+  const newSlideButton = tbButton(Plus, `${t('New slide')} (${mod('M')})`, () => addSlide(), editable(always))
+  const textColor = editor.colorTool(Baseline, t('Text color'), setTextColor, t('Theme color'), () => editingText() || editor.hasSelection())
+  const presentButton = el('button', { type: 'button', class: 'primary slides-present-btn' })
+  presentButton.append(icon(Play), document.createTextNode(t('Present')))
+  presentButton.addEventListener('click', () => present(true))
+  presentButton.title = t('Present from the current slide (Shift+F5)')
+
+  if (!readOnly) {
+    tbGroup(newSlideButton, layoutSelect)
+    tbGroup(
+      tbButton(Undo2, `${t('Undo')} (${mod('Z')})`, editor.undo, editable(() => editor.undoManager.canUndo())),
+      tbButton(Redo2, `${t('Redo')} (${mod('Y')})`, editor.redo, editable(() => editor.undoManager.canRedo())),
+    )
+  }
+  tbGroup(...editor.zoomTools())
+  if (!readOnly) {
+    const hasText = () => editingText() || editor.hasSelection()
+    tbGroup(
+      tbButton(Bold, `${t('Bold')} (${mod('B')})`, () => toggleFontBit(1, 'bold'), editable(hasText)),
+      tbButton(Italic, `${t('Italic')} (${mod('I')})`, () => toggleFontBit(2, 'italic'), editable(hasText)),
+      tbButton(Underline, `${t('Underline')} (${mod('U')})`, () => toggleFontBit(4, 'underline'), editable(hasText)),
+      textColor,
+      tbButton(AArrowUp, t('Bigger text'), () => fontSizeStep(1), editable(hasText)),
+      tbButton(AArrowDown, t('Smaller text'), () => fontSizeStep(-1), editable(hasText)),
+    )
+    tbGroup(
+      tbButton(AlignLeft, t('Align left'), () => setAlign('left'), editable(hasText)),
+      tbButton(AlignCenter, t('Center'), () => setAlign('center'), editable(hasText)),
+      tbButton(AlignRight, t('Align right'), () => setAlign('right'), editable(hasText)),
+      tbButton(List, t('Bulleted list'), () => toggleList(false), editable(hasText)),
+      tbButton(ListOrdered, t('Numbered list'), () => toggleList(true), editable(hasText)),
+    )
+    tbGroup(
+      tbButton(Type, t('Text box'), insertTextBox, editable(always)),
+      tbButton(ImagePlus, t('Image'), () => imageInput.click(), editable(always)),
+      tbButton(Shapes, t('Shapes'), () => showLeft(editor.sidebar.element.hidden ? 'shapes' : 'slides'), editable(always), () => !editor.sidebar.element.hidden),
+      tableButton,
+      tbButton(Sigma, t('Equation'), () => void insertEquation(), editable(always)),
+    )
+    tbGroup(themeSelect, bgButton, tbButton(PanelRight, t('Format panel'), () => editor.togglePanel(editor.format.element), undefined, () => !editor.format.element.hidden))
+  }
+  const followGroup = el('div', { class: 'tb-group slides-present-group' }, followBtn, presentButton)
+  shell.toolbar.append(el('span', { class: 'spacer' }), followGroup)
+  editor.onStatus(() => {
+    themeSelect.value = theme.id
+  })
+
+  // ---------- Keyboard ----------
+
+  const onKey = (e: KeyboardEvent): boolean => {
+    if (presentation.active) return true
+    const modKey = e.ctrlKey || e.metaKey
+    const key = e.key
+    const done = () => {
+      e.preventDefault()
+      return true
+    }
+    if (key === 'F5') {
+      present(e.shiftKey)
+      return done()
+    }
+    if (modKey && key.toLowerCase() === 'm' && !readOnly) {
+      addSlide()
+      return done()
+    }
+    if (!editor.hasSelection() && (key === 'PageDown' || key === 'PageUp' || (readOnly && key.startsWith('Arrow')))) {
+      go(key === 'PageDown' || key === 'ArrowRight' || key === 'ArrowDown' ? 1 : -1)
+      return done()
+    }
+    if (readOnly) return false
+    if (modKey && !e.shiftKey && ['b', 'i', 'u'].includes(key.toLowerCase()) && editor.hasSelection()) {
+      const k = key.toLowerCase()
+      toggleFontBit(k === 'b' ? 1 : k === 'i' ? 2 : 4, k === 'b' ? 'bold' : k === 'i' ? 'italic' : 'underline')
+      return done()
+    }
+    if (modKey && e.shiftKey && (key === '>' || key === '<' || key === '.' || key === ',')) {
+      fontSizeStep(key === '>' || key === '.' ? 1 : -1)
+      return done()
+    }
+    // Typing on a selected text box starts editing it, like in other presentation apps.
+    const cell = graph.getSelectionCount() === 1 ? graph.getSelectionCell() : null
+    if (cell?.isVertex() && key.length === 1 && !modKey && !e.altKey && key !== ' ' && graph.isCellEditable(cell)) {
+      graph.startEditingAtCell(cell)
+      return true
+    }
+    return false
+  }
+
+  // ---------- Format panel: slide options ----------
+
+  const slideSection = (): HTMLElement => {
+    const m = readSlideMeta(doc, sync.page)
+    const section = (heading: string, ...children: HTMLElement[]) => el('section', { class: 'fmt-section' }, el('h3', { textContent: heading }), ...children)
+    const row = (label: string, control: HTMLElement) => el('label', { class: 'fmt-row' }, el('span', { class: 'fmt-label', textContent: label }), control)
+    const select = (options: [string, string][], value: string, apply: (v: string) => void) => {
+      const s = el('select', { class: 'fmt-select', disabled: readOnly })
+      for (const [v, label] of options) s.append(el('option', { value: v, textContent: label }))
+      s.value = value
+      s.addEventListener('change', () => apply(s.value))
+      return s
+    }
+    const bg = parseBackground(m.background, theme)
+    const swatch = el('span', { class: 'fmt-swatch' })
+    swatch.style.background = backgroundCss(bg)
+    const bgBtn = el('button', { type: 'button', class: 'fmt-color', disabled: readOnly }, swatch, el('span', { textContent: m.background ? m.background : t('Theme') }))
+    bgBtn.addEventListener('click', () => openPopover(bgBtn, colorPalette((c) => setBackground(c), t('Theme background'))))
+    const themes = el('div', { class: 'slides-theme-grid' })
+    for (const th of THEMES) {
+      const b = el('button', { type: 'button', class: 'slides-theme-card', title: t(th.name), disabled: readOnly })
+      b.style.background = backgroundCss(th.background)
+      const aa = el('span', { textContent: 'Aa' })
+      aa.style.cssText = `color:${th.titleColor};font-family:'${th.titleFont}'`
+      const name = el('small', { textContent: t(th.name) })
+      name.style.color = th.bodyColor
+      b.append(aa, name)
+      b.classList.toggle('active', th.id === theme.id)
+      b.addEventListener('click', () => setTheme(th.id))
+      themes.append(b)
+    }
+    return el(
+      'div',
+      {},
+      section(
+        t('Slide'),
+        row(t('Layout'), select([['', '—'], ...LAYOUTS.map((l) => [l.id, layoutName(l.id)] as [string, string])], m.layout ?? '', (v) => v && applyLayout(v as LayoutId))),
+        row(t('Background'), bgBtn),
+      ),
+      section(
+        t('Presentation'),
+        row(t('Slide size'), select([['16:9', t('Widescreen (16:9)')], ['4:3', t('Standard (4:3)')]], size.ratio, (v) => setRatio(v as Ratio))),
+        el('div', { class: 'fmt-subtitle', textContent: t('Theme') }),
+        themes,
+        el('p', { class: 'fmt-hint', textContent: t('Only what is inside the slide is presented and exported. Double click to add text.') }),
+      ),
+    )
+  }
+
+  // ---------- Layout ----------
+
+  const center = el('div', { class: 'slides-center' }, canvas, notes.element)
+  const body = el('div', { class: 'diagram-body slides-body' }, left, center, editor.format.element)
+  shell.main.append(body)
+  const readOnlyNote = readOnly ? el('span', { class: 'read-only-note', textContent: t('View only') }) : null
+  shell.statusbar.append(slideLabel, el('span', { class: 'spacer' }), readOnlyNote ?? '', editor.selectionLabel, editor.zoomLabel)
+  editor.zoomLabel.addEventListener('click', editor.actualSize)
+  list.setAspect(size.width, size.height)
+  if (window.matchMedia('(max-width: 800px)').matches) {
+    left.hidden = true
+    notes.element.hidden = true
+  }
+  session.awareness.on('change', () => updateFollow())
+
+  ready = true
+  editor.start()
+  // Remote edits while presenting show up on the presented slide.
+  if (import.meta.env.DEV) Object.assign(window, { slidesPresentation: presentation, slidesData: presentationData, slidesApp: { addSlide, applyLayout, present, followPresenter, downloadPptx, downloadOdp, printPdf, insertTable } })
+
+  // Save indicator: changes are stored locally as they happen.
+  const saveState = document.getElementById('save-state')!
+  let saveTimer = 0
+  doc.on('update', () => {
+    saveState.textContent = t('Saving…')
+    clearTimeout(saveTimer)
+    saveTimer = window.setTimeout(() => (saveState.textContent = t('Saved in this browser')), 600)
+  })
+  saveState.textContent = t('Saved in this browser')
+}
+
+function parseData(cell: Cell): Record<string, unknown> {
+  try {
+    return JSON.parse((cell as Cell & { woData?: string }).woData ?? '{}') as Record<string, unknown>
+  } catch {
+    return {}
+  }
+}
+
+// "<ul><li>a</li><li>b</li></ul>" → "a<br>b" and back.
+function listToLines(html: string): string {
+  const box = document.createElement('div')
+  box.innerHTML = html
+  return [...box.querySelectorAll('li')].map((li) => li.innerHTML).join('<br>')
+}
+
+function linesToList(html: string, tag: 'ul' | 'ol'): string {
+  const box = document.createElement('div')
+  box.innerHTML = html
+  // Lines separated by <br> or block elements.
+  const lines: string[] = []
+  let current = ''
+  const flush = () => {
+    if (current.trim()) lines.push(current)
+    current = ''
+  }
+  for (const node of [...box.childNodes]) {
+    if (node.nodeName === 'BR') flush()
+    else if (node.nodeType === 1 && /^(DIV|P|LI|UL|OL)$/.test(node.nodeName)) {
+      flush()
+      const items = (node as HTMLElement).querySelectorAll('li')
+      if (items.length) items.forEach((li) => lines.push(li.innerHTML))
+      else lines.push((node as HTMLElement).innerHTML)
+    } else current += node.nodeType === 1 ? (node as HTMLElement).outerHTML : (node.textContent ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+  }
+  flush()
+  return `<${tag}>${(lines.length ? lines : ['']).map((l) => `<li>${l}</li>`).join('')}</${tag}>`
+}

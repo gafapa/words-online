@@ -21,7 +21,7 @@ type CellsMap = Y.Map<FieldMap>
 type PageMeta = Y.Map<string | number> // name, pos
 
 const PAGES_KEY = 'diagram-pages'
-const cellsKey = (pageId: string) => `diagram-cells:${pageId}`
+export const cellsKey = (pageId: string) => `diagram-cells:${pageId}`
 
 export interface PageInfo {
   id: string
@@ -46,6 +46,8 @@ export class DiagramSync {
   constructor(
     private readonly doc: Y.Doc,
     private readonly graph: EditorGraph,
+    // The page an empty document starts with (fixed ids, so replicas agree).
+    private readonly blank: (id?: string, name?: string) => PageRecord = emptyPage,
   ) {
     this.pages = doc.getMap<PageMeta>(PAGES_KEY)
   }
@@ -63,15 +65,15 @@ export class DiagramSync {
   // ---------- Pages ----------
 
   pageList(): PageInfo[] {
-    if (this.virtual) return [{ id: this.page, name: emptyPage().name }]
+    if (this.virtual) return [{ id: this.page, name: this.blank().name }]
     return orderedPages(this.pages)
   }
 
   // Writes the blank page shown for an empty document (fixed ids: replicas agree).
-  private materialize(): void {
+  materialize(): void {
     if (!this.virtual) return
     this.virtual = false
-    this.doc.transact(() => writePage(this.doc, emptyPage(this.page), 0), this)
+    this.doc.transact(() => writePage(this.doc, this.blank(this.page), 0), this)
   }
 
   addPage(name: string, cells?: CellRecord[]): string {
@@ -113,7 +115,7 @@ export class DiagramSync {
   }
 
   pageRecords(id: string): CellRecord[] {
-    if (this.virtual && id === this.page) return emptyPage(id).cells
+    if (this.virtual && id === this.page) return this.blank(id).cells
     return readCells(this.doc.getMap<FieldMap>(cellsKey(id)))
   }
 
@@ -138,12 +140,12 @@ export class DiagramSync {
     if (this.pages.size) this.showPage(this.pageList()[0].id)
     else {
       this.virtual = true
-      this.showPage(emptyPage().id)
+      this.showPage(this.blank().id)
     }
   }
 
   showPage(id: string): void {
-    if (!this.pages.has(id) && !(this.virtual && id === emptyPage().id)) return
+    if (!this.pages.has(id) && !(this.virtual && id === this.blank().id)) return
     this.page = id
     this.graph.pageId = id
     this.observed?.unobserveDeep(this.onCells)

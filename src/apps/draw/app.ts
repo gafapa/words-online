@@ -7,10 +7,13 @@ import { createRoot } from 'react-dom/client'
 import { Excalidraw, MainMenu, exportToBlob, exportToSvg, serializeAsJSON } from '@excalidraw/excalidraw'
 import '@excalidraw/excalidraw/index.css'
 import { appInfo } from '../registry'
+import { printImages } from '../../core/handin'
+import { t } from '../../core/i18n'
 import { homePath, newDocPath } from '../../core/router'
 import type { Session } from '../../core/session'
 import { setupChrome } from '../../ui/chrome'
 import { renderShell } from '../../ui/shell'
+import { makeCopy, openVersionHistory, saveNamedVersion } from '../../ui/versions'
 import { el, toast } from '../../ui/widgets'
 import { DrawSync } from './sync'
 
@@ -18,6 +21,18 @@ export const DRAW_ACCEPT = '.excalidraw'
 
 // Fonts are served from our own origin (copied by scripts/copy-excalidraw-assets.mjs).
 ;(window as any).EXCALIDRAW_ASSET_PATH = `${import.meta.env.BASE_URL}excalidraw/`
+
+// Excalidraw API of each open session (for hand in).
+export const drawApis = new WeakMap<Session, any>()
+
+export async function exportDrawing(api: any, format: 'png' | 'svg' | 'excalidraw'): Promise<Blob> {
+  const elements = api.getSceneElements()
+  const appState = api.getAppState()
+  const files = api.getFiles()
+  if (format === 'png') return exportToBlob({ elements, appState: { ...appState, exportBackground: true }, files, mimeType: 'image/png' })
+  if (format === 'svg') return new Blob([(await exportToSvg({ elements, appState: { ...appState, exportBackground: true }, files })).outerHTML], { type: 'image/svg+xml' })
+  return new Blob([serializeAsJSON(elements, appState, files, 'local')], { type: 'application/json' })
+}
 
 export function mountDraw(session: Session, root: HTMLElement): void {
   const info = appInfo('draw')
@@ -61,13 +76,7 @@ export function mountDraw(session: Session, root: HTMLElement): void {
     const download = async (format: 'png' | 'svg' | 'excalidraw') => {
       const api = apiRef.current
       if (!api) return
-      const elements = api.getSceneElements()
-      const appState = api.getAppState()
-      const files = api.getFiles()
-      let blob: Blob
-      if (format === 'png') blob = await exportToBlob({ elements, appState: { ...appState, exportBackground: true }, files, mimeType: 'image/png' })
-      else if (format === 'svg') blob = new Blob([(await exportToSvg({ elements, appState: { ...appState, exportBackground: true }, files })).outerHTML], { type: 'image/svg+xml' })
-      else blob = new Blob([serializeAsJSON(elements, appState, files, 'local')], { type: 'application/json' })
+      const blob = await exportDrawing(api, format)
       const a = el('a', { href: URL.createObjectURL(blob), download: `${title()}.${format}` })
       a.click()
       setTimeout(() => URL.revokeObjectURL(a.href), 1000)
@@ -80,6 +89,7 @@ export function mountDraw(session: Session, root: HTMLElement): void {
         initialData,
         excalidrawAPI: (api: any) => {
           apiRef.current = api
+          drawApis.set(session, api)
           sync.attach(api)
           if (import.meta.env.DEV) Object.assign(window, { excalidrawAPI: api, drawSync: sync })
         },
@@ -90,6 +100,8 @@ export function mountDraw(session: Session, root: HTMLElement): void {
         onPointerUpdate: (payload: any) =>
           sync.onPointer(payload.pointer, payload.button, apiRef.current?.getAppState().selectedElementIds ?? {}),
         isCollaborating: true,
+        // Viewers and commenters cannot change the drawing.
+        viewModeEnabled: !session.canEdit,
         UIOptions: { canvasActions: { loadScene: false } },
       },
       h(
@@ -99,6 +111,10 @@ export function mountDraw(session: Session, root: HTMLElement): void {
         item('Open file (.excalidraw)…', () => fileInput.click()),
         item('All documents', () => (location.href = homePath())),
         item('Share…', () => document.getElementById('btn-share')!.click()),
+        h(MainMenu.Separator),
+        item(t('Make a copy'), () => void makeCopy(session)),
+        session.canEdit ? item(t('Save version…'), () => void saveNamedVersion(session)) : null,
+        item(t('Version history…'), () => void openVersionHistory(session)),
         h(MainMenu.Separator),
         item('Download PNG', () => download('png')),
         item('Download SVG', () => download('svg')),
@@ -111,6 +127,11 @@ export function mountDraw(session: Session, root: HTMLElement): void {
         h(MainMenu.DefaultItems.Help),
       ),
     )
+  }
+
+  session.hooks.print = async () => {
+    const api = drawApis.get(session)
+    if (api) await printImages([await exportDrawing(api, 'png')])
   }
 
   createRoot(container).render(h(Editor))

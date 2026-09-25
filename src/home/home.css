@@ -60,3 +60,5 @@ body:has(.home) { overflow: auto; }
 .offline-control { display: flex; align-items: center; }
 .offline-ready { color: var(--ok); font-size: 13px; white-space: nowrap; }
 .offline-pending { color: var(--muted); font-size: 13px; white-space: nowrap; }
+
+.access-tag { font-size: 11px; color: #7a4f01; background: #fef7e0; border: 1px solid #f4d58d; border-radius: 10px; padding: 1px 7px; margin-left: 8px; font-weight: 400; }

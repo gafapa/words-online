@@ -15,10 +15,23 @@ export interface PageSettings {
 
 export interface DocumentData {
   title: string
+  // Comment ranges are `commentRange` marks (attrs.id) on the body's inline content.
   body: JSONContent
   header: JSONContent | null
   footer: JSONContent | null
   page: PageSettings
+  comments?: CommentData[]
+}
+
+// A comment or, with parentId, a reply (replies have no range of their own).
+export interface CommentData {
+  id: string
+  parentId?: string
+  author: string
+  // Milliseconds since the epoch; 0 when unknown.
+  date: number
+  text: string
+  resolved?: boolean
 }
 
 // Portrait width × height in millimetres.

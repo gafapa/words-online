@@ -7,6 +7,8 @@ import { homePath, newDocPath } from '../../core/router'
 import type { Session } from '../../core/session'
 import { setupChrome } from '../../ui/chrome'
 import { renderShell } from '../../ui/shell'
+import { t } from '../../core/i18n'
+import { documentMenuItems } from '../../ui/versions'
 import { createMenuBar, el, showDialog, toast } from '../../ui/widgets'
 import { exportSheetFile, SHEET_ACCEPT, type SheetExportFormat } from './formats'
 import { renderPrintHtml } from './print'
@@ -15,6 +17,9 @@ import { createSpreadsheet } from './univer'
 
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform)
 const mod = (k: string) => (isMac ? `⌘${k}` : `Ctrl+${k}`)
+
+// Live workbook access of each open session (for hand in).
+export const sheetHandles = new WeakMap<Session, { snapshot: () => IWorkbookData; activeSheetId: () => string }>()
 
 export function mountSheet(session: Session, root: HTMLElement): void {
   const info = appInfo('sheet')
@@ -32,12 +37,36 @@ export function mountSheet(session: Session, root: HTMLElement): void {
   const { univer, univerAPI } = createSpreadsheet(container)
   // Declared first: the initial rebuild runs inside the SheetSync constructor.
   let presence: SelectionPresence | undefined
-  const sync = new SheetSync({ doc: session.doc, univer, univerAPI, onRebuild: () => presence?.render() })
+  // Viewers and commenters get a read-only workbook (again after every rebuild).
+  const applyAccess = () => {
+    if (!session.canEdit) univerAPI.getActiveWorkbook()?.setEditable(false)
+  }
+  const sync = new SheetSync({
+    doc: session.doc,
+    univer,
+    univerAPI,
+    onRebuild: () => {
+      applyAccess()
+      presence?.render()
+    },
+  })
   presence = new SelectionPresence(session, univerAPI, univer.__getInjector().get(ICommandService))
+  applyAccess()
+  if (!session.canEdit) {
+    // Commands and local mutations are refused (operations such as selecting,
+    // scrolling or copying still work); remote changes arrive as collab mutations.
+    univer.__getInjector().get(ICommandService).beforeCommandExecuted((info, options) => {
+      if (options?.fromCollab || options?.onlyLocal || /\.operation\.|copy|zoom/.test(info.id)) return
+      if (!/\.(command|mutation)\./.test(info.id)) return
+      toast(t('This spreadsheet is view only'))
+      throw new Error(t('This spreadsheet is view only'))
+    })
+  }
 
   const meta = session.doc.getMap<unknown>('meta')
   const title = () => String(meta.get('title') || info.untitled)
   const snapshot = () => univerAPI.getActiveWorkbook()!.save() as IWorkbookData
+  sheetHandles.set(session, { snapshot, activeSheetId: () => univerAPI.getActiveWorkbook()!.getActiveSheet().getSheetId() })
 
   // ---------- File actions ----------
 
@@ -74,6 +103,8 @@ export function mountSheet(session: Session, root: HTMLElement): void {
     }
   })
 
+  session.hooks.print = print
+
   // ---------- Menus ----------
 
   createMenuBar(shell.menubar, [
@@ -94,6 +125,8 @@ export function mountSheet(session: Session, root: HTMLElement): void {
             { label: 'PDF (via Print, current sheet)', run: print },
           ],
         },
+        '-',
+        ...documentMenuItems(session),
         '-',
         { label: 'Print', shortcut: mod('P'), run: print },
       ],

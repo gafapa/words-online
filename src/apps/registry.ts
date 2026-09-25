@@ -1,6 +1,6 @@
 // Apps of the suite. Each app is loaded with a dynamic import() only when opened.
 
-import type { Session } from '../core/session'
+import type { Session, SubmitFile } from '../core/session'
 import type { DocType } from '../core/store'
 
 export interface AppModule {
@@ -9,6 +9,10 @@ export interface AppModule {
   accept: string
   // Imports a file into a new local document and returns its path.
   importFile(file: File): Promise<string>
+  // "Hand in": the document in its original formats (e.g. .odt + .docx).
+  submitFiles?(session: Session): Promise<SubmitFile[]>
+  // Restores a version (Y.encodeStateAsUpdate without history); default: generic restore.
+  restoreVersion?(session: Session, state: Uint8Array): void | Promise<void>
 }
 
 export interface AppInfo {
@@ -64,6 +68,16 @@ export const APPS: AppInfo[] = [
     color: '#9334e6',
     accept: '.drawio,.xml',
     load: () => import('./diagram'),
+  },
+  {
+    type: 'slides',
+    name: 'Presentation',
+    newLabel: 'New presentation',
+    untitled: 'Untitled presentation',
+    letter: 'P',
+    color: '#d24726',
+    accept: '.pptx',
+    load: () => import('./slides'),
   },
 ]
 

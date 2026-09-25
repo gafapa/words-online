@@ -1,9 +1,10 @@
 // Entry point of the spreadsheet, loaded on demand by the app registry.
 
-import type { Session } from '../../core/session'
+import type { Session, SubmitFile } from '../../core/session'
 import { createLocalDocument } from '../../core/session'
-import { mountSheet } from './app'
-import { importSheetFile, SHEET_ACCEPT } from './formats'
+import { mountSheet, sheetHandles } from './app'
+import { exportSheetFile, importSheetFile, SHEET_ACCEPT } from './formats'
+import type { IWorkbookData } from '@univerjs/presets'
 import { SheetSync } from './sync'
 import './sheet.css'
 
@@ -18,4 +19,21 @@ export async function importFile(file: File): Promise<string> {
   const data = await importSheetFile(file)
   const title = file.name.replace(/\.[^.]+$/, '')
   return createLocalDocument('sheet', title, (doc) => SheetSync.setBase(doc, data))
+}
+
+// Creates a new local document from a workbook snapshot (templates); returns its path.
+export function createFromWorkbook(title: string, data: Partial<IWorkbookData>): Promise<string> {
+  return createLocalDocument('sheet', title, (doc) => SheetSync.setBase(doc, data))
+}
+
+// "Hand in": the workbook as .ods and .xlsx.
+export async function submitFiles(session: Session): Promise<SubmitFile[]> {
+  const handle = sheetHandles.get(session)
+  if (!handle) throw new Error('The spreadsheet is still loading')
+  const title = String(session.doc.getMap('meta').get('title') || 'Untitled spreadsheet')
+  const data = handle.snapshot()
+  return [
+    { name: `${title}.ods`, blob: await exportSheetFile('ods', data) },
+    { name: `${title}.xlsx`, blob: await exportSheetFile('xlsx', data) },
+  ]
 }

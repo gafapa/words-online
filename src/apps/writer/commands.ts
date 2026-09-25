@@ -14,12 +14,14 @@ import {
   ListIndentDecrease,
   ListIndentIncrease,
   ListOrdered,
+  MessageSquarePlus,
   Minus,
   Plus,
   Printer,
   Redo2,
   RemoveFormatting,
   Search,
+  Sigma,
   Strikethrough,
   Table,
   TextAlignCenter,
@@ -35,6 +37,8 @@ import type { ParagraphStyle } from './editor/nodes'
 import { closePopover, colorPalette, createMenuBar, el, icon, openPopover, showContextMenu, tableGrid, type MenuEntry } from '../../ui/widgets'
 import type { WriterContext } from './app'
 import { homePath } from '../../core/router'
+import { t } from '../../core/i18n'
+import { documentMenuItems } from '../../ui/versions'
 
 export const FONTS = [
   'Arial',
@@ -70,6 +74,35 @@ const mod = (k: string) => (isMac ? `⌘${k}` : `Ctrl+${k}`)
 
 const dialogs = () => import('./dialogs')
 
+// Marks that record review information rather than formatting.
+const REVIEW_MARKS = new Set(['authorship', 'insertion', 'deletion', 'commentRange'])
+
+export function clearFormatting(editor: Editor): void {
+  editor
+    .chain()
+    .focus()
+    .command(({ tr, state }) => {
+      const { from, to, empty } = state.selection
+      if (empty) tr.setStoredMarks([])
+      else for (const type of Object.values(state.schema.marks)) if (!REVIEW_MARKS.has(type.name)) tr.removeMark(from, to, type)
+      return true
+    })
+    .run()
+}
+
+// Disables document-changing items for people who cannot edit.
+function guard(items: MenuEntry[], editable: () => boolean): MenuEntry[] {
+  return items.map((item) => {
+    if (item === '-') return item
+    const enabled = item.enabled
+    return {
+      ...item,
+      submenu: item.submenu ? guard(item.submenu, editable) : undefined,
+      enabled: () => editable() && (enabled ? enabled() : true),
+    }
+  })
+}
+
 export function currentStyle(editor: Editor): ParagraphStyle {
   for (let level = 1; level <= 4; level++) if (editor.isActive('heading', { level })) return `h${level}` as ParagraphStyle
   const styleId = editor.getAttributes('paragraph').styleId
@@ -99,6 +132,9 @@ export function buildMenus(ctx: WriterContext, container: HTMLElement): void {
   const run = (fn: (e: Editor) => unknown) => () => fn(editor)
   const inTable = () => editor.isActive('table')
   const can = (fn: (c: ReturnType<Editor['can']>) => boolean) => () => fn(editor.can())
+  const editable = () => editor.isEditable
+  const canComment = () => ctx.access !== 'view'
+  const comment = () => ctx.review.startComment()
 
   createMenuBar(container, [
     {
@@ -121,24 +157,26 @@ export function buildMenus(ctx: WriterContext, container: HTMLElement): void {
           ],
         },
         '-',
-        { label: 'Page setup…', run: () => dialogs().then((d) => d.pageSetup(ctx)) },
+        ...documentMenuItems(ctx.session),
+        '-',
+        { label: 'Page setup…', run: () => dialogs().then((d) => d.pageSetup(ctx)), enabled: editable },
         { label: 'Print', shortcut: mod('P'), run: ctx.print },
       ],
     },
     {
       label: 'Edit',
       items: [
-        { label: 'Undo', shortcut: mod('Z'), run: run((e) => e.chain().focus().undo().run()), enabled: can((c) => c.undo()) },
-        { label: 'Redo', shortcut: mod('Y'), run: run((e) => e.chain().focus().redo().run()), enabled: can((c) => c.redo()) },
+        { label: 'Undo', shortcut: mod('Z'), run: run((e) => e.chain().focus().undo().run()), enabled: () => editable() && editor.can().undo() },
+        { label: 'Redo', shortcut: mod('Y'), run: run((e) => e.chain().focus().redo().run()), enabled: () => editable() && editor.can().redo() },
         '-',
-        { label: 'Cut', shortcut: mod('X'), run: () => clipboardCommand(editor, 'cut') },
+        { label: 'Cut', shortcut: mod('X'), run: () => clipboardCommand(editor, 'cut'), enabled: editable },
         { label: 'Copy', shortcut: mod('C'), run: () => clipboardCommand(editor, 'copy') },
-        { label: 'Paste', shortcut: mod('V'), run: () => dialogs().then((d) => d.pasteHint()) },
+        { label: 'Paste', shortcut: mod('V'), run: () => dialogs().then((d) => d.pasteHint()), enabled: editable },
         '-',
         { label: 'Select all', shortcut: mod('A'), run: run((e) => e.chain().focus().selectAll().run()) },
         '-',
         { label: 'Find', shortcut: mod('F'), run: () => ctx.find.open(false) },
-        { label: 'Find and replace', shortcut: mod('H'), run: () => ctx.find.open(true) },
+        { label: 'Find and replace', shortcut: mod('H'), run: () => ctx.find.open(true), enabled: editable },
       ],
     },
     {
@@ -152,27 +190,41 @@ export function buildMenus(ctx: WriterContext, container: HTMLElement): void {
           ],
         },
         { label: 'Word count…', run: () => dialogs().then((d) => d.wordCount(ctx)) },
+        '-',
+        { label: t('Show authorship'), run: () => ctx.authorship.toggle(), active: () => ctx.authorship.enabled },
+        { label: t('Contributions…'), run: ctx.showContributions },
+        { label: t('Show resolved comments'), run: () => toggleResolved(ctx), active: () => ctx.review.showResolved },
       ],
     },
     {
       label: 'Insert',
       items: [
-        { label: 'Image from file…', run: () => pickImage(editor) },
-        { label: 'Image from URL…', run: () => dialogs().then((d) => d.imageFromUrl(ctx)) },
-        { label: 'Table…', run: () => dialogs().then((d) => d.insertTableDialog(ctx)) },
-        { label: 'Link…', shortcut: mod('K'), run: () => dialogs().then((d) => d.editLink(ctx)) },
+        { label: t('Comment'), shortcut: isMac ? '⌥⌘M' : 'Ctrl+Alt+M', run: comment, enabled: canComment },
         '-',
-        { label: 'Footnote…', shortcut: isMac ? '⌥⌘F' : 'Ctrl+Alt+F', run: () => dialogs().then((d) => d.insertFootnote(ctx)) },
-        { label: 'Header and footer…', run: () => dialogs().then((d) => d.editHeaderFooter(ctx)) },
-        '-',
-        { label: 'Page break', shortcut: mod('Enter'), run: run((e) => e.chain().focus().setPageBreak().run()) },
-        { label: 'Horizontal line', run: run((e) => e.chain().focus().setHorizontalRule().run()) },
-        { label: 'Special character…', run: () => dialogs().then((d) => d.specialCharacters(ctx)) },
+        ...guard(
+          [
+            { label: t('Equation…'), run: () => ctx.insertEquation(false) },
+            { label: t('Display equation…'), run: () => ctx.insertEquation(true) },
+            '-',
+            { label: 'Image from file…', run: () => pickImage(editor) },
+            { label: 'Image from URL…', run: () => dialogs().then((d) => d.imageFromUrl(ctx)) },
+            { label: 'Table…', run: () => dialogs().then((d) => d.insertTableDialog(ctx)) },
+            { label: 'Link…', shortcut: mod('K'), run: () => dialogs().then((d) => d.editLink(ctx)) },
+            '-',
+            { label: 'Footnote…', shortcut: isMac ? '⌥⌘F' : 'Ctrl+Alt+F', run: () => dialogs().then((d) => d.insertFootnote(ctx)) },
+            { label: 'Header and footer…', run: () => dialogs().then((d) => d.editHeaderFooter(ctx)) },
+            '-',
+            { label: 'Page break', shortcut: mod('Enter'), run: run((e) => e.chain().focus().setPageBreak().run()) },
+            { label: 'Horizontal line', run: run((e) => e.chain().focus().setHorizontalRule().run()) },
+            { label: 'Special character…', run: () => dialogs().then((d) => d.specialCharacters(ctx)) },
+          ],
+          editable,
+        ),
       ],
     },
     {
       label: 'Format',
-      items: [
+      items: guard([
         {
           label: 'Text',
           submenu: [
@@ -224,12 +276,12 @@ export function buildMenus(ctx: WriterContext, container: HTMLElement): void {
         { label: 'Quote', run: run((e) => e.chain().focus().toggleBlockquote().run()), active: () => editor.isActive('blockquote') },
         { label: 'Code block', run: run((e) => e.chain().focus().toggleCodeBlock().run()), active: () => editor.isActive('codeBlock') },
         '-',
-        { label: 'Clear formatting', shortcut: mod('\\'), run: run((e) => e.chain().focus().unsetAllMarks().clearNodes().run()) },
-      ],
+        { label: 'Clear formatting', shortcut: mod('\\'), run: () => { clearFormatting(editor); editor.chain().focus().clearNodes().run() } },
+      ], editable),
     },
     {
       label: 'Table',
-      items: [
+      items: guard([
         { label: 'Insert table…', run: () => dialogs().then((d) => d.insertTableDialog(ctx)), enabled: () => !inTable() },
         '-',
         { label: 'Insert row above', run: run((e) => e.chain().focus().addRowBefore().run()), enabled: inTable },
@@ -245,6 +297,22 @@ export function buildMenus(ctx: WriterContext, container: HTMLElement): void {
         { label: 'Split cell', run: run((e) => e.chain().focus().splitCell().run()), enabled: can((c) => c.splitCell()) },
         { label: 'Header row', run: run((e) => e.chain().focus().toggleHeaderRow().run()), enabled: inTable },
         { label: 'Cell background…', run: () => dialogs().then((d) => d.cellBackground(ctx)), enabled: inTable },
+      ], editable),
+    },
+    {
+      label: t('Review'),
+      items: [
+        { label: t('Comment'), shortcut: isMac ? '⌥⌘M' : 'Ctrl+Alt+M', run: comment, enabled: canComment },
+        { label: t('Suggest changes'), run: () => ctx.setSuggesting(!ctx.isSuggesting()), active: ctx.isSuggesting, enabled: editable },
+        '-',
+        { label: t('Next comment or suggestion'), run: () => ctx.review.step(1) },
+        { label: t('Previous comment or suggestion'), run: () => ctx.review.step(-1) },
+        { label: t('Accept all suggestions'), run: run((e) => e.commands.acceptAllSuggestions()), enabled: editable },
+        { label: t('Reject all suggestions'), run: run((e) => e.commands.rejectAllSuggestions()), enabled: editable },
+        '-',
+        { label: t('Show resolved comments'), run: () => toggleResolved(ctx), active: () => ctx.review.showResolved },
+        { label: t('Show authorship'), run: () => ctx.authorship.toggle(), active: () => ctx.authorship.enabled },
+        { label: t('Contributions…'), run: ctx.showContributions },
       ],
     },
     {
@@ -263,15 +331,20 @@ export function buildMenus(ctx: WriterContext, container: HTMLElement): void {
       dialogs().then((d) => d.shortcuts())
     } else if (modKey && e.key.toLowerCase() === 'k') {
       e.preventDefault()
-      dialogs().then((d) => d.editLink(ctx))
+      if (editor.isEditable) dialogs().then((d) => d.editLink(ctx))
     } else if (modKey && e.altKey && e.key.toLowerCase() === 'f') {
       e.preventDefault()
-      dialogs().then((d) => d.insertFootnote(ctx))
+      if (editor.isEditable) dialogs().then((d) => d.insertFootnote(ctx))
     } else if (modKey && e.key === '\\') {
       e.preventDefault()
-      editor.chain().focus().unsetAllMarks().run()
+      if (editor.isEditable) clearFormatting(editor)
     }
   })
+}
+
+function toggleResolved(ctx: WriterContext) {
+  ctx.review.showResolved = !ctx.review.showResolved
+  ctx.review.refresh()
 }
 
 function indent(editor: Editor, dir: 1 | -1) {
@@ -335,8 +408,8 @@ export function buildToolbar(ctx: WriterContext, container: HTMLElement): void {
   }
 
   group(
-    button(Undo2, `Undo (${mod('Z')})`, () => editor.chain().focus().undo().run(), undefined, () => editor.can().undo()),
-    button(Redo2, `Redo (${mod('Y')})`, () => editor.chain().focus().redo().run(), undefined, () => editor.can().redo()),
+    button(Undo2, `Undo (${mod('Z')})`, () => editor.chain().focus().undo().run(), undefined, () => editor.isEditable && editor.can().undo()),
+    button(Redo2, `Redo (${mod('Y')})`, () => editor.chain().focus().redo().run(), undefined, () => editor.isEditable && editor.can().redo()),
     button(Printer, `Print (${mod('P')})`, ctx.print),
     button(Search, `Find and replace (${mod('F')})`, () => ctx.find.open(true)),
   )
@@ -457,7 +530,32 @@ export function buildToolbar(ctx: WriterContext, container: HTMLElement): void {
     button(ListIndentIncrease, 'Increase indent', () => indent(editor, 1)),
   )
 
-  group(button(RemoveFormatting, `Clear formatting (${mod('\\')})`, () => editor.chain().focus().unsetAllMarks().run()))
+  group(button(RemoveFormatting, `Clear formatting (${mod('\\')})`, () => clearFormatting(editor)))
+
+  group(
+    button(Sigma, t('Insert equation'), () => ctx.insertEquation(false)),
+  )
+
+  // Review tools stay available to commenters.
+  const review = el('div', { class: 'tb-group tb-review' })
+  const commentButton = button(MessageSquarePlus, `${t('Comment')} (${isMac ? '⌥⌘M' : 'Ctrl+Alt+M'})`, () => ctx.review.startComment())
+  commentButton.disabled = ctx.access === 'view'
+  review.append(commentButton)
+  if (ctx.access === 'edit') {
+    const mode = select(
+      t('Mode'),
+      [
+        ['editing', t('Editing')],
+        ['suggesting', t('Suggesting')],
+      ],
+      () => (ctx.isSuggesting() ? 'suggesting' : 'editing'),
+      (v) => ctx.setSuggesting(v === 'suggesting'),
+      'tb-mode',
+    )
+    review.append(mode)
+  }
+  container.append(review)
+  if (ctx.access !== 'edit') container.classList.add('readonly')
 
   const refresh = () => updaters.forEach((u) => u())
   editor.on('transaction', refresh)
@@ -474,8 +572,19 @@ export function setupContextMenu(ctx: WriterContext): void {
     e.preventDefault()
     const pos = editor.view.posAtCoords({ left: e.clientX, top: e.clientY })
     const { from, to } = editor.state.selection
-    if (pos && (pos.pos < from || pos.pos > to)) editor.commands.setTextSelection(pos.pos)
+    if (editor.isEditable && pos && (pos.pos < from || pos.pos > to)) editor.commands.setTextSelection(pos.pos)
+    if (!editor.isEditable) {
+      const sel = window.getSelection()
+      const hasText = !editor.state.selection.empty || (!!sel && !sel.isCollapsed)
+      showContextMenu(e.clientX, e.clientY, [
+        { label: 'Copy', shortcut: mod('C'), run: () => clipboardCommand(editor, 'copy'), enabled: () => hasText },
+        { label: t('Comment'), shortcut: isMac ? '⌥⌘M' : 'Ctrl+Alt+M', run: () => ctx.review.startComment(), enabled: () => hasText && ctx.access !== 'view' },
+      ])
+      return
+    }
     const items: MenuEntry[] = [
+      { label: t('Comment'), shortcut: isMac ? '⌥⌘M' : 'Ctrl+Alt+M', run: () => ctx.review.startComment(), enabled: () => !editor.state.selection.empty },
+      '-',
       { label: 'Cut', shortcut: mod('X'), run: () => clipboardCommand(editor, 'cut'), enabled: () => !editor.state.selection.empty },
       { label: 'Copy', shortcut: mod('C'), run: () => clipboardCommand(editor, 'copy'), enabled: () => !editor.state.selection.empty },
       { label: 'Paste', shortcut: mod('V'), run: () => dialogs().then((d) => d.pasteHint()) },
@@ -501,7 +610,7 @@ export function setupContextMenu(ctx: WriterContext): void {
         { label: 'Delete table', run: () => editor.chain().focus().deleteTable().run() },
       )
     }
-    items.push('-', { label: 'Clear formatting', shortcut: mod('\\'), run: () => editor.chain().focus().unsetAllMarks().run() })
+    items.push('-', { label: 'Clear formatting', shortcut: mod('\\'), run: () => clearFormatting(editor) })
     showContextMenu(e.clientX, e.clientY, items)
   })
 }

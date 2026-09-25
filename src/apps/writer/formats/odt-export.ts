@@ -13,6 +13,9 @@ import {
   type PageSettings,
 } from './types'
 import { escapeXml, loadImage, toHex, toPt } from '../../../core/formats'
+import { latexToMathML, measureEquation } from '../../../ui/equation'
+import { changeOf, commentMarkers, type CommentMarkers } from './review'
+import type { CommentData } from './types'
 
 const NS = [
   'xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"',
@@ -25,6 +28,7 @@ const NS = [
   'xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"',
   'xmlns:dc="http://purl.org/dc/elements/1.1/"',
   'xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0"',
+  'xmlns:loext="urn:org:documentfoundation:names:experimental:office:xmlns:loext:1.0"',
 ].join(' ')
 
 const INDENT_CM = 1.27
@@ -44,6 +48,11 @@ interface Shared {
   frames: number
   // Text area width, for tables without explicit column widths.
   contentWidthCm: number
+  comments: CommentMarkers
+  // Tracked changes (text:changed-region elements).
+  changes: string[]
+  // Formula objects: folder name → MathML.
+  formulas: Map<string, string>
 }
 
 interface Ctx {
@@ -63,6 +72,9 @@ export async function exportOdt(data: DocumentData): Promise<Blob> {
     notes: 0,
     frames: 0,
     contentWidthCm: (width - data.page.margins.left - data.page.margins.right) / 10,
+    comments: commentMarkers(data),
+    changes: [],
+    formulas: new Map(),
   }
   // Body styles go to content.xml; header/footer styles to styles.xml (prefixed to keep names apart).
   const bodyStyles = new AutoStyles('')
@@ -80,12 +92,13 @@ export async function exportOdt(data: DocumentData): Promise<Blob> {
     `<?xml version="1.0" encoding="UTF-8"?>` +
       `<office:document-content ${NS} office:version="1.3">${fontDecls(shared.fonts)}` +
       `<office:automatic-styles>${bodyStyles.xml()}</office:automatic-styles>` +
-      `<office:body><office:text>${body || '<text:p text:style-name="Standard"/>'}</office:text></office:body></office:document-content>`,
+      `<office:body><office:text>${trackedChanges(shared.changes)}${body || '<text:p text:style-name="Standard"/>'}</office:text></office:body></office:document-content>`,
   )
   zip.file('styles.xml', stylesXml(data.page, masterStyles, shared.fonts, header, footer))
   zip.file('meta.xml', metaXml(data.title))
   shared.pictures.forEach((pic, name) => zip.file(`Pictures/${name}`, pic.data))
-  zip.file('META-INF/manifest.xml', manifestXml(shared.pictures))
+  shared.formulas.forEach((mathml, name) => zip.file(`${name}/content.xml`, `<?xml version="1.0" encoding="UTF-8"?>${mathml}`))
+  zip.file('META-INF/manifest.xml', manifestXml(shared.pictures, shared.formulas))
   return zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.oasis.opendocument.text' })
 }
 
@@ -172,7 +185,8 @@ class Writer {
               ? 'Subtitle'
               : ctx.parent
         const props: string[] = []
-        const align = { left: 'start', center: 'center', right: 'end', justify: 'justify' }[a.textAlign as string]
+        const onlyDisplayEquation = node.content?.length === 1 && node.content[0].type === 'equation' && node.content[0].attrs?.display
+        const align = { left: 'start', center: 'center', right: 'end', justify: 'justify' }[a.textAlign as string] ?? (onlyDisplayEquation ? 'center' : undefined)
         if (align) props.push(`fo:text-align="${align}"`)
         const indent = Math.min(Math.max(Number(a.indent) || 0, 0), 8)
         if (indent && !ctx.inList) {
@@ -326,13 +340,32 @@ class Writer {
   }
 
   private async run(node: JSONContent): Promise<string> {
+    const { starts, ends } = this.shared.comments
+    const before = (starts.get(node) ?? []).map((c) => annotation(c)).join('')
+    const after = (ends.get(node) ?? []).map((c) => `<office:annotation-end office:name="${annotationName(c)}"/>`).join('')
+    return before + (await this.content(node)) + after
+  }
+
+  private async content(node: JSONContent): Promise<string> {
     const a = node.attrs ?? {}
     switch (node.type) {
       case 'text': {
         const text = escapeText(node.text ?? '')
         const style = this.textStyle(node.marks ?? [])
-        return style ? `<text:span text:style-name="${style}">${text}</text:span>` : text
+        const span = style ? `<text:span text:style-name="${style}">${text}</text:span>` : text
+        const change = changeOf(node)
+        if (!change) return span
+        const id = `ct${this.shared.changes.length + 1}`
+        const info = `<office:change-info><dc:creator>${escapeXml(change.author)}</dc:creator><dc:date>${isoDate(change.date)}</dc:date></office:change-info>`
+        if (change.kind === 'insertion') {
+          this.shared.changes.push(`<text:changed-region xml:id="${id}" text:id="${id}"><text:insertion>${info}</text:insertion></text:changed-region>`)
+          return `<text:change-start text:change-id="${id}"/>${span}<text:change-end text:change-id="${id}"/>`
+        }
+        this.shared.changes.push(`<text:changed-region xml:id="${id}" text:id="${id}"><text:deletion>${info}<text:p>${span}</text:p></text:deletion></text:changed-region>`)
+        return `<text:change text:change-id="${id}"/>`
       }
+      case 'equation':
+        return this.formula(String(a.latex ?? ''), !!a.display)
       case 'hardBreak':
         return '<text:line-break/>'
       case 'image':
@@ -353,6 +386,25 @@ class Writer {
       default:
         return node.content ? this.inline(node.content) : ''
     }
+  }
+
+  // A LibreOffice Math object holding the equation as MathML (with its LaTeX as annotation).
+  private formula(latex: string, display: boolean): string {
+    if (!latex.trim()) return ''
+    const name = `Formula${this.shared.formulas.size + 1}`
+    this.shared.formulas.set(name, latexToMathML(latex, display))
+    const size = measureEquation(latex, display)
+    const style = this.styles.add(
+      'graphic',
+      'fr',
+      null,
+      '<style:graphic-properties style:vertical-pos="middle" style:vertical-rel="text" fo:margin-left="0cm" fo:margin-right="0cm" fo:margin-top="0cm" fo:margin-bottom="0cm" draw:fill="none" draw:ole-draw-aspect="1"/>',
+    )
+    return (
+      `<draw:frame draw:style-name="${style}" draw:name="${name}" text:anchor-type="as-char" svg:width="${(size.width / PX_PER_CM).toFixed(3)}cm" ` +
+      `svg:height="${(size.height / PX_PER_CM).toFixed(3)}cm" draw:z-index="0"><draw:object xlink:href="./${name}" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/>` +
+      `<svg:desc>${escapeXml(latex)}</svg:desc></draw:frame>`
+    )
   }
 
   private textStyle(marks: NonNullable<JSONContent['marks']>): string | null {
@@ -437,6 +489,28 @@ class Writer {
       `<draw:image xlink:href="${escapeXml(href)}" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/>${title}${desc}</draw:frame>`
     )
   }
+}
+
+function isoDate(ms: number): string {
+  return new Date(ms || Date.now()).toISOString().slice(0, 19)
+}
+
+const annotationName = (c: CommentData) => `comment-${c.id}`
+
+function annotation(c: CommentData): string {
+  const parent = c.parentId ? ` loext:parent-name="comment-${escapeXml(c.parentId)}"` : ''
+  const paragraphs = c.text
+    .split('\n')
+    .map((line) => `<text:p>${escapeText(line)}</text:p>`)
+    .join('')
+  return (
+    `<office:annotation office:name="${escapeXml(annotationName(c))}"${parent} loext:resolved="${c.resolved ? 'true' : 'false'}">` +
+    `<dc:creator>${escapeXml(c.author)}</dc:creator><dc:date>${isoDate(c.date)}</dc:date>${paragraphs}</office:annotation>`
+  )
+}
+
+function trackedChanges(changes: string[]): string {
+  return changes.length ? `<text:tracked-changes text:track-changes="false">${changes.join('')}</text:tracked-changes>` : ''
 }
 
 function linkOf(node: JSONContent): string | null {
@@ -607,10 +681,16 @@ function metaXml(title: string): string {
   )
 }
 
-function manifestXml(pictures: Shared['pictures']): string {
+function manifestXml(pictures: Shared['pictures'], formulas: Shared['formulas']): string {
   const entries = [...pictures].map(
     ([name, pic]) => `<manifest:file-entry manifest:full-path="Pictures/${name}" manifest:media-type="${pic.mime}"/>`,
   )
+  for (const name of formulas.keys()) {
+    entries.push(
+      `<manifest:file-entry manifest:full-path="${name}/content.xml" manifest:media-type="text/xml"/>`,
+      `<manifest:file-entry manifest:full-path="${name}/" manifest:version="1.3" manifest:media-type="application/vnd.oasis.opendocument.formula"/>`,
+    )
+  }
   return (
     `<?xml version="1.0" encoding="UTF-8"?>` +
     `<manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.3">` +

@@ -4,6 +4,10 @@ import type { JSONContent } from '@tiptap/core'
 import {
   AlignmentType,
   BorderStyle,
+  CommentRangeEnd,
+  CommentRangeStart,
+  CommentReference,
+  DeletedTextRun,
   Document,
   ExternalHyperlink,
   Footer,
@@ -11,6 +15,8 @@ import {
   Header,
   HeadingLevel,
   ImageRun,
+  ImportedXmlComponent,
+  InsertedTextRun,
   LevelFormat,
   LineRuleType,
   Packer,
@@ -26,12 +32,16 @@ import {
   TableRow,
   TextRun,
   WidthType,
+  type ICommentOptions,
   type ILevelsOptions,
   type IRunOptions,
   type ParagraphChild,
 } from 'docx'
-import { DEFAULT_FONT, DEFAULT_FONT_SIZE_PT, HEADING_SIZES_PT, PAGE_SIZES_MM, SUBTITLE_SIZE_PT, TITLE_SIZE_PT, type DocumentData } from './types'
+import { DEFAULT_FONT, DEFAULT_FONT_SIZE_PT, HEADING_SIZES_PT, PAGE_SIZES_MM, SUBTITLE_SIZE_PT, TITLE_SIZE_PT, type CommentData, type DocumentData } from './types'
 import { loadImage, toHex, toPt, type LoadedImage } from '../../../core/formats'
+import { latexToMathML } from '../../../ui/equation'
+import { mathmlToOmml } from './math'
+import { changeOf, commentMarkers } from './review'
 
 // Custom style ids (the importer recognises them by name) and layout constants.
 const TWIPS_PER_INDENT = 720 // 1.27 cm per indent level
@@ -74,6 +84,12 @@ interface Context {
   lists: number
   // Usable width between the margins, in twips.
   contentWidth: number
+  // Comment markers: numeric ids of each comment and its replies, placed
+  // before the first and after the last inline node the comment covers.
+  commentStarts: Map<JSONContent, number[]>
+  commentEnds: Map<JSONContent, number[]>
+  // Tracked change ids (w:ins / w:del).
+  revisions: number
 }
 
 // Where a block sits: inside a quote, a table header cell, or as extra content of a list item.
@@ -94,7 +110,11 @@ export async function exportDocx(data: DocumentData): Promise<Blob> {
     numbering: [listDefinition('bullet', 'bullet', 1), listDefinition('task-checked', 'checked', 1), listDefinition('task-unchecked', 'unchecked', 1)],
     lists: 0,
     contentWidth: Math.round(((landscape ? ph : pw) - m.left - m.right) * MM_TO_TWIPS),
+    commentStarts: new Map(),
+    commentEnds: new Map(),
+    revisions: 0,
   }
+  const comments = prepareComments(data, ctx)
 
   const body = await blocks(data.body.content ?? [], ctx, {})
   // Word expects the body to end with a paragraph, not a table.
@@ -165,6 +185,7 @@ export async function exportDocx(data: DocumentData): Promise<Blob> {
     },
     numbering: { config: ctx.numbering },
     footnotes: ctx.footnotes,
+    comments: comments.length ? { children: comments } : undefined,
     sections: [
       {
         properties: {
@@ -191,6 +212,34 @@ export async function exportDocx(data: DocumentData): Promise<Blob> {
     ],
   })
   return Packer.toBlob(doc)
+}
+
+// Numbers the comments (replies share their parent's range, as Word does)
+// and places their markers.
+function prepareComments(data: DocumentData, ctx: Context): ICommentOptions[] {
+  const markers = commentMarkers(data)
+  const numbers = new Map(markers.placed.map((c, i) => [c.id, i]))
+  const ids = (list: CommentData[]) => list.map((c) => numbers.get(c.id)!)
+  for (const [node, list] of markers.starts) ctx.commentStarts.set(node, ids(list))
+  for (const [node, list] of markers.ends) ctx.commentEnds.set(node, ids(list))
+  return markers.placed.map((c) => ({
+    id: numbers.get(c.id)!,
+    author: c.author,
+    initials: initials(c.author),
+    date: c.date ? new Date(c.date) : undefined,
+    parentId: c.parentId !== undefined ? numbers.get(c.parentId) : undefined,
+    resolved: c.resolved || undefined,
+    children: c.text.split('\n').map((line) => new Paragraph({ children: [new TextRun(line)] })),
+  }))
+}
+
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w[0].toUpperCase())
+    .join('')
+    .slice(0, 3)
 }
 
 function hasContent(doc: JSONContent): boolean {
@@ -340,14 +389,21 @@ async function inlines(nodes: JSONContent[], ctx: Context): Promise<ParagraphChi
     const marks = node.marks ?? []
     const href = marks.find((mk) => mk.type === 'link')?.attrs?.href as string | undefined
     const run = await inline(node, ctx)
-    if (!run) continue
+    const starts = ctx.commentStarts.get(node) ?? []
+    const ends = ctx.commentEnds.get(node) ?? []
+    const children: ParagraphChild[] = [
+      ...starts.map((id) => new CommentRangeStart(id)),
+      ...(run ? [run] : []),
+      ...ends.flatMap((id) => [new CommentRangeEnd(id), new TextRun({ children: [new CommentReference(id)] })]),
+    ]
+    if (!children.length) continue
     if (href) {
       if (link && link.href !== href) flush()
       link ??= { href, runs: [] }
-      link.runs.push(run)
+      link.runs.push(...children)
     } else {
       flush()
-      out.push(run)
+      out.push(...children)
     }
   }
   flush()
@@ -357,8 +413,15 @@ async function inlines(nodes: JSONContent[], ctx: Context): Promise<ParagraphChi
 async function inline(node: JSONContent, ctx: Context): Promise<ParagraphChild | null> {
   const opts = runOptions(node.marks ?? [])
   switch (node.type) {
-    case 'text':
-      return new TextRun({ ...opts, children: withTabs(node.text ?? '') })
+    case 'text': {
+      const children = withTabs(node.text ?? '')
+      const change = changeOf(node)
+      if (!change) return new TextRun({ ...opts, children })
+      const revision = { id: ++ctx.revisions, author: change.author, date: new Date(change.date).toISOString().replace(/\.\d+Z$/, 'Z') }
+      return change.kind === 'deletion' ? new DeletedTextRun({ ...opts, children, ...revision }) : new InsertedTextRun({ ...opts, children, ...revision })
+    }
+    case 'equation':
+      return equation(String(node.attrs?.latex ?? ''), !!node.attrs?.display)
     case 'hardBreak':
       return new TextRun({ break: 1 })
     case 'pageNumber':
@@ -447,6 +510,28 @@ async function image(node: JSONContent, ctx: Context): Promise<ImageRun | null> 
     transformation: { width: Math.round(width), height: Math.round(height) },
     altText: { name: 'Image', description: a.alt ?? undefined, title: a.title ?? undefined },
   })
+}
+
+// Office Math (OMML) from the LaTeX source, through KaTeX's MathML.
+function equation(latex: string, display: boolean): ParagraphChild | null {
+  if (!latex.trim()) return null
+  const math = new DOMParser().parseFromString(latexToMathML(latex, display), 'application/xml').documentElement
+  let omml = mathmlToOmml(math)
+  if (display) omml = `<m:oMathPara>${omml}</m:oMathPara>`
+  const root = new DOMParser().parseFromString(`<root xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math">${omml}</root>`, 'application/xml')
+  const el = root.documentElement.firstElementChild
+  return el ? (xmlComponent(el) as unknown as ParagraphChild) : null
+}
+
+function xmlComponent(el: Element): ImportedXmlComponent {
+  const attrs: Record<string, string> = {}
+  for (const a of el.attributes) if (a.name !== 'xmlns:m') attrs[a.name] = a.value
+  const out = new ImportedXmlComponent(el.tagName, Object.keys(attrs).length ? attrs : undefined)
+  for (const child of el.childNodes) {
+    if (child.nodeType === Node.ELEMENT_NODE) out.push(xmlComponent(child as Element))
+    else if (child.nodeType === Node.TEXT_NODE && child.textContent) out.push(child.textContent)
+  }
+  return out
 }
 
 // Loads PNG/JPEG/GIF/BMP directly; other browser-decodable formats (SVG, WebP) are converted to PNG.
