@@ -4,15 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prepare:assets": "node scripts/fetch-drawio.mjs && node scripts/copy-excalidraw-assets.mjs",
-    "predev": "node scripts/fetch-drawio.mjs && node scripts/copy-excalidraw-assets.mjs",
+    "prepare:assets": "node scripts/copy-excalidraw-assets.mjs",
+    "predev": "node scripts/copy-excalidraw-assets.mjs",
     "dev": "vite --host",
-    "prebuild": "node scripts/fetch-drawio.mjs && node scripts/copy-excalidraw-assets.mjs",
+    "prebuild": "node scripts/copy-excalidraw-assets.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host"
   },
   "dependencies": {
     "@excalidraw/excalidraw": "^0.18.1",
+    "@maxgraph/core": "^0.24.0",
     "@tiptap/core": "^3.31.3",
     "@tiptap/extension-collaboration": "^3.31.3",
     "@tiptap/extension-collaboration-caret": "^3.31.3",

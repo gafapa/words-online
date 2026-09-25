@@ -1,4 +1,109 @@
-/* Diagram editor: draw.io fills the main area. */
+/* Diagram editor: shape panel, canvas and format panel. */
 
-.diagram-host { flex: 1; min-height: 0; display: flex; }
-.drawio-frame { flex: 1; border: 0; width: 100%; height: 100%; background: var(--surface); }
+.diagram-body { flex: 1; min-height: 0; display: flex; background: var(--surface); }
+
+.diagram-canvas {
+  position: relative; flex: 1; min-width: 0; overflow: hidden; outline: none; background-color: #fff;
+  --grid: 10px; --grid-major: 40px;
+}
+.diagram-canvas.grid {
+  background-image:
+    linear-gradient(to right, rgb(0 0 0 / 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(0 0 0 / 0.08) 1px, transparent 1px),
+    linear-gradient(to right, rgb(0 0 0 / 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(0 0 0 / 0.035) 1px, transparent 1px);
+  background-size: var(--grid-major) var(--grid-major), var(--grid-major) var(--grid-major), var(--grid) var(--grid), var(--grid) var(--grid);
+}
+.diagram-canvas > svg { position: absolute; inset: 0; }
+
+/* Collaborators' pointers */
+.diagram-pointer { position: absolute; z-index: 3; height: 18px; border-left: 2px solid; pointer-events: none; }
+.diagram-pointer span {
+  position: absolute; left: 2px; top: 14px; white-space: nowrap; font: 600 11px sans-serif; color: #fff;
+  padding: 1px 4px; border-radius: 3px;
+}
+
+/* Shapes panel */
+.diagram-sidebar {
+  width: 216px; flex: none; display: flex; flex-direction: column; border-right: 1px solid var(--border); background: var(--surface);
+}
+.sidebar-search { margin: 8px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 16px; background: var(--bg); }
+.sidebar-list { flex: 1; overflow-y: auto; padding-bottom: 12px; }
+.sidebar-lib {
+  display: flex; align-items: center; gap: 6px; width: 100%; border: 0; border-top: 1px solid var(--border);
+  background: none; padding: 8px 12px; font-weight: 500; text-align: left;
+}
+.sidebar-lib::before { content: '▸'; color: var(--muted); font-size: 11px; }
+.sidebar-lib.open::before { content: '▾'; }
+.sidebar-lib:hover { background: var(--hover); }
+.sidebar-grid { display: grid; grid-template-columns: repeat(auto-fill, 44px); gap: 2px; padding: 4px 8px 8px; }
+.sidebar-item {
+  width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid transparent; border-radius: 4px;
+  background: none; padding: 0; cursor: grab;
+}
+.sidebar-item:hover { border-color: var(--border); background: var(--hover); }
+.sidebar-item svg { max-width: 38px; max-height: 38px; overflow: visible; }
+.sidebar-empty { color: var(--muted); padding: 12px; }
+.sidebar-thumb-host { position: absolute; left: -10000px; top: 0; width: 200px; height: 200px; overflow: hidden; visibility: hidden; }
+.sidebar-drag-preview { border: 1px dashed #29b6f2; background: rgb(41 182 242 / 0.08); }
+
+/* Format panel */
+.diagram-format {
+  width: 248px; flex: none; overflow-y: auto; border-left: 1px solid var(--border); background: var(--surface); font-size: 13px;
+}
+.fmt-section { padding: 10px 12px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 7px; }
+.fmt-section h3 { margin: 0 0 2px; font-size: 13px; font-weight: 600; }
+.fmt-subtitle { color: var(--muted); font-size: 12px; margin-top: 4px; }
+.fmt-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.fmt-label { color: var(--muted); }
+.fmt-input, .fmt-select, .fmt-number {
+  border: 1px solid var(--border); border-radius: 4px; background: var(--surface); padding: 3px 6px; font-size: 13px; min-width: 0;
+}
+.fmt-input { flex: 1; }
+.fmt-select { max-width: 140px; }
+.fmt-number { width: 70px; }
+.fmt-check { display: flex; align-items: center; gap: 6px; }
+.fmt-color {
+  display: flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface);
+  padding: 3px 6px; font-size: 12px; min-width: 110px;
+}
+.fmt-swatch { width: 16px; height: 16px; border: 1px solid rgb(0 0 0 / 0.25); border-radius: 3px; flex: none; }
+.fmt-swatch.none { background: linear-gradient(to top right, transparent 45%, #d00 45%, #d00 55%, transparent 55%) !important; }
+.fmt-toggles { display: flex; gap: 2px; flex-wrap: wrap; }
+.fmt-toggle {
+  min-width: 28px; height: 26px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); font-weight: 600;
+}
+.fmt-toggle.active { background: var(--active); border-color: var(--active); }
+.fmt-buttons { display: flex; gap: 4px; }
+.fmt-btn { flex: 1; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); padding: 4px 6px; font-size: 12px; }
+.fmt-btn:hover, .fmt-toggle:hover, .fmt-color:hover { background: var(--hover); }
+.fmt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.fmt-cell { display: flex; flex-direction: column; gap: 2px; color: var(--muted); font-size: 11px; }
+.fmt-cell .fmt-number { width: 100%; }
+.fmt-hint { color: var(--muted); margin: 4px 0 0; line-height: 1.4; }
+
+/* Page tabs in the status bar */
+.page-tabs { display: flex; align-items: center; gap: 2px; min-width: 0; overflow-x: auto; }
+.page-tab {
+  display: flex; align-items: center; gap: 4px; border: 1px solid transparent; border-radius: 4px; background: none;
+  padding: 2px 10px; color: var(--muted); white-space: nowrap; font-size: 12px;
+}
+.page-tab:hover { background: var(--hover); }
+.page-tab.active { background: var(--active); color: #041e49; font-weight: 500; }
+.page-peer { width: 8px; height: 8px; border-radius: 50%; }
+.page-add { border: 0; background: none; border-radius: 4px; display: grid; place-items: center; width: 24px; height: 22px; color: var(--muted); }
+.page-add:hover { background: var(--hover); }
+
+/* Printing: only the diagram */
+.diagram-print { display: none; }
+@media print {
+  .app { display: none !important; }
+  .diagram-print { display: block; }
+  .diagram-print svg { max-width: 100%; height: auto; }
+}
+
+@media (max-width: 800px) {
+  .diagram-sidebar, .diagram-format { position: absolute; top: 0; bottom: 0; z-index: 5; box-shadow: var(--shadow); }
+  .diagram-body { position: relative; }
+  .diagram-format { right: 0; }
+}

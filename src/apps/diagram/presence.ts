@@ -1,9 +1,9 @@
-// Collaborator presence inside draw.io: remote selections are highlighted and
+// Collaborator presence on the diagram: remote selections are highlighted and
 // remote pointers are drawn with the collaborator's name, in their color.
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { CellHighlight, InternalEvent, type InternalMouseEvent } from '@maxgraph/core'
 import type { Awareness } from 'y-protocols/awareness'
-import type { DrawioWindow, EditorUi } from './drawio'
+import type { EditorGraph } from './graph'
 
 interface RemoteState {
   user?: { name: string; color: string }
@@ -11,29 +11,22 @@ interface RemoteState {
 }
 
 export class DiagramPresence {
-  private highlights: any[] = []
+  private highlights: CellHighlight[] = []
   private pointers = new Map<number, HTMLElement>()
   private pointer: { x: number; y: number } | undefined
   private frame = 0
 
   constructor(
-    private readonly ui: EditorUi,
-    private readonly win: DrawioWindow,
+    private readonly graph: EditorGraph,
     private readonly awareness: Awareness,
     private readonly clientId: number,
   ) {
-    const graph = ui.editor.graph
-    const { mxEvent } = win
-    graph.getSelectionModel().addListener(mxEvent.CHANGE, () => this.publish())
-    ui.editor.addListener('pageSelected', () => {
-      this.publish()
-      this.render()
-    })
+    graph.getSelectionModel().addListener(InternalEvent.CHANGE, () => this.publish())
     let last = 0
     graph.addMouseListener({
       mouseDown: () => {},
       mouseUp: () => {},
-      mouseMove: (_sender: unknown, me: any) => {
+      mouseMove: (_sender: unknown, me: InternalMouseEvent) => {
         const now = Date.now()
         if (now - last < 50) return
         last = now
@@ -43,21 +36,25 @@ export class DiagramPresence {
       },
     })
     // Pointers are in graph coordinates: redraw when the view pans or zooms.
-    graph.view.addListener(mxEvent.SCALE, () => this.schedule())
-    graph.view.addListener(mxEvent.TRANSLATE, () => this.schedule())
-    graph.view.addListener(mxEvent.SCALE_AND_TRANSLATE, () => this.schedule())
-    graph.getModel().addListener(mxEvent.CHANGE, () => this.schedule())
-    awareness.on('change', () => this.schedule())
+    const schedule = () => this.schedule()
+    graph.view.addListener(InternalEvent.SCALE, schedule)
+    graph.view.addListener(InternalEvent.TRANSLATE, schedule)
+    graph.view.addListener(InternalEvent.SCALE_AND_TRANSLATE, schedule)
+    graph.getDataModel().addListener(InternalEvent.CHANGE, schedule)
+    awareness.on('change', schedule)
     this.publish()
   }
 
-  private currentPageId(): string {
-    return this.ui.currentPage?.getId() ?? ''
+  // Called when another page is shown.
+  pageChanged(): void {
+    this.pointer = undefined
+    this.publish()
+    this.schedule()
   }
 
   private publish(): void {
-    const cells = (this.ui.editor.graph.getSelectionCells() as any[]).map((c) => c.getId())
-    this.awareness.setLocalStateField('diagram', { page: this.currentPageId(), cells, pointer: this.pointer })
+    const cells = this.graph.getSelectionCells().map((c) => c.getId()!)
+    this.awareness.setLocalStateField('diagram', { page: this.graph.pageId ?? '', cells, pointer: this.pointer })
   }
 
   private schedule(): void {
@@ -65,50 +62,59 @@ export class DiagramPresence {
     this.frame = requestAnimationFrame(() => this.render())
   }
 
+  // Page each collaborator is looking at, for the page tabs.
+  pagesOfPeers(): Map<string, { name: string; color: string }[]> {
+    const out = new Map<string, { name: string; color: string }[]>()
+    for (const [clientId, state] of this.awareness.getStates() as Map<number, RemoteState>) {
+      if (clientId === this.clientId || !state.user || !state.diagram) continue
+      const list = out.get(state.diagram.page) ?? []
+      list.push(state.user)
+      out.set(state.diagram.page, list)
+    }
+    return out
+  }
+
   render(): void {
-    const { ui, win } = this
-    const graph = ui.editor.graph
+    const { graph } = this
     this.highlights.forEach((h) => h.destroy())
     this.highlights = []
-    const page = this.currentPageId()
     const seen = new Set<number>()
 
     for (const [clientId, state] of this.awareness.getStates() as Map<number, RemoteState>) {
-      if (clientId === this.clientId || !state.user || state.diagram?.page !== page) continue
+      const diagram = state.diagram
+      if (clientId === this.clientId || !state.user || !diagram || diagram.page !== graph.pageId) continue
       const { color, name } = state.user
-      for (const id of state.diagram.cells) {
-        const cellState = graph.view.getState(graph.getModel().getCell(id))
+      for (const id of diagram.cells) {
+        const cell = graph.getDataModel().getCell(id)
+        const cellState = cell ? graph.view.getState(cell) : null
         if (!cellState) continue
-        const highlight = new win.mxCellHighlight(graph, color, 3)
+        const highlight = new CellHighlight(graph, color, 3)
         highlight.highlight(cellState)
         this.highlights.push(highlight)
       }
-      const p = state.diagram.pointer
+      const p = diagram.pointer
       if (!p) continue
       seen.add(clientId)
       let el = this.pointers.get(clientId)
       if (!el) {
-        el = graph.container.ownerDocument.createElement('div') as HTMLElement
-        el.className = 'wo-pointer'
-        graph.container.appendChild(el)
+        el = document.createElement('div')
+        el.className = 'diagram-pointer'
+        el.append(document.createElement('span'))
+        graph.container.append(el)
         this.pointers.set(clientId, el)
       }
-      if (!el) continue
       const { scale, translate } = graph.view
-      el.style.cssText =
-        `position:absolute;pointer-events:none;z-index:3;left:${(p.x + translate.x) * scale}px;top:${(p.y + translate.y) * scale}px;` +
-        `border-left:2px solid ${color};height:18px;`
-      el.innerHTML = `<span style="position:absolute;left:2px;top:14px;white-space:nowrap;font:600 11px sans-serif;color:#fff;background:${color};padding:1px 4px;border-radius:3px">${escape(name)}</span>`
+      el.style.left = `${(p.x + translate.x) * scale}px`
+      el.style.top = `${(p.y + translate.y) * scale}px`
+      el.style.borderColor = color
+      const label = el.firstElementChild as HTMLElement
+      label.textContent = name
+      label.style.background = color
     }
     for (const [id, el] of this.pointers) {
-      if (!seen.has(id)) {
-        el.remove()
-        this.pointers.delete(id)
-      }
+      if (seen.has(id)) continue
+      el.remove()
+      this.pointers.delete(id)
     }
   }
-}
-
-function escape(s: string): string {
-  return s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!)
 }

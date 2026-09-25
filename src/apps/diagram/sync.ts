@@ -1,264 +1,409 @@
-// State-based collaboration for draw.io over Yjs.
+// State-based collaboration for the diagram editor over Yjs.
 //
-// Yjs holds the diagram as pages → cells → fields (the JSON draw.io produces
-// with getJsonForCell), so concurrent edits merge per field and every replica
-// converges. draw.io's own diff/patch machinery is the bridge:
-// - local edits: diffPages(shadow, current) tells which pages/cells/fields
-//   changed; only those are written to Yjs;
-// - remote edits: Yjs events are turned into a draw.io patch and applied with
-//   file.patch, which keeps the local selection and undo history.
+// Yjs holds pages → cells → fields (see model.ts), so concurrent edits merge
+// per field (one person moves a shape while another recolors it) and every
+// replica converges. Page names and order live in one map; the cells of each
+// page in a top-level map of their own, so pages created concurrently with the
+// same id (the blank first page) merge instead of replacing each other.
+// The graph shows one page at a time:
+// - local edits: each model change marks cells; their records are compared
+//   with Yjs and only changed fields are written;
+// - remote edits: changed cells of the shown page are applied to the model in
+//   one update, kept out of the local undo history.
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as Y from 'yjs'
-import type { DrawioWindow, EditorUi } from './drawio'
+import { Cell, InternalEvent, type EventObject, type UndoableEdit } from '@maxgraph/core'
+import { cellToRecord, geometryFromJson, recordToCell, styleFromString, type DataCell, type EditorGraph } from './graph'
+import { CELL_FIELDS, emptyPage, type CellRecord, type PageRecord } from './model'
 
-type CellJson = Record<string, any> & { id: string }
-type PageMap = Y.Map<any> // name, previous, viewBox, cells: Y.Map<Y.Map<any>>
+type FieldMap = Y.Map<string | number>
+type CellsMap = Y.Map<FieldMap>
+type PageMeta = Y.Map<string | number> // name, pos
 
-const DIFF_INSERT = 'i'
-const DIFF_REMOVE = 'r'
-const DIFF_UPDATE = 'u'
+const PAGES_KEY = 'diagram-pages'
+const cellsKey = (pageId: string) => `diagram-cells:${pageId}`
 
-// Fixed ids so replicas that start an empty diagram at the same time agree.
-export const DEFAULT_XML =
-  '<mxfile><diagram id="page-1" name="Page-1"><mxGraphModel><root>' +
-  '<mxCell id="0"/><mxCell id="1" parent="0"/></root></mxGraphModel></diagram></mxfile>'
-
-// A base holding a Visio file waiting to be converted by draw.io (base64).
-export const VSDX_PREFIX = 'vsdx:'
+export interface PageInfo {
+  id: string
+  name: string
+}
 
 export class DiagramSync {
-  readonly pages: Y.Map<PageMap>
-  private shadow: any[] = []
-  private applying = false
+  readonly pages: Y.Map<PageMeta>
+  page = ''
+  // True while remote changes are applied to the model.
+  applying = false
+  // An empty document shows a local blank page, written to Yjs only on the first
+  // edit: someone opening a shared link before it syncs must not add a page.
+  private virtual = false
+  private observed: CellsMap | null = null
+  private readonly onCells = (events: Y.YEvent<Y.AbstractType<unknown>>[], tr: Y.Transaction) => {
+    if (tr.origin !== this) this.applyRemote(events)
+  }
+  onPagesChange: () => void = () => {}
+  onPageShown: () => void = () => {}
 
   constructor(
     private readonly doc: Y.Doc,
-    private readonly ui: EditorUi,
-    private readonly win: DrawioWindow,
+    private readonly graph: EditorGraph,
   ) {
-    this.pages = doc.getMap<PageMap>('diagram-pages')
+    this.pages = doc.getMap<PageMeta>(PAGES_KEY)
   }
 
-  // Initial mxfile XML for the editor: shared state, else the stored base (import), else empty.
-  static initialXml(doc: Y.Doc, win: DrawioWindow): string {
-    const pages = doc.getMap<PageMap>('diagram-pages')
-    if (pages.size) return xmlFromState(pages, win)
-    const base = doc.getMap('diagram').get('base')
-    return typeof base === 'string' && !base.startsWith(VSDX_PREFIX) ? base : DEFAULT_XML
+  // ---------- Whole-document access (import / export) ----------
+
+  static setPages(doc: Y.Doc, pages: PageRecord[]): void {
+    doc.transact(() => pages.forEach((page, i) => writePage(doc, page, i)))
   }
 
-  static setBase(doc: Y.Doc, xml: string): void {
-    doc.getMap('diagram').set('base', xml)
+  static readPages(doc: Y.Doc): PageRecord[] {
+    return orderedPages(doc.getMap<PageMeta>(PAGES_KEY)).map(({ id, name }) => ({ id, name, cells: readCells(doc.getMap<FieldMap>(cellsKey(id))) }))
   }
 
-  // Base64 of an imported Visio file not converted yet (only while the diagram is empty).
-  static pendingVisio(doc: Y.Doc): string | null {
-    const base = doc.getMap('diagram').get('base')
-    if (doc.getMap('diagram-pages').size || typeof base !== 'string' || !base.startsWith(VSDX_PREFIX)) return null
-    return base.slice(VSDX_PREFIX.length)
+  // ---------- Pages ----------
+
+  pageList(): PageInfo[] {
+    if (this.virtual) return [{ id: this.page, name: emptyPage().name }]
+    return orderedPages(this.pages)
   }
 
-  // The shared pages now hold the diagram; the base is no longer needed.
-  static clearBase(doc: Y.Doc): void {
-    doc.getMap('diagram').delete('base')
+  // Writes the blank page shown for an empty document (fixed ids: replicas agree).
+  private materialize(): void {
+    if (!this.virtual) return
+    this.virtual = false
+    this.doc.transact(() => writePage(this.doc, emptyPage(this.page), 0), this)
   }
+
+  addPage(name: string, cells?: CellRecord[]): string {
+    this.materialize()
+    const page = emptyPage(crypto.randomUUID(), name)
+    if (cells) page.cells = cells
+    const pos = Math.max(0, ...[...this.pages.values()].map((p) => Number(p.get('pos')) || 0)) + 1
+    this.doc.transact(() => writePage(this.doc, page, pos), this)
+    return page.id
+  }
+
+  renamePage(id: string, name: string): void {
+    this.materialize()
+    this.doc.transact(() => this.pages.get(id)?.set('name', name), this)
+    this.onPagesChange()
+  }
+
+  deletePage(id: string): void {
+    if (this.pages.size <= 1) return
+    const next = this.pageList().find((p) => p.id !== id)!.id
+    this.doc.transact(() => {
+      this.pages.delete(id)
+      const cells = this.doc.getMap<FieldMap>(cellsKey(id))
+      for (const key of [...cells.keys()]) cells.delete(key)
+    }, this)
+    if (id === this.page) this.showPage(next)
+    else this.onPagesChange()
+  }
+
+  // Moves a page before another one (or to the end with null).
+  movePage(id: string, before: string | null): void {
+    const list = this.pageList().filter((p) => p.id !== id)
+    const index = before ? list.findIndex((p) => p.id === before) : list.length
+    const pos = (i: number) => Number(this.pages.get(list[i]?.id)?.get('pos'))
+    const prev = index > 0 ? pos(index - 1) : pos(0) - 2
+    const next = index < list.length ? pos(index) : prev + 2
+    this.doc.transact(() => this.pages.get(id)?.set('pos', (prev + next) / 2), this)
+    this.onPagesChange()
+  }
+
+  pageRecords(id: string): CellRecord[] {
+    if (this.virtual && id === this.page) return emptyPage(id).cells
+    return readCells(this.doc.getMap<FieldMap>(cellsKey(id)))
+  }
+
+  // ---------- Lifecycle ----------
 
   start(): void {
-    const { ui } = this
-    // Seeding is idempotent (ids come from the file), so concurrent seeders agree.
-    if (!this.pages.size) this.doc.transact(() => this.applyDiff(ui.diffPages([], ui.pages)), this)
-    this.shadow = ui.clonePages(ui.pages)
+    const model = this.graph.getDataModel()
+    model.addListener(InternalEvent.CHANGE, (_sender: unknown, evt: EventObject) => {
+      if (this.applying) return
+      const edit = evt.getProperty('edit') as UndoableEdit
+      this.pushLocal(edit.changes)
+    })
+    this.pages.observeDeep((_events, tr) => {
+      if (tr.origin === this) return
+      if (this.virtual && this.pages.size) {
+        // The shared diagram arrived before any local edit: show it instead of the blank page.
+        this.virtual = false
+        this.showPage(this.pageList()[0].id)
+      } else if (!this.virtual && !this.pages.has(this.page) && this.pages.size) this.showPage(this.pageList()[0].id)
+      else this.onPagesChange()
+    })
+    if (this.pages.size) this.showPage(this.pageList()[0].id)
+    else {
+      this.virtual = true
+      this.showPage(emptyPage().id)
+    }
+  }
 
-    ui.editor.graph.model.addListener(this.win.mxEvent.CHANGE, () => {
-      if (!this.applying) this.pushLocal()
-    })
-    this.pages.observeDeep((events, tr) => {
-      if (tr.origin !== this) this.applyRemote(events)
-    })
+  showPage(id: string): void {
+    if (!this.pages.has(id) && !(this.virtual && id === emptyPage().id)) return
+    this.page = id
+    this.graph.pageId = id
+    this.observed?.unobserveDeep(this.onCells)
+    this.observed = this.cellsMap()
+    this.observed.observeDeep(this.onCells)
+    this.rebuild()
+    this.onPagesChange()
+    this.onPageShown()
+  }
+
+  private cellsMap(): CellsMap {
+    return this.doc.getMap<FieldMap>(cellsKey(this.page))
+  }
+
+  // Replaces the model content with the shown page.
+  private rebuild(): void {
+    const list = this.pageRecords(this.page)
+    const records = new Map(list.map((r) => [r.id, r]))
+    const rootRec = list.find((r) => !r.parent) ?? { id: '0' }
+    const model = this.graph.getDataModel()
+    this.graph.stopEditing(true)
+    this.graph.clearSelection()
+    this.applying = true
+    try {
+      model.beginUpdate()
+      try {
+        const root = new Cell()
+        root.setId(rootRec.id)
+        model.setRoot(root)
+        this.applyCells(list.filter((r) => r !== rootRec).map((r) => r.id), records)
+      } finally {
+        model.endUpdate()
+      }
+    } finally {
+      this.applying = false
+    }
   }
 
   // ---------- Local → Yjs ----------
 
-  private pushLocal(): void {
-    const { ui } = this
-    const diff = ui.diffPages(this.shadow, ui.pages)
-    this.shadow = ui.clonePages(ui.pages)
-    if (Object.keys(diff).length) this.doc.transact(() => this.applyDiff(diff), this)
-  }
+  private pushLocal(changes: unknown[]): void {
+    this.materialize()
+    const cells = this.cellsMap()
+    const model = this.graph.getDataModel()
+    const touched = new Set<string>()
+    const removed = new Set<string>()
+    const orderOf = new Set<Cell>()
 
-  private applyDiff(diff: any): void {
-    for (const id of diff[DIFF_REMOVE] ?? []) this.pages.delete(id)
-
-    for (const inserted of diff[DIFF_INSERT] ?? []) {
-      const page = new Y.Map<any>()
-      const cells = new Y.Map<Y.Map<any>>()
-      const parsed = this.ui.getPagesForXml(`<mxfile>${inserted.data}</mxfile>`)[0]
-      page.set('name', parsed?.getName() ?? '')
-      page.set('previous', inserted.previous ?? '')
-      if (parsed) {
-        this.ui.updatePageRoot(parsed)
-        for (const json of cellsOf(this.ui, parsed.root)) cells.set(json.id, fieldsMap(json))
-      }
-      page.set('cells', cells)
-      this.pages.set(inserted.id, page)
+    const markTree = (cell: Cell, into: Set<string>) => {
+      const id = cell.getId()
+      if (id) into.add(id)
+      for (let i = 0; i < cell.getChildCount(); i++) markTree(cell.getChildAt(i), into)
     }
 
-    for (const [pageId, pageDiff] of Object.entries<any>(diff[DIFF_UPDATE] ?? {})) {
-      const page = this.pages.get(pageId)
-      if (!page) continue
-      for (const key of ['name', 'previous', 'viewBox']) if (key in pageDiff) page.set(key, pageDiff[key])
-      const cellsDiff = pageDiff.cells
-      if (!cellsDiff) continue
-      const cells = page.get('cells') as Y.Map<Y.Map<any>>
-      for (const id of cellsDiff[DIFF_REMOVE] ?? []) cells.delete(id)
-      for (const json of cellsDiff[DIFF_INSERT] ?? []) cells.set(json.id, fieldsMap(json))
-      for (const [id, fields] of Object.entries<any>(cellsDiff[DIFF_UPDATE] ?? {})) {
-        const cell = cells.get(id)
-        if (!cell) continue
-        for (const [key, value] of Object.entries(fields)) {
-          if (value === null || value === undefined) cell.delete(key)
-          else cell.set(key, value)
-          // A cell label is either a plain value or an XML user object.
-          if (key === 'value') cell.delete('xmlValue')
-          if (key === 'xmlValue') cell.delete('value')
+    for (const change of changes as Record<string, unknown>[]) {
+      if ('child' in change) {
+        // ChildChange: added, removed or moved to another parent/index.
+        const child = change.child as Cell
+        const parent = change.parent as Cell | null
+        const previous = change.previous as Cell | null
+        if (parent) {
+          markTree(child, touched)
+          orderOf.add(parent)
+        } else markTree(child, removed)
+        if (previous) orderOf.add(previous)
+      } else if ('root' in change) {
+        // RootChange only comes from rebuilds, which never reach this point.
+        continue
+      } else if ('cell' in change && change.cell) {
+        const cell = change.cell as Cell
+        if (cell.getId()) touched.add(cell.getId()!)
+      }
+    }
+    // Sibling order is stored as `previous`: every child of a reordered parent may change.
+    for (const parent of orderOf) {
+      if (!parent.getId() || model.getCell(parent.getId()!) !== parent) continue
+      for (let i = 0; i < parent.getChildCount(); i++) touched.add(parent.getChildAt(i).getId()!)
+    }
+
+    this.doc.transact(() => {
+      for (const id of removed) if (!model.getCell(id)) cells.delete(id)
+      for (const id of touched) {
+        const cell = model.getCell(id) as DataCell | null
+        if (!cell) {
+          cells.delete(id)
+          continue
         }
+        writeRecord(cells, cellToRecord(cell))
       }
-    }
+    }, this)
   }
 
-  // ---------- Yjs → draw.io ----------
+  // ---------- Yjs → local ----------
 
-  private applyRemote(events: Y.YEvent<any>[]): void {
-    const patch: any = {}
-    const update = (pageId: string) => ((patch[DIFF_UPDATE] ??= {})[pageId] ??= {})
-    const cellsPatch = (pageId: string) => (update(pageId).cells ??= {})
-    const insertedPages = new Set<string>()
-    const insertedCells = new Set<string>()
-
+  private applyRemote(events: Y.YEvent<Y.AbstractType<unknown>>[]): void {
+    if (this.virtual) return // handled by the page list observer
+    const dirty = new Set<string>()
     for (const event of events) {
-      const path = event.path as string[]
-      if (event.target === this.pages) {
-        for (const [key, change] of event.changes.keys) {
-          if (change.action === 'delete') (patch[DIFF_REMOVE] ??= []).push(key)
-          else {
-            const page = this.pages.get(key)!
-            insertedPages.add(key)
-            ;(patch[DIFF_INSERT] ??= []).push({ id: key, data: pageXml(key, page, this.win), previous: page.get('previous') ?? '' })
-            if (change.action === 'update') (patch[DIFF_REMOVE] ??= []).push(key)
-          }
-        }
-      } else if (path.length === 1 && !insertedPages.has(path[0])) {
-        const page = this.pages.get(path[0])
-        for (const key of (event as Y.YMapEvent<any>).keysChanged) if (key !== 'cells') update(path[0])[key] = page?.get(key) ?? ''
-      } else if (path.length === 2 && !insertedPages.has(path[0])) {
-        const cells = event.target as Y.Map<Y.Map<any>>
-        for (const [id, change] of event.changes.keys) {
-          if (change.action !== 'add') (cellsPatch(path[0])[DIFF_REMOVE] ??= []).push(id)
-          if (change.action !== 'delete') {
-            insertedCells.add(`${path[0]}:${id}`)
-            ;(cellsPatch(path[0])[DIFF_INSERT] ??= []).push(cells.get(id)!.toJSON())
-          }
-        }
-      } else if (path.length === 3 && !insertedPages.has(path[0]) && !insertedCells.has(`${path[0]}:${path[2]}`)) {
-        const cell = event.target as Y.Map<any>
-        const fields = ((cellsPatch(path[0])[DIFF_UPDATE] ??= {})[path[2]] ??= {})
-        for (const key of (event as Y.YMapEvent<any>).keysChanged) fields[key] = cell.get(key) ?? emptyValue(key)
-      }
+      if (event.path.length === 0) for (const key of (event as Y.YMapEvent<unknown>).keysChanged) dirty.add(key)
+      else dirty.add(String(event.path[0]))
     }
-    if (!Object.keys(patch).length) return
-
-    const file = this.ui.getCurrentFile()
+    if (!dirty.size) return
+    const records = new Map(readCells(this.cellsMap()).map((r) => [r.id, r]))
+    const model = this.graph.getDataModel()
     this.applying = true
     try {
-      file.patch([patch], null, false)
+      model.beginUpdate()
+      try {
+        this.applyCells([...dirty], records)
+      } finally {
+        model.endUpdate()
+      }
     } finally {
       this.applying = false
     }
-    this.shadow = this.ui.clonePages(this.ui.pages)
   }
-}
 
-// Removal marker per field, as used by draw.io diffs.
-function emptyValue(key: string): unknown {
-  return ['parent', 'source', 'target', 'previous'].includes(key) ? '' : null
-}
+  // Brings the given cells of the shown page in line with Yjs. Runs inside a model update.
+  private applyCells(ids: string[], records: Map<string, CellRecord>): void {
+    const model = this.graph.getDataModel()
+    const root = model.getRoot()!
 
-function fieldsMap(json: CellJson): Y.Map<any> {
-  const map = new Y.Map<any>()
-  for (const [key, value] of Object.entries(json)) if (value !== undefined && value !== null) map.set(key, value)
-  return map
-}
+    const reorder = new Set<string>()
+    const pending = new Map<string, DataCell>()
 
-// All cells below `root` (included) as JSON, in document order with `previous`.
-function cellsOf(ui: EditorUi, root: any): CellJson[] {
-  const out: CellJson[] = []
-  const visit = (cell: any, previous: any) => {
-    out.push(ui.getJsonForCell(cell, previous))
-    let prev = null
-    for (let i = 0; i < cell.getChildCount(); i++) {
-      const child = cell.getChildAt(i)
-      visit(child, prev)
-      prev = child
+    // Removed cells.
+    for (const id of ids) {
+      if (records.has(id)) continue
+      const cell = model.getCell(id)
+      // Children moved elsewhere concurrently are changed too, so they are re-created below.
+      if (cell && cell !== root) model.remove(cell)
+    }
+
+    // Cells to create or update, parents before children.
+    const depth = (id: string, seen = new Set<string>()): number => {
+      const parent = records.get(id)?.parent
+      if (!parent || seen.has(id)) return 0
+      seen.add(id)
+      return 1 + depth(parent, seen)
+    }
+    const present = ids.filter((id) => records.has(id) && id !== root.getId()).sort((a, b) => depth(a) - depth(b))
+
+    for (const id of present) {
+      const rec = records.get(id)!
+      let cell = model.getCell(id) as DataCell | null
+      if (!cell) {
+        cell = recordToCell({ ...rec, source: undefined, target: undefined })
+        pending.set(id, cell)
+      }
+      const parent = rec.parent ? (model.getCell(rec.parent) ?? pending.get(rec.parent)) : null
+      if (!parent) continue // orphan: its parent is gone
+      if (cell.getParent() !== parent || pending.has(id)) {
+        const oldParent = cell.getParent()?.getId()
+        if (oldParent) reorder.add(oldParent)
+        model.add(parent, cell, parent.getChildCount())
+        pending.delete(id)
+      }
+      reorder.add(parent.getId()!)
+
+      const value = rec.value ?? ''
+      if ((cell.getValue() ?? '') !== value) model.setValue(cell, value)
+      if (styleString(cell) !== (rec.style ?? '')) model.setStyle(cell, styleFromString(rec.style))
+      const geometry = cellToRecord(cell).geometry
+      if (geometry !== rec.geometry) model.setGeometry(cell, geometryFromJson(rec.geometry)!)
+      if (cell.isVisible() !== (rec.visible !== 0)) model.setVisible(cell, rec.visible !== 0)
+      if (cell.isCollapsed() !== (rec.collapsed === 1)) model.setCollapsed(cell, rec.collapsed === 1)
+      cell.setConnectable(rec.connectable !== 0)
+      cell.woData = rec.data
+    }
+
+    // Terminals, once every cell exists.
+    for (const id of present) {
+      const rec = records.get(id)!
+      const cell = model.getCell(id)
+      if (!cell?.isEdge()) continue
+      const source = rec.source ? model.getCell(rec.source) : null
+      const target = rec.target ? model.getCell(rec.target) : null
+      if (cell.getTerminal(true) !== source) model.setTerminal(cell, source, true)
+      if (cell.getTerminal(false) !== target) model.setTerminal(cell, target, false)
+    }
+    // Edges connected to cells that were just created elsewhere in this batch.
+    for (const [id, rec] of records) {
+      if (!rec.edge || present.includes(id)) continue
+      const cell = model.getCell(id)
+      if (!cell) continue
+      if (rec.source && !cell.getTerminal(true) && model.getCell(rec.source)) model.setTerminal(cell, model.getCell(rec.source), true)
+      if (rec.target && !cell.getTerminal(false) && model.getCell(rec.target)) model.setTerminal(cell, model.getCell(rec.target), false)
+    }
+
+    // Child order from the `previous` chains.
+    for (const parentId of reorder) {
+      const parent = model.getCell(parentId) ?? (parentId === root.getId() ? root : null)
+      if (!parent) continue
+      const childIds = [...records.values()].filter((r) => r.parent === parentId).map((r) => r.id)
+      const ordered = orderByPrevious(childIds, (id) => records.get(id)?.previous)
+      let index = 0
+      for (const id of ordered) {
+        const child = model.getCell(id)
+        if (!child || child.getParent() !== parent) continue
+        if (parent.getChildAt(index) !== child) model.add(parent, child, index)
+        index++
+      }
     }
   }
-  if (root) visit(root, null)
+}
+
+function styleString(cell: Cell): string {
+  return cellToRecord(cell).style ?? ''
+}
+
+// ---------- Yjs helpers ----------
+
+function writePage(doc: Y.Doc, page: PageRecord, pos: number): void {
+  doc.getMap<PageMeta>(PAGES_KEY).set(page.id, new Y.Map<string | number>([['name', page.name], ['pos', pos]]))
+  const cells = doc.getMap<FieldMap>(cellsKey(page.id))
+  for (const rec of page.cells) writeRecord(cells, rec)
+}
+
+function readCells(cells: CellsMap): CellRecord[] {
+  return [...cells.entries()].map(([id, fields]) => readRecord(id, fields))
+}
+
+function recordEntries(rec: CellRecord): [string, string | number][] {
+  const out: [string, string | number][] = []
+  for (const field of CELL_FIELDS) if (rec[field] !== undefined) out.push([field, rec[field] as string | number])
   return out
 }
 
-// ---------- Materializing XML from the shared state ----------
-
-function xmlFromState(pages: Y.Map<PageMap>, win: DrawioWindow): string {
-  return `<mxfile>${orderByPrevious([...pages.keys()], (id) => pages.get(id)?.get('previous'))
-    .map((id) => pageXml(id, pages.get(id)!, win))
-    .join('')}</mxfile>`
+function readRecord(id: string, fields: FieldMap): CellRecord {
+  const rec: Record<string, unknown> = { id }
+  for (const field of CELL_FIELDS) {
+    const v = fields.get(field)
+    if (v !== undefined) rec[field] = v
+  }
+  return rec as unknown as CellRecord
 }
 
-function pageXml(id: string, page: PageMap, win: DrawioWindow): string {
-  const cellsMap = page.get('cells') as Y.Map<Y.Map<any>> | undefined
-  const json: CellJson[] = cellsMap ? [...cellsMap.values()].map((c) => c.toJSON() as CellJson) : []
-  const codec = new win.mxCodec()
-  // getCellForJson only needs a codec and EditorUi's cell property helpers.
-  const factory = Object.assign(Object.create(win.EditorUi.prototype), { codec })
-  const cells = new Map<string, any>()
-  for (const j of json) cells.set(j.id, win.EditorUi.prototype.getCellForJson.call(factory, j))
-
-  // Children in sibling order, following `previous` links.
-  const byParent = new Map<string, CellJson[]>()
-  let rootJson: CellJson | undefined
-  for (const j of json) {
-    if (!j.parent || !cells.has(j.parent)) {
-      rootJson ??= j
-      continue
-    }
-    const list = byParent.get(j.parent) ?? []
-    list.push(j)
-    byParent.set(j.parent, list)
+function writeRecord(cells: CellsMap, rec: CellRecord): void {
+  const fields = cells.get(rec.id)
+  if (!fields) {
+    cells.set(rec.id, new Y.Map<string | number>(recordEntries(rec)))
+    return
   }
-  const root = rootJson ? cells.get(rootJson.id) : new win.mxCell()
-  if (!rootJson) root.setId('0')
-  for (const [parentId, children] of byParent) {
-    const parent = cells.get(parentId)
-    for (const childId of orderByPrevious(children.map((c) => c.id), (cid) => children.find((c) => c.id === cid)?.previous)) {
-      parent.insert(cells.get(childId))
-    }
+  for (const field of CELL_FIELDS) {
+    const value = rec[field]
+    if (value === undefined) {
+      if (fields.has(field)) fields.delete(field)
+    } else if (fields.get(field) !== value) fields.set(field, value as string | number)
   }
-  for (const j of json) {
-    const cell = cells.get(j.id)
-    if (j.source && cells.has(j.source)) cells.get(j.source).insertEdge(cell, true)
-    if (j.target && cells.has(j.target)) cells.get(j.target).insertEdge(cell, false)
-  }
-  const model = new win.mxGraphModel(root)
-  const node = codec.encode(model)
-  const viewBox = page.get('viewBox')
-  return (
-    `<diagram id="${escapeAttr(id)}" name="${escapeAttr(page.get('name') ?? '')}"${viewBox ? ` viewBox="${escapeAttr(viewBox)}"` : ''}>` +
-    `${win.mxUtils.getXml(node)}</diagram>`
-  )
 }
 
-// Orders ids by a `previous` pointer chain; ties and orphans are resolved deterministically.
-function orderByPrevious(ids: string[], previousOf: (id: string) => string | undefined): string[] {
+function orderedPages(pages: Y.Map<PageMeta>): PageInfo[] {
+  return [...pages.entries()]
+    .map(([id, page]) => ({ id, name: String(page.get('name') ?? ''), pos: Number(page.get('pos')) || 0 }))
+    .sort((a, b) => a.pos - b.pos || (a.id < b.id ? -1 : 1))
+    .map(({ id, name }) => ({ id, name }))
+}
+
+// Deterministic sibling order from `previous` links; tolerates forks and cycles.
+export function orderByPrevious(ids: string[], previousOf: (id: string) => string | undefined): string[] {
   const set = new Set(ids)
   const after = new Map<string, string[]>()
   for (const id of ids) {
@@ -280,14 +425,11 @@ function orderByPrevious(ids: string[], previousOf: (id: string) => string | und
   }
   walk('')
   // Cycles (concurrent reorders) leave some ids unreached: append them in id order.
-  for (const id of [...ids].sort()) if (!seen.has(id)) {
+  for (const id of [...ids].sort()) {
+    if (seen.has(id)) continue
     seen.add(id)
     out.push(id)
     walk(id)
   }
   return out
-}
-
-function escapeAttr(value: string): string {
-  return value.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!)
 }

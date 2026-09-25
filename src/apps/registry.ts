@@ -62,7 +62,7 @@ export const APPS: AppInfo[] = [
     untitled: 'Untitled diagram',
     letter: 'G',
     color: '#9334e6',
-    accept: '.drawio,.xml,.vsdx',
+    accept: '.drawio,.xml',
     load: () => import('./diagram'),
   },
 ]

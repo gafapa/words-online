@@ -59,4 +59,4 @@ body:has(.home) { overflow: auto; }
 
 .offline-control { display: flex; align-items: center; }
 .offline-ready { color: var(--ok); font-size: 13px; white-space: nowrap; }
-@media (max-width: 640px) { .offline-control .home-open { font-size: 12px; padding: 4px 8px; } }
+.offline-pending { color: var(--muted); font-size: 13px; white-space: nowrap; }

@@ -71,28 +71,35 @@ replicas the same log order, so replaying it always yields the same workbook.
 
 ## Diagrams
 
-- Built on [draw.io / diagrams.net](https://github.com/jgraph/drawio) (Apache-2.0),
-  **self-hosted**: the pinned web app is downloaded with a checksum at build time
-  (`scripts/fetch-drawio.mjs`) and served from the same origin, with external
-  services disabled.
-- Thousands of shapes (UML, BPMN, network, cloud, floor plans…), orthogonal
-  connectors, layouts, pages, templates; draw.io's own export menu (PNG, JPEG,
-  SVG, PDF, HTML, XML).
-- Open `.drawio`/`.xml` and **Visio `.vsdx`** (converted in the browser); download `.drawio`.
-- Collaborators' selections are highlighted and their pointers shown.
+- Our own editor built on [maxGraph](https://github.com/maxGraph/maxGraph)
+  (Apache-2.0, the TypeScript successor of mxGraph, the engine behind draw.io),
+  about 170 KB gzipped and loaded only when a diagram is opened.
+- **draw.io compatible**: opens and downloads `.drawio` files (compressed or
+  not, multiple pages, user objects) with the same style strings, so diagrams
+  move between both editors. Pasting draw.io XML also works.
+- Shapes and markers ported from draw.io (general, flowchart, UML, entity
+  relation, basic, arrows and connectors) in a searchable shape panel; click
+  to insert or drag onto the canvas or into a container.
+- Connection points, orthogonal/elbow/curved/entity-relation connectors, guides,
+  rotation, grouping, containers, alignment and distribution, automatic layouts
+  (tree, hierarchical, circle, organic), multiple pages, in-place label editing.
+- Format panel (fill, gradient, line, pattern, opacity, shadow, text, arrows,
+  position and size, raw style editing), context menu, keyboard shortcuts,
+  copy/paste between diagrams (and images or text from other apps), zoom and pan.
+- Download SVG and PNG (the selection or the whole page) and print / PDF.
+- Collaborators' selections are highlighted, their pointers shown, and the page
+  tabs show who is on each page.
 - Sync is state-based: Yjs holds pages → cells → fields, so concurrent edits merge
-  per field (e.g. one person moves a shape while another recolors it). draw.io's
-  own `diffPages`/`patch` bridge local and remote changes, keeping undo history.
+  per field (one person moves a shape while another recolors it). Remote edits
+  never enter the local undo history.
 
 ## Offline and installable
 
 Words Online is a Progressive Web App: install it from the browser (address bar
 or menu → *Install*) and it works without a connection for individual work.
 
-- A service worker precaches the suite and every app (writer, spreadsheet,
-  drawing). The diagram editor (draw.io, ~10 MB) is cached the first time a
-  diagram is opened, or ahead of time with **Make diagrams available offline** on
-  the home screen.
+- A service worker precaches the suite and every app, so after the first visit
+  everything works offline; the home screen shows when it is ready.
 - Documents always live in the browser (IndexedDB), so creating, editing,
   opening and downloading files needs no network. Collaboration resumes by itself
   when peers are reachable again, and offline edits merge automatically.
@@ -132,7 +139,7 @@ To use your own Nostr relays, add them to the URL (share links keep it):
 src/
   main.ts            Router: home screen or app, loaded with dynamic import()
   core/              Shared, UI-free building blocks
-    offline.ts       Service worker registration and offline preparation
+    offline.ts       Service worker registration
     router.ts        #app=…&doc=…&key=… parsing and links
     session.ts       Y.Doc + IndexedDB + awareness + P2P room for a document
     network.ts       Yjs sync/awareness provider over Trystero (WebRTC + Nostr)
@@ -147,10 +154,17 @@ src/
   apps/
     registry.ts      App list: name, icon, loader, supported files
     draw/            Drawing (Excalidraw + Yjs element sync)
-    diagram/         Diagrams (self-hosted draw.io in a same-origin iframe)
-      drawio.ts      Embeds draw.io and obtains its EditorUi instance
-      sync.ts        Pages/cells/fields in Yjs <-> draw.io diff/patch
+    diagram/         Diagrams (maxGraph)
+      app.ts         Editor in the shell: menus, toolbar, keyboard, clipboard, pages, files
+      graph.ts       maxGraph set up like draw.io; cells <-> plain records
+      model.ts       Plain diagram model shared by the editor, sync and converters
+      sync.ts        Pages/cells/fields in Yjs <-> graph model
       presence.ts    Remote selections and pointers
+      sidebar.ts     Shape panel; palette.ts holds the libraries
+      format.ts      Format panel
+      export.ts      SVG / PNG rendering
+      shapes/        draw.io shapes, markers, perimeters, stencils and stylesheet
+      formats/       .drawio import and export (loaded on demand)
     sheet/           Spreadsheet
       app.ts         Univer in the shell: menus, file actions, presence, printing
       univer.ts      Univer presets and locales
@@ -173,9 +187,7 @@ Each app and each converter is a separate chunk, loaded only when used.
 ## Development
 
 `npm run dev` and `npm run build` first run `npm run prepare:assets`, which
-downloads the pinned draw.io release (verified by SHA-256) into `public/drawio`
-and copies Excalidraw's fonts into `public/excalidraw`. Both folders are generated
-and not committed.
+copies Excalidraw's fonts into `public/excalidraw` (generated, not committed).
 
 ```bash
 npm install
@@ -200,7 +212,12 @@ The build uses relative paths, so any static host or subfolder works.
 - Word/ODT: only the default header/footer, a single section, plain-text
   footnotes; text boxes, comments and floating shapes are not imported.
   Legacy `.doc` is not supported.
-- Documents created with the earlier Quill-based version are not migrated.
+- Documents created with the earlier Quill-based version are not migrated, nor
+  diagrams made with the earlier embedded draw.io version.
+- Diagrams: a subset of draw.io's shape libraries (no cloud/network icon sets,
+  BPMN or floor plans yet; unknown shapes render as rectangles but are kept in
+  the file); no Visio import; no hand-drawn (sketch) style; math and custom
+  fonts are not rendered.
 - Spreadsheet: the app bundle is large (~2 MB gzipped, loaded only when a sheet
   is opened). Univer's paid features (charts, pivot tables, native printing,
   official collaboration server) are not used. The mutation log is never

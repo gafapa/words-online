@@ -3,7 +3,7 @@
 
 import { ALL_ACCEPT, APPS, appForFile, appInfo, type AppInfo } from '../apps/registry'
 import { docPath, newDocPath } from '../core/router'
-import { isDiagramsReady, isOfflineCapable, prepareDiagramsOffline } from '../core/offline'
+import { isOfflineCapable, whenOfflineReady } from '../core/offline'
 import * as store from '../core/store'
 import { el, showContextMenu, toast } from '../ui/widgets'
 import './home.css'
@@ -197,38 +197,14 @@ function formatDate(time: number): string {
   return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }) })
 }
 
-// Offline status: the suite is precached; diagrams (draw.io) are cached on
-// first use or ahead of time with this button.
+// Offline status: the whole suite is precached by the service worker.
 function offlineControl(): HTMLElement {
   const wrap = el('span', { class: 'offline-control' })
   if (!isOfflineCapable()) return wrap
-  const render = (state: 'ready' | 'partial' | 'working') => {
-    wrap.replaceChildren()
-    if (state === 'ready') {
-      wrap.append(el('span', { class: 'offline-ready', textContent: '✓ Available offline', title: 'All apps work without a connection' }))
-      return
-    }
-    const button = el('button', {
-      type: 'button',
-      class: 'home-open',
-      textContent: state === 'working' ? 'Preparing…' : 'Make diagrams available offline',
-      title: 'Documents, spreadsheets and drawings already work offline. Diagrams need a one-time download (~10 MB).',
-      disabled: state === 'working',
-    })
-    button.addEventListener('click', async () => {
-      render('working')
-      try {
-        await prepareDiagramsOffline()
-        render('ready')
-        toast('All apps are now available offline')
-      } catch (err) {
-        render('partial')
-        toast(`Could not prepare offline use: ${(err as Error).message}`)
-      }
-    })
-    wrap.append(button)
-  }
-  render(isDiagramsReady() ? 'ready' : 'partial')
+  wrap.append(el('span', { class: 'offline-pending', textContent: 'Preparing offline use…' }))
+  whenOfflineReady()
+    .then(() => wrap.replaceChildren(el('span', { class: 'offline-ready', textContent: '✓ Available offline', title: 'All apps work without a connection' })))
+    .catch(() => wrap.replaceChildren())
   return wrap
 }
 

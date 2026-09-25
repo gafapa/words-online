@@ -1,16 +1,12 @@
-import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
-
-const drawio = JSON.parse(readFileSync(new URL('./scripts/drawio.json', import.meta.url), 'utf8')) as { version: string }
 
 // Relative base so the build can be served from any static host or subpath.
 export default defineConfig({
   base: './',
   plugins: [
-    // Installable web app that works offline. The suite and its apps are
-    // precached; draw.io (large) and CJK fonts are cached the first time they
-    // are used, or ahead of time from the home screen.
+    // Installable web app that works offline. The suite and every app are
+    // precached; CJK handwriting fonts are cached the first time they are used.
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: false,
@@ -46,26 +42,15 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,woff2,svg,png,ico,webmanifest}'],
-        globIgnores: ['drawio/**', 'excalidraw/fonts/Xiaolai/**'],
+        globIgnores: ['excalidraw/fonts/Xiaolai/**'],
         // The spreadsheet engine is a single large chunk.
         maximumFileSizeToCacheInBytes: 16 * 1024 * 1024,
         navigateFallback: 'index.html',
-        navigateFallbackDenylist: [/\/drawio\//],
         cleanupOutdatedCaches: true,
         // Take control right away, so the first visit already works offline afterwards.
         clientsClaim: true,
         skipWaiting: true,
         runtimeCaching: [
-          {
-            urlPattern: ({ url }) => url.pathname.includes('/drawio/'),
-            handler: 'CacheFirst',
-            options: {
-              // Versioned: a new draw.io release starts a fresh cache.
-              cacheName: `drawio-${drawio.version}`,
-              expiration: { maxEntries: 5000 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
           {
             urlPattern: ({ url }) => url.pathname.includes('/excalidraw/fonts/'),
             handler: 'CacheFirst',
