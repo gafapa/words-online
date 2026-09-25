@@ -9,7 +9,7 @@ find each other.
 | App | Status |
 | --- | --- |
 | Word processor (`writer`) | Available |
-| Spreadsheet (`sheet`) | Planned |
+| Spreadsheet (`sheet`) | Available |
 | Drawing (`draw`) | Planned |
 | Diagram (`diagram`) | Planned |
 
@@ -31,6 +31,32 @@ find each other.
   styles, lists, tables (merged cells, widths), images, footnotes, header/footer
   fields and page setup. Also opens `.html`, `.txt` and `.md`.
 - Real-time collaboration with live cursors, presence and offline editing.
+
+## Spreadsheet
+
+- Built on [Univer](https://github.com/dream-num/univer) (Apache-2.0, open-source presets only):
+  multiple sheets, formulas (hundreds of functions), number formats, styles,
+  borders, merged cells, freeze panes, filters, sorting, conditional formatting,
+  data validation, tables, hyperlinks, notes, images and find & replace.
+- Real-time collaboration without a server (see below), with collaborators'
+  selections shown in their color.
+- Open and download **Excel (.xlsx)**, **OpenDocument (.ods)** and **CSV**;
+  print / PDF of the current sheet.
+
+### How spreadsheet sync works
+
+Univer describes every change as a replayable *mutation*. The shared state is a
+base snapshot plus an append-only log of mutations in a `Y.Array`; Yjs gives all
+replicas the same log order, so replaying it always yields the same workbook.
+
+- Local changes apply immediately and are appended to the log.
+- If a concurrent change lands before local ones, edits of different cells are
+  applied directly (order does not matter); anything else triggers a rebuild in
+  the shared order, so replicas never diverge.
+- Each entry records which changes its author had seen. An edit made without
+  knowing about a concurrent row/column insertion or deletion is shifted before
+  replaying, so it lands on the cell its author meant.
+- Checkpoints (snapshot + covered entries) every 300 changes keep loading fast.
 
 ## How collaboration works
 
@@ -77,6 +103,13 @@ src/
   home/              Home screen: new document buttons, open file, recent documents
   apps/
     registry.ts      App list: name, icon, loader, supported files
+    sheet/           Spreadsheet
+      app.ts         Univer in the shell: menus, file actions, presence, printing
+      univer.ts      Univer presets and locales
+      sync.ts        Mutation log over Yjs, rebuilds and checkpoints
+      transform.ts   Shifts concurrent edits through row/column changes
+      print.ts       Print layout of the current sheet
+      formats/       XLSX / ODS / CSV import and export (loaded on demand)
     writer/          Word processor
       app.ts         Editor, print layout, zoom, status bar, file actions
       commands.ts    Menus, toolbar, context menu
@@ -115,3 +148,8 @@ The build uses relative paths, so any static host or subfolder works.
   footnotes; text boxes, comments and floating shapes are not imported.
   Legacy `.doc` is not supported.
 - Documents created with the earlier Quill-based version are not migrated.
+- Spreadsheet: the app bundle is large (~2 MB gzipped, loaded only when a sheet
+  is opened). Univer's paid features (charts, pivot tables, native printing,
+  official collaboration server) are not used. The mutation log is never
+  pruned, so very long-lived sheets keep growing in storage (checkpoints keep
+  loading fast).

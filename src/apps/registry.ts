@@ -31,7 +31,15 @@ export const APPS: AppInfo[] = [
     color: '#1a73e8',
     load: () => import('./writer'),
   },
-  { type: 'sheet', name: 'Spreadsheet', newLabel: 'New spreadsheet', untitled: 'Untitled spreadsheet', letter: 'S', color: '#188038' },
+  {
+    type: 'sheet',
+    name: 'Spreadsheet',
+    newLabel: 'New spreadsheet',
+    untitled: 'Untitled spreadsheet',
+    letter: 'S',
+    color: '#188038',
+    load: () => import('./sheet'),
+  },
   { type: 'draw', name: 'Drawing', newLabel: 'New drawing', untitled: 'Untitled drawing', letter: 'D', color: '#e8710a' },
   { type: 'diagram', name: 'Diagram', newLabel: 'New diagram', untitled: 'Untitled diagram', letter: 'G', color: '#9334e6' },
 ]
