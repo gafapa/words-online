@@ -1,42 +1,40 @@
 // Entry points for opening and saving documents in external formats.
+// Converters are loaded on demand to keep the initial bundle small.
 
-import type { Op } from 'quill'
-import { linesToOps } from './model'
+import { generateJSON, type JSONContent } from '@tiptap/core'
+import { allExtensions } from '../editor/extensions'
+import { DEFAULT_PAGE, type DocumentData } from './types'
 
 export type ExportFormat = 'docx' | 'odt' | 'html' | 'txt'
 
 export const OPEN_ACCEPT = '.docx,.odt,.html,.htm,.txt,.md'
 
-// Word/ODT become Delta ops directly; HTML and text go through Quill's clipboard.
-export type Imported = { ops: Op[] } | { html: string } | { text: string }
+export type Imported = Omit<DocumentData, 'title'>
 
 export async function importFile(file: File): Promise<Imported> {
   const ext = file.name.split('.').pop()?.toLowerCase()
-  if (ext === 'docx') {
-    const { importDocx } = await import('./docx-import')
-    return { ops: linesToOps(await importDocx(await file.arrayBuffer())) }
-  }
-  if (ext === 'odt') {
-    const { importOdt } = await import('./odt-import')
-    return { ops: linesToOps(await importOdt(await file.arrayBuffer())) }
-  }
+  if (ext === 'docx') return (await import('./docx-import')).importDocx(await file.arrayBuffer())
+  if (ext === 'odt') return (await import('./odt-import')).importOdt(await file.arrayBuffer())
   if (ext === 'doc') throw new Error('Legacy .doc files are not supported; save them as .docx first')
   const text = await file.text()
-  return ext === 'html' || ext === 'htm' ? { html: text } : { text }
+  const body: JSONContent =
+    ext === 'html' || ext === 'htm'
+      ? generateJSON(text, allExtensions())
+      : {
+          type: 'doc',
+          content: text.split(/\r?\n/).map((line) => (line ? { type: 'paragraph', content: [{ type: 'text', text: line }] } : { type: 'paragraph' })),
+        }
+  return { body, header: null, footer: null, page: DEFAULT_PAGE }
 }
 
-export async function exportFile(format: ExportFormat, ops: Op[], html: string, text: string, title: string): Promise<Blob> {
+export async function exportFile(format: ExportFormat, data: DocumentData, html: string, text: string): Promise<Blob> {
   switch (format) {
-    case 'docx': {
-      const { exportDocx } = await import('./docx')
-      return exportDocx(ops, title)
-    }
-    case 'odt': {
-      const { exportOdt } = await import('./odt')
-      return exportOdt(ops, title)
-    }
+    case 'docx':
+      return (await import('./docx-export')).exportDocx(data)
+    case 'odt':
+      return (await import('./odt-export')).exportOdt(data)
     case 'html': {
-      const doc = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title></head><body>${html}</body></html>`
+      const doc = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(data.title)}</title></head><body>${html}</body></html>`
       return new Blob([doc], { type: 'text/html' })
     }
     case 'txt':

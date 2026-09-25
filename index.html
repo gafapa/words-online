@@ -4,69 +4,69 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Words Online</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231a73e8'/><text x='50' y='72' font-size='64' text-anchor='middle' fill='white' font-family='Arial'>W</text></svg>" />
   </head>
   <body>
-    <header class="topbar">
-      <input id="doc-title" class="doc-title" placeholder="Untitled document" aria-label="Document title" />
-      <div class="actions">
-        <span id="presence" class="presence" title="People in this document"></span>
-        <span id="peer-status" class="status offline">Connecting…</span>
-        <button id="btn-share" class="primary">Share</button>
-        <details class="menu">
-          <summary>File</summary>
-          <div class="menu-items">
-            <button id="btn-new">New document</button>
-            <button id="btn-docs">My documents…</button>
-            <button id="btn-open-file">Open file (Word, ODT…)</button>
-            <hr />
-            <button data-export="docx">Download Word (.docx)</button>
-            <button data-export="odt">Download OpenDocument (.odt)</button>
-            <button data-export="html">Download HTML</button>
-            <button data-export="txt">Download text</button>
-            <button id="btn-print">Print / PDF</button>
+    <div class="app">
+      <header class="appbar">
+        <div class="appbar-main">
+          <a class="app-logo" href="#" title="Words Online">W</a>
+          <div class="title-block">
+            <div class="title-row">
+              <input id="doc-title" class="doc-title" placeholder="Untitled document" aria-label="Document title" spellcheck="false" />
+              <span id="save-state" class="save-state"></span>
+            </div>
+            <nav id="menubar" class="menubar" aria-label="Menu"></nav>
           </div>
-        </details>
-        <input id="user-name" class="user-name" aria-label="Your name" />
-      </div>
-    </header>
+          <div class="appbar-actions">
+            <span id="presence" class="presence" title="People in this document"></span>
+            <span id="peer-status" class="status offline">Connecting…</span>
+            <button id="btn-share" class="primary share-btn">Share</button>
+            <input id="user-name" class="user-name" aria-label="Your name" title="Your name, as others see it" />
+          </div>
+        </div>
+        <div id="toolbar" class="toolbar" role="toolbar" aria-label="Formatting"></div>
+      </header>
 
-    <main class="page-wrap">
-      <div id="editor"></div>
-    </main>
+      <div id="find-panel" class="find-panel" hidden>
+        <div class="find-row">
+          <input data-find placeholder="Find in document" aria-label="Find" />
+          <span data-count class="find-count"></span>
+          <button type="button" data-prev title="Previous (Shift+Enter)">↑</button>
+          <button type="button" data-next title="Next (Enter)">↓</button>
+          <button type="button" data-close title="Close (Esc)">✕</button>
+        </div>
+        <div class="find-row" data-replace-row>
+          <input data-replace placeholder="Replace with" aria-label="Replace with" />
+          <button type="button" data-replace-one>Replace</button>
+          <button type="button" data-replace-all>Replace all</button>
+        </div>
+        <label class="find-option"><input type="checkbox" data-case /> Match case</label>
+      </div>
+
+      <main id="canvas" class="canvas">
+        <div id="zoom-wrap" class="zoom-wrap">
+          <div id="paper" class="paper">
+            <div id="first-header" class="page-header"></div>
+            <div id="editor"></div>
+            <div id="page-tail" class="page-tail"></div>
+          </div>
+        </div>
+      </main>
+
+      <footer class="statusbar">
+        <span id="status-page">Page 1 of 1</span>
+        <span id="status-words">0 words</span>
+        <span id="status-chars" class="hide-narrow">0 characters</span>
+        <span class="spacer"></span>
+        <span class="hide-narrow">Zoom</span>
+        <input id="zoom-range" type="range" min="50" max="200" step="10" value="100" aria-label="Zoom" class="hide-narrow" />
+        <button id="zoom-value" class="zoom-value" title="Reset zoom">100%</button>
+      </footer>
+    </div>
 
     <input id="file-input" type="file" hidden />
-
-    <dialog id="dlg-share">
-      <form method="dialog" class="dlg">
-        <h2>Share this document</h2>
-        <p>Anyone who opens this link can edit the document with you in real time.</p>
-        <div class="code-row">
-          <input id="share-link" readonly />
-          <button type="button" id="btn-copy-share">Copy</button>
-        </div>
-        <canvas id="share-qr" class="qr"></canvas>
-        <p class="hint">
-          The link contains the document's secret key. Edits travel directly between browsers; public relays are
-          only used to find each other.
-        </p>
-        <div class="dlg-actions">
-          <button value="cancel" class="primary">Done</button>
-        </div>
-      </form>
-    </dialog>
-
-    <dialog id="dlg-docs">
-      <form method="dialog" class="dlg">
-        <h2>Documents in this browser</h2>
-        <ul id="doc-list" class="doc-list"></ul>
-        <div class="dlg-actions">
-          <button value="cancel">Close</button>
-        </div>
-      </form>
-    </dialog>
-
-    <div id="toast" class="toast" hidden></div>
+    <input id="image-input" type="file" accept="image/*" hidden />
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
