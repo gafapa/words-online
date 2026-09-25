@@ -5,6 +5,7 @@
 // through the presentation theme. Charts, SmartArt and animations are skipped.
 
 import JSZip from 'jszip'
+import { t } from '../../../core/i18n'
 import { newCellId, type CellRecord } from '../../diagram/model'
 import { SLIDE_SIZES, type Ratio, type SlideData } from '../model'
 
@@ -86,7 +87,7 @@ function relOfType(part: Part, type: string): string | null {
 export async function parsePptx(buffer: ArrayBuffer): Promise<{ ratio: Ratio; slides: SlideData[] }> {
   const zip = await JSZip.loadAsync(buffer)
   const pres = await readPart(zip, 'ppt/presentation.xml')
-  if (!pres) throw new Error('Not a PowerPoint presentation')
+  if (!pres) throw new Error(t('Not a PowerPoint presentation'))
   const sz = find(pres.doc, 'sldSz')
   const cx = num(attr(sz, 'cx'), 9144000)
   const cy = num(attr(sz, 'cy'), 5143500)
@@ -137,7 +138,7 @@ export async function parsePptx(buffer: ArrayBuffer): Promise<{ ratio: Ratio; sl
       background,
     })
   }
-  if (!slides.length) throw new Error('The presentation has no slides')
+  if (!slides.length) throw new Error(t('The presentation has no slides'))
   return { ratio, slides }
 }
 

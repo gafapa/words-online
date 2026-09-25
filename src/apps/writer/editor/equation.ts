@@ -51,8 +51,8 @@ export const Equation = Node.create({
       let current = node
       const draw = () => {
         dom.className = current.attrs.display ? 'equation display' : 'equation'
-        dom.title = current.attrs.latex
         renderEquation(dom, current.attrs.latex, current.attrs.display)
+        if (!dom.classList.contains('equation-error')) dom.title = current.attrs.latex
       }
       draw()
       dom.addEventListener('dblclick', (e) => {

@@ -156,9 +156,10 @@
 .rv-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px; }
 .rv-actions button:not(.primary) { border: 1px solid var(--border); background: var(--surface); border-radius: 6px; padding: 4px 10px; }
 .rv-actions button.primary { padding: 4px 12px; }
+/* Narrow screens: a bottom sheet opened from the status bar. */
 .review-rail.narrow {
-  position: fixed; right: 0; top: 110px; bottom: 32px; width: min(340px, 92vw); z-index: 40; overflow: auto;
-  background: var(--canvas); padding: 8px; box-shadow: var(--shadow); display: none;
+  position: fixed; left: 0; right: 0; bottom: 30px; width: auto; max-height: 55vh; z-index: 40; overflow: auto;
+  background: var(--canvas); padding: 8px; box-shadow: var(--shadow); border-radius: 12px 12px 0 0; display: none;
 }
 .review-rail.narrow.open { display: block; }
 .review-rail.narrow .rv-card { position: static; margin-bottom: 8px; }

@@ -22,6 +22,7 @@ export interface EquationDialogOptions {
 
 // Renders LaTeX into `target`; invalid input is shown in red with the error as tooltip.
 export function renderEquation(target: HTMLElement, latex: string, display = false): void {
+  addStyle()
   try {
     katex.render(latex || '\\square', target, { displayMode: display, throwOnError: true, output: 'htmlAndMathml' })
     target.removeAttribute('title')

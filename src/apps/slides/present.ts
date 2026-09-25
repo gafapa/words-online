@@ -4,7 +4,7 @@
 // presentation, who see the presenter's slide and laser through awareness.
 
 import type { Awareness } from 'y-protocols/awareness'
-import { ChevronLeft, ChevronRight, MonitorSpeaker, MousePointer2, X } from 'lucide'
+import { ChevronLeft, ChevronRight, Maximize, MonitorSpeaker, MousePointer2, X } from 'lucide'
 import { t } from '../../core/i18n'
 import { el, icon, toast } from '../../ui/widgets'
 
@@ -59,8 +59,11 @@ export class Presentation {
   private lastLaser = 0
   private readonly onKey = (e: KeyboardEvent) => this.key(e)
   private readonly onAwareness = () => this.followUpdate()
+  // Leaving full screen (Esc) ends the presentation, except with the presenter
+  // view open: opening that window may leave full screen by itself.
   private readonly onFullscreen = () => {
-    if (!document.fullscreenElement && this.root && this.wasFullscreen) this.stop()
+    const presenterView = this.presenterWindow && !this.presenterWindow.closed
+    if (!document.fullscreenElement && this.root && this.wasFullscreen && !presenterView) this.stop()
   }
   private wasFullscreen = false
 
@@ -120,6 +123,7 @@ export class Presentation {
       hudButton(ChevronRight, t('Next slide'), () => this.go(this.index + 1)),
       hudButton(MousePointer2, t('Laser pointer (L)'), () => this.toggleLaser()),
       hudButton(MonitorSpeaker, t('Presenter view'), () => this.openPresenterView()),
+      hudButton(Maximize, t('Full screen'), () => this.toggleFullscreen()),
       hudButton(X, t('Exit (Esc)'), () => this.stop()),
     )
     const followNote = el('div', { class: 'present-follow-note' })
@@ -155,6 +159,15 @@ export class Presentation {
     this.wasFullscreen = false
     const request = document.documentElement.requestFullscreen?.()
     request?.then(() => (this.wasFullscreen = true)).catch(() => {})
+  }
+
+  private toggleFullscreen(): void {
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => {})
+    else
+      document.documentElement
+        .requestFullscreen?.()
+        .then(() => (this.wasFullscreen = true))
+        .catch(() => {})
   }
 
   stop(): void {
@@ -294,6 +307,7 @@ export class Presentation {
     else if (k === 'Home') this.go(0)
     else if (k === 'End') this.go(this.host.slides().length - 1)
     else if (k === 'l' || k === 'L') this.toggleLaser()
+    else if (k === 'f' || k === 'F') this.toggleFullscreen()
     else if (k === 'b' || k === 'B' || k === '.') {
       this.blank = !this.blank
       this.show(false)
@@ -408,7 +422,7 @@ main { flex: 1; min-height: 0; display: flex; gap: 16px; padding: 16px; }
 .current { flex: 2; align-self: flex-start; aspect-ratio: var(--slide-aspect); background: #000; box-shadow: 0 2px 12px #0008; }
 .side { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .side h2 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #9aa0a6; }
-.next { aspect-ratio: var(--slide-aspect); background: #000; opacity: .9; }
+.next { aspect-ratio: var(--slide-aspect); background: #000; }
 .notes { flex: 1; overflow: auto; white-space: pre-wrap; font-size: 20px; line-height: 1.45; background: #2d2e31; border-radius: 8px; padding: 12px; }
 .end { color: #9aa0a6; text-align: center; margin-top: 20%; }
 svg { display: block; }

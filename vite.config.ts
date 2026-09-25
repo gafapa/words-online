@@ -45,6 +45,7 @@ export default defineConfig({
               'text/csv': ['.csv'],
               'application/vnd.jgraph.mxfile': ['.drawio'],
               'application/json': ['.excalidraw'],
+              'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
             },
           },
         ],

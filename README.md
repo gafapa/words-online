@@ -12,6 +12,7 @@ find each other.
 | Spreadsheet (`sheet`) | Available |
 | Drawing (`draw`) | Available |
 | Diagram (`diagram`) | Available |
+| Presentation (`slides`) | Available |
 
 ## Word processor
 
@@ -19,7 +20,7 @@ find each other.
   and margins, page breaks, header and footer with page number / page count,
   footnotes at the foot of each page, zoom, and printing / PDF that matches the
   screen.
-- Menu bar (File, Edit, View, Insert, Format, Table, Help), classic toolbar,
+- Menu bar (File, Edit, View, Insert, Format, Table, Review, Help), classic toolbar,
   context menu, status bar (page X of Y, words, characters) and keyboard shortcuts.
 - Paragraph styles (Normal, Title, Subtitle, Headings), fonts, sizes in points,
   bold/italic/underline/strike, sub/superscript, text and highlight colors,
@@ -31,6 +32,44 @@ find each other.
   styles, lists, tables (merged cells, widths), images, footnotes, header/footer
   fields and page setup. Also opens `.html`, `.txt` and `.md`.
 - Real-time collaboration with live cursors, presence and offline editing.
+
+### Reviewing (teachers correcting student work)
+
+- **Comments**: select text → *Comment* (toolbar, context menu, *Insert* or
+  *Review* menu, Ctrl+Alt+M). Cards sit in a margin next to the page, aligned
+  with their text (a bottom sheet on phones), with author, color, time, replies,
+  resolve / reopen, edit and delete (own comments). Comments are anchored with
+  Yjs relative positions and live in the session's comments channel, so they
+  follow the text through concurrent edits and people with a *comment* link can
+  add them without being able to edit the text. *View* links see them read-only.
+- **Suggestions** (track changes): switch the toolbar mode from *Editing* to
+  *Suggesting*. Typed text is underlined and deleted text struck through (not
+  removed) in the author's color; deleting your own suggestion removes it.
+  Each suggestion (or replacement) gets a card with accept / reject, and
+  *Review* has accept all / reject all and next / previous. Local edits are
+  rewritten before they are applied; remote changes and undo are never
+  rewritten. Suggesting needs edit access (commenters comment instead).
+  Paragraph splits/joins and formatting changes are applied directly.
+- **Authorship**: *View → Show authorship* tints text in the color of whoever
+  typed it, and *Contributions…* lists words, characters and share per author
+  (for group work). Text carries the Yjs client id of its author (an
+  `authorship` mark, so it survives paragraph splits); older text falls back to
+  the client id of its Yjs items. Client ids map to people through
+  `session.authors`.
+- **Equations**: *Insert → Equation… / Display equation…* opens an editor
+  (`src/ui/equation.ts`, shared by other apps) built on MathLive, with templates,
+  symbols, a LaTeX field and a virtual keyboard for tablets. MathLive is loaded
+  only when the editor opens; equations are rendered with KaTeX, whose fonts are
+  bundled (offline). Double click (or Enter) edits an equation.
+- **Files**: comments (with replies and resolved state), tracked changes and
+  equations are written to and read from Word (`w:comment`, `w:ins` / `w:del`,
+  Office Math) and OpenDocument (`office:annotation`, `text:tracked-changes`,
+  embedded MathML formula objects). Equations go through KaTeX's MathML (LaTeX
+  kept as annotation in ODT) and a MathML → OMML converter; OMML and MathML are
+  converted back to LaTeX on import. Comments of an opened file move into the
+  comments channel the first time an editor opens it.
+- Access: *view* and *comment* links open the text read-only; the File menu has
+  *Make a copy*, *Save version…* and *Version history…*.
 
 ## Spreadsheet
 
@@ -104,6 +143,42 @@ replicas the same log order, so replaying it always yields the same workbook.
 - Sync is state-based: Yjs holds pages → cells → fields, so concurrent edits merge
   per field (one person moves a shape while another recolors it). Remote edits
   never enter the local undo history.
+- Labels are edited as rich text (bold, lists, colors) when they are HTML.
+- Links with view or comment access open the diagram read-only: zoom, pan,
+  pages, downloads and presence keep working.
+
+## Presentations
+
+Slides for the classroom, built on the diagram editor (same shapes, libraries,
+hand-drawn style, sync and presence). Each slide is a diagram page with a fixed
+16:9 (960×540) or 4:3 (960×720) frame; content outside the frame is kept but not
+presented or exported.
+
+- Slide panel with live thumbnails, drag to reorder, context menu (new,
+  duplicate, delete, move, layout, background) and keyboard navigation; the
+  shape panel is the second tab. Who is on each slide is shown on its thumbnail.
+- Themes (Light, Dark, Ocean, Paper, Chalkboard, Fresh: background, fonts and
+  colors) and layouts (Title, Title and content, Two columns, Section header,
+  Title only, Blank) with "Click to add title" placeholders. Changing the theme
+  restyles every placeholder and text box that has no color or font of its own.
+- Rich text boxes (bold, italic, underline, bullets, numbering, sizes, colors,
+  alignment), images (insert, paste, drop), shapes, arrows and icons from the
+  shape libraries, tables and equations (MathLive editor, rendered as MathML).
+- Speaker notes per slide under the canvas, edited together in real time.
+- **Present**: full screen, arrows / Space / Page Up / Page Down / click / swipe,
+  slide counter, laser pointer (L), black screen (B), Esc to end. **Presenter
+  view** in a second window: current and next slide, notes, timer.
+- **Follow the presenter**: when someone presents, everyone else in the
+  presentation sees a *Follow* button; followers see the presenter's slide and
+  laser pointer (through awareness) until the presentation ends. View-only
+  links work too, so students can follow the teacher's slides.
+- Download **PowerPoint (.pptx)** (text boxes, basic shapes, lines and arrows,
+  tables and notes stay editable; other shapes become pictures), **OpenDocument
+  (.odp)**, **PDF** (print, one slide per page at the slide size), PNG of a
+  slide or of all slides (.zip). **Open .pptx** files: text boxes and
+  placeholders (positions and sizes from the layout and master, bullets, theme
+  colors), shapes, pictures, connectors, tables, backgrounds and notes.
+- Hand in: the .pptx plus a PNG of every slide.
 
 ## Templates
 
@@ -172,7 +247,7 @@ or menu → *Install*) and it works without a connection for individual work.
   opening and downloading files needs no network. Collaboration resumes by itself
   when peers are reachable again, and offline edits merge automatically.
 - When installed, the app registers as a handler for `.docx`, `.odt`, `.xlsx`,
-  `.ods`, `.csv`, `.drawio` and `.excalidraw` files ("Open with").
+  `.ods`, `.csv`, `.drawio`, `.excalidraw` and `.pptx` files ("Open with").
 - Updates are picked up automatically on the next visit.
 
 ## How collaboration works
@@ -282,6 +357,7 @@ src/
     chrome.ts        Title, presence, connection status, share dialog + QR, hand in
     versions.ts      Make a copy / Save version / Version history (File menu items)
     widgets.ts       Menus, context menus, popovers, color palette, dialogs, toasts
+    equation.ts      Equation editor (MathLive, lazy) and KaTeX rendering / MathML
     base.css
   home/              Home screen: new document buttons, open file, recent documents
   templates/         Template gallery (catalog, thumbnails) and template content per app
@@ -289,7 +365,9 @@ src/
     registry.ts      App list: name, icon, loader, supported files
     draw/            Drawing (Excalidraw + Yjs element sync)
     diagram/         Diagrams (maxGraph)
-      app.ts         Editor in the shell: menus, toolbar, keyboard, clipboard, pages, files
+      app.ts         Diagram app: menus, toolbar, page tabs, files
+      editor.ts      The editor without its frame (graph, sync, undo, zoom, clipboard,
+                     commands, panels, keyboard, presence), shared with slides/
       graph.ts       maxGraph set up like draw.io; cells <-> plain records
       model.ts       Plain diagram model shared by the editor, sync and converters
       sync.ts        Pages/cells/fields in Yjs <-> graph model
@@ -301,6 +379,14 @@ src/
       shapes/        draw.io shapes, markers, perimeters, stencils and stylesheet;
                      compat.ts runs draw.io's shape code (mxGraph API) on maxGraph
       formats/       .drawio import and export (loaded on demand)
+    slides/          Presentations (on diagram/editor.ts)
+      app.ts         Slides app: slide panel, frame, themes, layouts, text tools, menus
+      model.ts       Slide sizes, themes, layouts and placeholders; per-slide settings and notes in Yjs
+      render.ts      Theme styling of graphs; offscreen slide rendering to SVG
+      slidelist.ts   Thumbnails panel; notes.ts: speaker notes bound to a Y.Text
+      present.ts     Presenting, laser pointer, presenter view, following the presenter
+      formats/       PPTX / ODP export (elements.ts turns slides into neutral elements),
+                     PPTX import (loaded on demand)
     sheet/           Spreadsheet
       app.ts         Univer in the shell: menus, file actions, presence, printing
       univer.ts      Univer presets and locales
@@ -314,8 +400,13 @@ src/
       dialogs.ts     Page setup, header/footer, footnotes, links, tables…
       pages.ts       Pagination (pages, headers/footers, footnotes)
       find.ts        Find & replace
-      editor/        TipTap extensions and custom nodes
-      formats/       DOCX / ODT import and export (loaded on demand)
+      review.ts      Comments and suggestions: highlights and the margin rail
+      authorship.ts  Authorship colors and contributions per author
+      ypos.ts        ProseMirror positions <-> Yjs (relative positions, item authors)
+      collab.ts      Session helpers (comments channel, authors, user id)
+      editor/        TipTap extensions and custom nodes (equation, suggestions)
+      formats/       DOCX / ODT import and export (loaded on demand);
+                     math.ts converts MathML / OMML / LaTeX
 ```
 
 Each app and each converter is a separate chunk, loaded only when used.
@@ -351,7 +442,11 @@ The build uses relative paths, so any static host or subfolder works.
 - Pagination moves whole blocks to the next page (paragraphs are not split
   across pages); a block taller than a page overflows.
 - Word/ODT: only the default header/footer, a single section, plain-text
-  footnotes; text boxes, comments and floating shapes are not imported.
+  footnotes; text boxes and floating shapes are not imported. Tracked
+  formatting changes are not imported; comments on header/footer text are
+  dropped. Equations cover common constructs (fractions, roots, scripts,
+  sums/integrals, matrices, accents, delimiters); exotic OMML/MathML may lose
+  structure.
   Legacy `.doc` is not supported.
 - Documents created with the earlier Quill-based version are not migrated, nor
   diagrams made with the earlier embedded draw.io version.
@@ -361,6 +456,12 @@ The build uses relative paths, so any static host or subfolder works.
   editing handles (e.g. dragging a BPMN or mockup parameter) are not available
   for library shapes. Library images are not embedded in SVG/PNG downloads.
   No Visio import; math and custom web fonts are not rendered.
+- Presentations: no animations or transitions besides a fade; PowerPoint and
+  OpenDocument downloads turn library shapes, curved connectors, hand-drawn
+  shapes and equations into pictures, and gradient backgrounds into a picture.
+  PowerPoint import skips charts, SmartArt, animations and embedded media, and
+  uses the first stop of gradient fills in shapes. The presenter view needs
+  pop-ups allowed; opening it may leave full screen (use F or the ⛶ button).
 - Credits: the "More shapes" libraries are draw.io's (JGraph Ltd / draw.io AG):
   the code and palettes are Apache-2.0; the stencils and icons carry an extra
   restriction (they may not be used in, or distributed for, Atlassian products

@@ -14,6 +14,7 @@ import {
   Bold,
   ImagePlus,
   Italic,
+  PaintBucket,
   List,
   ListOrdered,
   PanelRight,
@@ -717,8 +718,8 @@ export function mountSlides(session: Session, root: HTMLElement): void {
   const { tbButton } = editor
   const always = () => true
   const tableButton = tbButton(Table, t('Insert table'), () => openPopover(tableButton, tableGrid(insertTable, 8)), editable(always))
-  const bgButton = el('button', { type: 'button', class: 'tb-btn tb-text slides-bg-button', textContent: t('Background') })
-  bgButton.addEventListener('click', () => !readOnly && chooseBackground())
+  const bgButton = tbButton(PaintBucket, t('Slide background'), () => chooseBackground(), editable(always))
+  bgButton.classList.add('slides-bg-button')
   const layoutSelect = el('select', { class: 'tb-select', title: t('Layout') })
   layoutSelect.append(el('option', { value: '', textContent: t('Layout'), disabled: true }), ...LAYOUTS.map((l) => el('option', { value: l.id, textContent: layoutName(l.id) })))
   layoutSelect.addEventListener('change', () => {
@@ -727,12 +728,6 @@ export function mountSlides(session: Session, root: HTMLElement): void {
     canvas.focus()
   })
   layoutSelect.value = ''
-  const themeSelect = el('select', { class: 'tb-select', title: t('Theme') })
-  themeSelect.append(...THEMES.map((th) => el('option', { value: th.id, textContent: t(th.name) })))
-  themeSelect.addEventListener('change', () => {
-    setTheme(themeSelect.value)
-    canvas.focus()
-  })
   const newSlideButton = tbButton(Plus, `${t('New slide')} (${mod('M')})`, () => addSlide(), editable(always))
   const textColor = editor.colorTool(Baseline, t('Text color'), setTextColor, t('Theme color'), () => editingText() || editor.hasSelection())
   const presentButton = el('button', { type: 'button', class: 'primary slides-present-btn' })
@@ -772,13 +767,10 @@ export function mountSlides(session: Session, root: HTMLElement): void {
       tableButton,
       tbButton(Sigma, t('Equation'), () => void insertEquation(), editable(always)),
     )
-    tbGroup(themeSelect, bgButton, tbButton(PanelRight, t('Format panel'), () => editor.togglePanel(editor.format.element), undefined, () => !editor.format.element.hidden))
+    tbGroup(bgButton, tbButton(PanelRight, t('Format panel'), () => editor.togglePanel(editor.format.element), undefined, () => !editor.format.element.hidden))
   }
   const followGroup = el('div', { class: 'tb-group slides-present-group' }, followBtn, presentButton)
   shell.toolbar.append(el('span', { class: 'spacer' }), followGroup)
-  editor.onStatus(() => {
-    themeSelect.value = theme.id
-  })
 
   // ---------- Keyboard ----------
 
@@ -857,7 +849,7 @@ export function mountSlides(session: Session, root: HTMLElement): void {
       {},
       section(
         t('Slide'),
-        row(t('Layout'), select([['', '—'], ...LAYOUTS.map((l) => [l.id, layoutName(l.id)] as [string, string])], m.layout ?? '', (v) => v && applyLayout(v as LayoutId))),
+        row(t('Layout'), select([['', '—'], ...LAYOUTS.map((l) => [l.id, layoutName(l.id)] as [string, string])], m.layout ?? (sync.page === blankSlide().id ? 'title' : ''), (v) => v && applyLayout(v as LayoutId))),
         row(t('Background'), bgBtn),
       ),
       section(
