@@ -10,8 +10,8 @@ find each other.
 | --- | --- |
 | Word processor (`writer`) | Available |
 | Spreadsheet (`sheet`) | Available |
-| Drawing (`draw`) | Planned |
-| Diagram (`diagram`) | Planned |
+| Drawing (`draw`) | Available |
+| Diagram (`diagram`) | Available |
 
 ## Word processor
 
@@ -58,6 +58,32 @@ replicas the same log order, so replaying it always yields the same workbook.
   replaying, so it lands on the cell its author meant.
 - Checkpoints (snapshot + covered entries) every 300 changes keep loading fast.
 
+## Drawing
+
+- Built on [Excalidraw](https://github.com/excalidraw/excalidraw) (MIT): shapes,
+  arrows that bind to shapes, freehand, text, images, frames, libraries, hand-drawn
+  or clean style, light/dark theme.
+- Collaborators' pointers and selections, live.
+- Open and download `.excalidraw`; download PNG and SVG.
+- Sync: each element is a value in a shared `Y.Map` (deleted elements stay as
+  tombstones); local edits are detected with Excalidraw's per-element version and
+  remote edits never enter the local undo history. Fonts are served locally.
+
+## Diagrams
+
+- Built on [draw.io / diagrams.net](https://github.com/jgraph/drawio) (Apache-2.0),
+  **self-hosted**: the pinned web app is downloaded with a checksum at build time
+  (`scripts/fetch-drawio.mjs`) and served from the same origin, with external
+  services disabled.
+- Thousands of shapes (UML, BPMN, network, cloud, floor plans…), orthogonal
+  connectors, layouts, pages, templates; draw.io's own export menu (PNG, JPEG,
+  SVG, PDF, HTML, XML).
+- Open `.drawio`/`.xml` and **Visio `.vsdx`** (converted in the browser); download `.drawio`.
+- Collaborators' selections are highlighted and their pointers shown.
+- Sync is state-based: Yjs holds pages → cells → fields, so concurrent edits merge
+  per field (e.g. one person moves a shape while another recolors it). draw.io's
+  own `diffPages`/`patch` bridge local and remote changes, keeping undo history.
+
 ## How collaboration works
 
 1. Click **Share** and send the link (or show the QR code).
@@ -103,6 +129,11 @@ src/
   home/              Home screen: new document buttons, open file, recent documents
   apps/
     registry.ts      App list: name, icon, loader, supported files
+    draw/            Drawing (Excalidraw + Yjs element sync)
+    diagram/         Diagrams (self-hosted draw.io in a same-origin iframe)
+      drawio.ts      Embeds draw.io and obtains its EditorUi instance
+      sync.ts        Pages/cells/fields in Yjs <-> draw.io diff/patch
+      presence.ts    Remote selections and pointers
     sheet/           Spreadsheet
       app.ts         Univer in the shell: menus, file actions, presence, printing
       univer.ts      Univer presets and locales
@@ -123,6 +154,11 @@ src/
 Each app and each converter is a separate chunk, loaded only when used.
 
 ## Development
+
+`npm run dev` and `npm run build` first run `npm run prepare:assets`, which
+downloads the pinned draw.io release (verified by SHA-256) into `public/drawio`
+and copies Excalidraw's fonts into `public/excalidraw`. Both folders are generated
+and not committed.
 
 ```bash
 npm install

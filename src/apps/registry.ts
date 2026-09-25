@@ -45,7 +45,16 @@ export const APPS: AppInfo[] = [
     accept: '.xlsx,.ods,.csv,.tsv',
     load: () => import('./sheet'),
   },
-  { type: 'draw', name: 'Drawing', newLabel: 'New drawing', untitled: 'Untitled drawing', letter: 'D', color: '#e8710a' },
+  {
+    type: 'draw',
+    name: 'Drawing',
+    newLabel: 'New drawing',
+    untitled: 'Untitled drawing',
+    letter: 'D',
+    color: '#e8710a',
+    accept: '.excalidraw',
+    load: () => import('./draw'),
+  },
   {
     type: 'diagram',
     name: 'Diagram',
