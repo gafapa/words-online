@@ -58,6 +58,8 @@ export function mountDiagram(session: Session, root: HTMLElement): void {
     onPagesChange: () => renderTabs(),
   })
   const { graph, sync, readOnly } = editor
+  // "Hand in" → print uses the same page rendering.
+  session.hooks.print = print
   const editable = editor.editable
 
   // ---------- Files ----------

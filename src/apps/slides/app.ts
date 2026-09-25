@@ -589,6 +589,8 @@ export function mountSlides(session: Session, root: HTMLElement): void {
     fileInput.value = ''
     if (file) void openFile(file)
   })
+  // "Hand in" → print: one slide per page.
+  session.hooks.print = () => void printPdf()
 
   // ---------- Menus ----------
 
