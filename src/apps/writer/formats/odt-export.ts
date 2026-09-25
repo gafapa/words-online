@@ -12,7 +12,7 @@ import {
   type DocumentData,
   type PageSettings,
 } from './types'
-import { escapeXml, loadImage, toHex, toPt } from './util'
+import { escapeXml, loadImage, toHex, toPt } from '../../../core/formats'
 
 const NS = [
   'xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"',

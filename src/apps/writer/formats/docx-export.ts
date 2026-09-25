@@ -31,7 +31,7 @@ import {
   type ParagraphChild,
 } from 'docx'
 import { DEFAULT_FONT, DEFAULT_FONT_SIZE_PT, HEADING_SIZES_PT, PAGE_SIZES_MM, SUBTITLE_SIZE_PT, TITLE_SIZE_PT, type DocumentData } from './types'
-import { loadImage, toHex, toPt, type LoadedImage } from './util'
+import { loadImage, toHex, toPt, type LoadedImage } from '../../../core/formats'
 
 // Custom style ids (the importer recognises them by name) and layout constants.
 const TWIPS_PER_INDENT = 720 // 1.27 cm per indent level

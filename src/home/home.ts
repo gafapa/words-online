@@ -1,0 +1,199 @@
+// Home screen: create documents of every type, open files and list the
+// documents stored in this browser.
+
+import { APPS, appForFile, appInfo, type AppInfo } from '../apps/registry'
+import { docPath, newDocPath } from '../core/router'
+import * as store from '../core/store'
+import { el, showContextMenu, toast } from '../ui/widgets'
+import './home.css'
+
+type Filter = store.DocType | 'all'
+
+export function mountHome(root: HTMLElement): void {
+  document.title = 'Words Online'
+  const user = store.loadUser()
+  let filter: Filter = 'all'
+  let query = ''
+
+  const nameInput = el('input', { class: 'user-name', value: user.name, title: 'Your name, as others see it' })
+  nameInput.setAttribute('aria-label', 'Your name')
+  nameInput.style.borderColor = user.color
+  nameInput.addEventListener('change', () => {
+    user.name = nameInput.value.trim() || user.name
+    nameInput.value = user.name
+    store.saveUser(user)
+  })
+
+  const fileInput = el('input', { type: 'file', hidden: true })
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files?.[0]
+    fileInput.value = ''
+    if (!file) return
+    try {
+      const target = await appForFile(file)
+      if (!target) return toast('This file type is not supported yet')
+      toast('Opening…')
+      location.href = await target.module.importFile(file)
+    } catch (err) {
+      toast(`Could not open the file: ${(err as Error).message}`)
+    }
+  })
+  const openButton = el('button', { type: 'button', class: 'home-open', textContent: 'Open file…' })
+  openButton.addEventListener('click', async () => {
+    // Accept every extension any available app can open.
+    const accepts = await Promise.all(APPS.filter((a) => a.load).map(async (a) => (await a.load!()).accept))
+    fileInput.accept = accepts.join(',')
+    fileInput.click()
+  })
+
+  const newCards = el(
+    'div',
+    { class: 'new-cards' },
+    ...APPS.map((app) => {
+      const card = el(
+        'a',
+        { class: `new-card${app.load ? '' : ' disabled'}`, href: app.load ? newDocPath(app.type) : '#', title: app.load ? app.newLabel : 'Coming soon' },
+        appIcon(app, 'large'),
+        el('span', { class: 'new-label', textContent: app.newLabel }),
+        app.load ? null : el('span', { class: 'soon', textContent: 'Coming soon' }),
+      )
+      if (!app.load) card.addEventListener('click', (e) => e.preventDefault())
+      return card
+    }),
+  )
+
+  const search = el('input', { class: 'home-search', type: 'search', placeholder: 'Search documents' })
+  search.setAttribute('aria-label', 'Search documents')
+  search.addEventListener('input', () => {
+    query = search.value.trim().toLowerCase()
+    renderList()
+  })
+
+  const filters = el('div', { class: 'home-filters', role: 'tablist' })
+  const filterOptions: [Filter, string][] = [['all', 'All'], ...APPS.map((a) => [a.type, `${a.name}s`] as [Filter, string])]
+  const renderFilters = () =>
+    filters.replaceChildren(
+      ...filterOptions.map(([value, label]) => {
+        const b = el('button', { type: 'button', class: `chip${filter === value ? ' active' : ''}`, textContent: label })
+        b.setAttribute('role', 'tab')
+        b.addEventListener('click', () => {
+          filter = value
+          renderFilters()
+          renderList()
+        })
+        return b
+      }),
+    )
+
+  const list = el('div', { class: 'doc-table', role: 'list' })
+  const renderList = () => {
+    const docs = store
+      .listDocs()
+      .filter((d) => filter === 'all' || d.type === filter)
+      .filter((d) => !query || (d.title || appInfo(d.type).untitled).toLowerCase().includes(query))
+    if (!docs.length) {
+      list.replaceChildren(
+        el('p', {
+          class: 'empty',
+          textContent: query || filter !== 'all' ? 'No matching documents.' : 'No documents yet. Create one above or open a file.',
+        }),
+      )
+      return
+    }
+    list.replaceChildren(
+      ...docs.map((d) => {
+        const app = appInfo(d.type)
+        const href = docPath(d.type, d.id, d.key)
+        const more = el('button', { type: 'button', class: 'row-more', title: 'More actions', textContent: '⋮' })
+        more.setAttribute('aria-label', 'More actions')
+        const row = el(
+          'a',
+          { class: 'doc-row', href, role: 'listitem' },
+          appIcon(app, 'small'),
+          el('span', { class: 'doc-name', textContent: d.title || app.untitled }),
+          el('span', { class: 'doc-type', textContent: app.name }),
+          el('span', { class: 'doc-date', textContent: formatDate(d.updated), title: new Date(d.updated).toLocaleString() }),
+          more,
+        )
+        const actions = () => [
+          { label: 'Open', run: () => (location.href = href) },
+          { label: 'Open in new tab', run: () => window.open(href, '_blank') },
+          '-' as const,
+          {
+            label: 'Remove from this browser',
+            run: async () => {
+              if (!confirm(`Remove "${d.title || app.untitled}" from this browser? Collaborators keep their copies.`)) return
+              await store.deleteDoc(d.id)
+              renderList()
+            },
+          },
+        ]
+        more.addEventListener('click', (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          const rect = more.getBoundingClientRect()
+          showContextMenu(rect.left - 180, rect.bottom, actions())
+        })
+        row.addEventListener('contextmenu', (e) => {
+          e.preventDefault()
+          showContextMenu(e.clientX, e.clientY, actions())
+        })
+        return row
+      }),
+    )
+  }
+
+  root.replaceChildren(
+    el(
+      'div',
+      { class: 'home' },
+      el(
+        'header',
+        { class: 'home-bar' },
+        el('span', { class: 'home-logo', textContent: 'W' }),
+        el('h1', { textContent: 'Words Online' }),
+        el('span', { class: 'spacer' }),
+        nameInput,
+      ),
+      el(
+        'section',
+        { class: 'home-new' },
+        el('div', { class: 'home-inner' }, el('div', { class: 'home-section-title' }, el('h2', { textContent: 'Start something new' }), openButton, fileInput), newCards),
+      ),
+      el(
+        'section',
+        { class: 'home-recent' },
+        el(
+          'div',
+          { class: 'home-inner' },
+          el('div', { class: 'home-section-title' }, el('h2', { textContent: 'Recent documents' }), search),
+          filters,
+          list,
+          el('p', {
+            class: 'hint',
+            textContent:
+              'Documents are stored in this browser. Share a document to edit it with others in real time; edits travel directly between browsers.',
+          }),
+        ),
+      ),
+    ),
+  )
+  renderFilters()
+  renderList()
+  // Titles and new documents from other tabs.
+  window.addEventListener('storage', renderList)
+}
+
+function appIcon(app: AppInfo, size: 'small' | 'large'): HTMLElement {
+  const icon = el('span', { class: `app-icon ${size}`, textContent: app.letter })
+  icon.style.background = app.color
+  return icon
+}
+
+function formatDate(time: number): string {
+  const date = new Date(time)
+  const now = new Date()
+  if (date.toDateString() === now.toDateString()) return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+  const sameYear = date.getFullYear() === now.getFullYear()
+  return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }) })
+}

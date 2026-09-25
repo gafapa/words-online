@@ -6,13 +6,15 @@ import { Editor, generateHTML, getSchema, type JSONContent } from '@tiptap/core'
 import Collaboration from '@tiptap/extension-collaboration'
 import CollaborationCaret from '@tiptap/extension-collaboration-caret'
 import { yXmlFragmentToProsemirrorJSON, prosemirrorJSONToYXmlFragment } from '@tiptap/y-tiptap'
-import { IndexeddbPersistence } from 'y-indexeddb'
-import { allExtensions, bodyExtensions, headerFooterExtensions } from '../editor/extensions'
-import { exportFile, importFile, OPEN_ACCEPT, type ExportFormat } from '../formats'
-import { DEFAULT_PAGE, pageDimensionsMm, type DocumentData, type PageSettings } from '../formats/types'
-import * as store from '../store'
-import { setupChrome, type Session } from '../ui/chrome'
-import { toast } from '../ui/widgets'
+import { allExtensions, bodyExtensions, headerFooterExtensions } from './editor/extensions'
+import { exportFile, importFile, OPEN_ACCEPT, type ExportFormat } from './formats'
+import { DEFAULT_PAGE, pageDimensionsMm, type DocumentData, type PageSettings } from './formats/types'
+import { appInfo } from '../registry'
+import { docPath, newDocPath } from '../../core/router'
+import { createLocalDocument, type Session } from '../../core/session'
+import { setupChrome } from '../../ui/chrome'
+import { renderShell } from '../../ui/shell'
+import { toast } from '../../ui/widgets'
 import { Find, setupFindPanel } from './find'
 import { mmToPx, notesHtml, Pagination, relayout, type Layout, type PageGeometry } from './pages'
 import { buildMenus, buildToolbar, setupContextMenu } from './commands'
@@ -20,9 +22,42 @@ import { buildMenus, buildToolbar, setupContextMenu } from './commands'
 const UNTITLED = 'Untitled document'
 const ZOOM_KEY = 'words-online:zoom'
 
-export interface WriterOptions {
-  docPath: (id: string, key: string) => string
-}
+const MAIN_HTML = `
+  <div id="find-panel" class="find-panel" hidden>
+    <div class="find-row">
+      <input data-find placeholder="Find in document" aria-label="Find" />
+      <span data-count class="find-count"></span>
+      <button type="button" data-prev title="Previous (Shift+Enter)">↑</button>
+      <button type="button" data-next title="Next (Enter)">↓</button>
+      <button type="button" data-close title="Close (Esc)">✕</button>
+    </div>
+    <div class="find-row" data-replace-row>
+      <input data-replace placeholder="Replace with" aria-label="Replace with" />
+      <button type="button" data-replace-one>Replace</button>
+      <button type="button" data-replace-all>Replace all</button>
+    </div>
+    <label class="find-option"><input type="checkbox" data-case /> Match case</label>
+  </div>
+  <div id="canvas" class="canvas">
+    <div id="zoom-wrap" class="zoom-wrap">
+      <div id="paper" class="paper">
+        <div id="first-header" class="page-header"></div>
+        <div id="editor"></div>
+        <div id="page-tail" class="page-tail"></div>
+      </div>
+    </div>
+  </div>
+  <input id="file-input" type="file" hidden />
+  <input id="image-input" type="file" accept="image/*" hidden />`
+
+const STATUS_HTML = `
+  <span id="status-page">Page 1 of 1</span>
+  <span id="status-words">0 words</span>
+  <span id="status-chars" class="hide-narrow">0 characters</span>
+  <span class="spacer"></span>
+  <span class="hide-narrow">Zoom</span>
+  <input id="zoom-range" type="range" min="50" max="200" step="10" value="100" aria-label="Zoom" class="hide-narrow" />
+  <button id="zoom-value" class="zoom-value" title="Reset zoom">100%</button>`
 
 export interface WriterContext {
   session: Session
@@ -41,9 +76,12 @@ export interface WriterContext {
   pages: () => number
 }
 
-export function mountWriter(session: Session, options: WriterOptions): WriterContext {
+export function mountWriter(session: Session, root: HTMLElement): WriterContext {
   const { doc, awareness, user } = session
   const meta = doc.getMap<unknown>('meta')
+  const shell = renderShell(appInfo('writer'), root)
+  shell.main.innerHTML = MAIN_HTML
+  shell.statusbar.innerHTML = STATUS_HTML
   setupChrome(session, UNTITLED)
 
   // ---------- Page settings (shared) ----------
@@ -251,8 +289,8 @@ export function mountWriter(session: Session, options: WriterOptions): WriterCon
 
   // ---------- Documents ----------
 
-  const openUrl = (id: string, key: string) => options.docPath(id, key)
-  const newDocument = () => window.open(openUrl(store.newDocId(), store.newDocKey()), '_blank')
+  const openUrl = (id: string, key: string) => docPath('writer', id, key)
+  const newDocument = () => window.open(newDocPath('writer'), '_blank')
 
   const fileInput = document.getElementById('file-input') as HTMLInputElement
   fileInput.accept = OPEN_ACCEPT
@@ -262,34 +300,11 @@ export function mountWriter(session: Session, options: WriterOptions): WriterCon
     if (!file) return
     try {
       toast('Opening…')
-      const imported = await importFile(file)
-      const title = file.name.replace(/\.[^.]+$/, '')
-      const url = await createDocument({ ...imported, title })
-      location.href = url
+      location.href = await importFileAsDocument(file)
     } catch (err) {
       toast(`Could not open the file: ${(err as Error).message}`)
     }
   })
-
-  // Writes an imported document into a new local Y.Doc and returns its URL.
-  async function createDocument(data: DocumentData): Promise<string> {
-    const id = store.newDocId()
-    const key = store.newDocKey()
-    const schema = getSchema(allExtensions())
-    const ydoc = new Y.Doc()
-    prosemirrorJSONToYXmlFragment(schema, data.body, ydoc.getXmlFragment('body'))
-    if (data.header && !isEmptyDoc(data.header)) prosemirrorJSONToYXmlFragment(schema, data.header, ydoc.getXmlFragment('header'))
-    if (data.footer && !isEmptyDoc(data.footer)) prosemirrorJSONToYXmlFragment(schema, data.footer, ydoc.getXmlFragment('footer'))
-    const m = ydoc.getMap<unknown>('meta')
-    m.set('title', data.title)
-    m.set('page', JSON.stringify(data.page))
-    // y-indexeddb stores the full current state when it first syncs.
-    const saved = new IndexeddbPersistence(store.dbName(id), ydoc)
-    await saved.whenSynced
-    await saved.destroy()
-    store.saveDoc({ id, key, title: data.title })
-    return openUrl(id, key)
-  }
 
   const documentData = (): DocumentData => {
     const header = yXmlFragmentToProsemirrorJSON(headerFragment) as JSONContent
@@ -343,8 +358,8 @@ export function mountWriter(session: Session, options: WriterOptions): WriterCon
     openUrl,
     pages: () => layout.pages,
   }
-  buildMenus(ctx, document.getElementById('menubar')!)
-  buildToolbar(ctx, document.getElementById('toolbar')!)
+  buildMenus(ctx, shell.menubar)
+  buildToolbar(ctx, shell.toolbar)
   setupContextMenu(ctx)
 
   // Double-click on a header or footer area to edit them.
@@ -394,3 +409,18 @@ function isEmptyDoc(json: JSONContent): boolean {
   const content = json.content ?? []
   return content.length === 0 || (content.length === 1 && content[0].type === 'paragraph' && !content[0].content?.length)
 }
+
+// Imports a Word/ODT/HTML/text file into a new local document; returns its path.
+export async function importFileAsDocument(file: File): Promise<string> {
+  const imported = await importFile(file)
+  const title = file.name.replace(/\.[^.]+$/, '')
+  const schema = getSchema(allExtensions())
+  return createLocalDocument('writer', title, (ydoc) => {
+    prosemirrorJSONToYXmlFragment(schema, imported.body, ydoc.getXmlFragment('body'))
+    if (imported.header && !isEmptyDoc(imported.header)) prosemirrorJSONToYXmlFragment(schema, imported.header, ydoc.getXmlFragment('header'))
+    if (imported.footer && !isEmptyDoc(imported.footer)) prosemirrorJSONToYXmlFragment(schema, imported.footer, ydoc.getXmlFragment('footer'))
+    ydoc.getMap<unknown>('meta').set('page', JSON.stringify(imported.page))
+  })
+}
+
+export { OPEN_ACCEPT }

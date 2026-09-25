@@ -30,10 +30,11 @@ import {
   Undo2,
   type IconNode,
 } from 'lucide'
-import { DEFAULT_FONT, DEFAULT_FONT_SIZE_PT } from '../formats/types'
-import type { ParagraphStyle } from '../editor/nodes'
-import { closePopover, colorPalette, createMenuBar, el, icon, openPopover, showContextMenu, tableGrid, type MenuEntry } from '../ui/widgets'
+import { DEFAULT_FONT, DEFAULT_FONT_SIZE_PT } from './formats/types'
+import type { ParagraphStyle } from './editor/nodes'
+import { closePopover, colorPalette, createMenuBar, el, icon, openPopover, showContextMenu, tableGrid, type MenuEntry } from '../../ui/widgets'
 import type { WriterContext } from './app'
+import { homePath } from '../../core/router'
 
 export const FONTS = [
   'Arial',
@@ -104,6 +105,7 @@ export function buildMenus(ctx: WriterContext, container: HTMLElement): void {
       label: 'File',
       items: [
         { label: 'New document', run: ctx.newDocument },
+        { label: 'All documents', run: () => (location.href = homePath()) },
         { label: 'Open file…', shortcut: mod('O'), run: ctx.openFile },
         { label: 'My documents…', run: () => dialogs().then((d) => d.openDocuments(ctx)) },
         '-',

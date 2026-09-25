@@ -6,8 +6,12 @@ const DOCS_KEY = 'words-online:docs'
 const USER_KEY = 'words-online:user'
 const COLORS = ['#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#469990', '#f032e6', '#9a6324', '#800000', '#000075']
 
+export type DocType = 'writer' | 'sheet' | 'draw' | 'diagram'
+export const DOC_TYPES: DocType[] = ['writer', 'sheet', 'draw', 'diagram']
+
 export interface DocEntry {
   id: string
+  type: DocType
   // Shared secret for the collaboration room; travels only inside share links.
   key: string
   title: string
@@ -31,7 +35,10 @@ function randomToken(bytes: number): string {
 }
 
 export function listDocs(): DocEntry[] {
-  return read<DocEntry[]>(DOCS_KEY, []).sort((a, b) => b.updated - a.updated)
+  // Entries written before document types existed are word-processor documents.
+  return read<DocEntry[]>(DOCS_KEY, [])
+    .map((d) => (DOC_TYPES.includes(d.type) ? d : { ...d, type: 'writer' as const }))
+    .sort((a, b) => b.updated - a.updated)
 }
 
 export function getDoc(id: string): DocEntry | undefined {

@@ -1,22 +1,10 @@
 // App chrome shared by every document type: title, presence avatars,
 // connection status, share dialog and user name.
 
-import type * as Y from 'yjs'
-import type { Awareness } from 'y-protocols/awareness'
 import QRCode from 'qrcode'
-import type { RoomProvider } from '../network'
-import * as store from '../store'
+import type { Session } from '../core/session'
+import * as store from '../core/store'
 import { el, showDialog, toast } from './widgets'
-
-export interface Session {
-  doc: Y.Doc
-  awareness: Awareness
-  room: RoomProvider
-  docId: string
-  docKey: string
-  user: store.User
-  shareUrl: () => string
-}
 
 export function setupChrome(session: Session, untitled: string): void {
   const { doc, awareness, room, user } = session

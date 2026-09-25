@@ -29,6 +29,7 @@ button.primary:hover { filter: brightness(1.08); }
 input, select, textarea { font: inherit; color: inherit; }
 
 .app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+.app-main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 
 /* ---------- App bar ---------- */
 
@@ -121,120 +122,6 @@ input, select, textarea { font: inherit; color: inherit; }
 .tb-zoom { width: 70px; }
 .tb-size { width: 44px; height: 26px; text-align: center; border: 1px solid #747775; border-radius: 4px; background: transparent; }
 
-/* ---------- Find panel ---------- */
-
-.find-panel {
-  position: fixed; top: 118px; right: 24px; z-index: 50;
-  background: var(--surface); border-radius: 8px; box-shadow: var(--shadow); padding: 10px; width: 360px;
-  display: flex; flex-direction: column; gap: 6px;
-}
-.find-row { display: flex; gap: 4px; align-items: center; }
-.find-row input { flex: 1; min-width: 0; padding: 5px 8px; border: 1px solid var(--border); border-radius: 4px; }
-.find-row button { border: 1px solid var(--border); background: var(--surface); border-radius: 4px; padding: 4px 8px; }
-.find-count { color: var(--muted); font-size: 12px; min-width: 56px; text-align: right; }
-.find-option { color: var(--muted); font-size: 13px; }
-.find-match { background: #fde293; }
-.find-match.current { background: #f9a825; }
-
-/* ---------- Canvas & pages ---------- */
-
-.canvas { flex: 1; overflow: auto; background: var(--canvas); padding: 16px; }
-.zoom-wrap { margin: 0 auto; }
-.paper {
-  --page-height: 1123px;
-  position: relative;
-  transform-origin: 0 0;
-  background: var(--surface);
-  box-shadow: var(--shadow);
-  font-family: var(--doc-font);
-  font-size: 11pt;
-  line-height: 1.15;
-  color: #000;
-}
-.page-header, .page-footer {
-  display: flex; flex-direction: column; overflow: hidden; color: #333; font-size: 10pt;
-  cursor: default;
-}
-.page-header { justify-content: flex-end; padding-bottom: 8px !important; }
-.page-footer { justify-content: flex-start; padding-top: 8px !important; }
-.page-header:hover, .page-footer:hover { background: rgb(26 115 232 / 0.04); outline: 1px dashed rgb(26 115 232 / 0.3); outline-offset: -1px; }
-.paper .page-header p, .paper .page-footer p { margin: 0; }
-.page-header:empty::after, .page-footer:empty::after { content: ''; }
-
-.page-spacer { user-select: none; position: relative; }
-/* Like Word, space before is dropped at the top of a page. */
-.page-spacer + * { margin-top: 0 !important; }
-.page-fill { height: var(--fill); }
-.page-gap {
-  background: var(--canvas);
-  box-shadow: inset 0 6px 6px -6px rgb(60 64 67 / 0.4), inset 0 -6px 6px -6px rgb(60 64 67 / 0.4);
-}
-.page-notes { display: flow-root; font-size: 9pt; line-height: 1.2; }
-.paper .page-notes hr { width: 33%; margin: 7px 0 8px; border: 0; border-top: 1px solid #555; height: 0; }
-.page-note { padding: 1px 0; }
-.page-note sup { font-size: 0.75em; }
-.page-notes.measure { position: absolute; left: -10000px; top: 0; visibility: hidden; padding: 0; }
-
-/* ---------- Document content ---------- */
-
-.ProseMirror { position: relative; outline: none; min-height: 60px; word-wrap: break-word; white-space: pre-wrap; }
-.ProseMirror p { margin: 0 0 8pt; }
-.ProseMirror p.style-title { font-size: 26pt; margin-bottom: 4pt; }
-.ProseMirror p.style-subtitle { font-size: 15pt; color: #595959; margin-bottom: 12pt; }
-.ProseMirror h1, .ProseMirror h2, .ProseMirror h3, .ProseMirror h4, .ProseMirror h5, .ProseMirror h6 { margin: 12pt 0 4pt; font-weight: 700; line-height: 1.2; }
-.ProseMirror h1 { font-size: 20pt; }
-.ProseMirror h2 { font-size: 16pt; }
-.ProseMirror h3 { font-size: 14pt; }
-.ProseMirror h4 { font-size: 12pt; }
-.ProseMirror h5, .ProseMirror h6 { font-size: 11pt; }
-.ProseMirror ul, .ProseMirror ol { padding-left: 1.27cm; margin: 0 0 8pt; }
-.ProseMirror li > p { margin: 0 0 2pt; }
-.ProseMirror ul[data-type='taskList'] { list-style: none; padding-left: 0.4cm; }
-.ProseMirror ul[data-type='taskList'] li { display: flex; gap: 6px; align-items: flex-start; }
-.ProseMirror ul[data-type='taskList'] li > label { flex: none; margin-top: 1px; }
-.ProseMirror ul[data-type='taskList'] li > div { flex: 1; }
-.ProseMirror ul[data-type='taskList'] li[data-checked='true'] > div { text-decoration: line-through; color: #777; }
-.ProseMirror blockquote { margin: 0 0 8pt; padding-left: 12pt; border-left: 3px solid #ccc; color: #444; }
-.ProseMirror pre { background: #f4f4f4; border-radius: 4px; padding: 8px 10px; font: 10pt/1.4 'Courier New', monospace; margin: 0 0 8pt; }
-.ProseMirror code { background: #f1f1f1; padding: 0 3px; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 0.95em; }
-.ProseMirror pre code { background: none; padding: 0; }
-.ProseMirror hr { border: 0; border-top: 1px solid #999; margin: 8pt 0; }
-.ProseMirror a { color: #1155cc; text-decoration: underline; cursor: text; }
-.ProseMirror mark { padding: 0; border-radius: 0; }
-.ProseMirror img { max-width: 100%; height: auto; vertical-align: bottom; }
-.ProseMirror img.ProseMirror-selectednode, .ProseMirror [data-resize-wrapper].ProseMirror-selectednode { outline: 2px solid var(--accent); }
-.ProseMirror .page-break {
-  height: 0; margin: 4px 0; border-top: 1px dashed #bbb; position: relative;
-}
-.ProseMirror .page-break::after {
-  content: 'Page break'; position: absolute; left: 50%; top: -8px; transform: translateX(-50%);
-  background: var(--surface); color: #999; font: 11px system-ui, sans-serif; padding: 0 6px;
-}
-.ProseMirror .page-break.ProseMirror-selectednode { border-top-color: var(--accent); }
-.ProseMirror { counter-reset: footnote; }
-.ProseMirror sup.footnote-ref { counter-increment: footnote; color: var(--accent); cursor: pointer; font-size: 0.75em; }
-.ProseMirror sup.footnote-ref::after { content: counter(footnote); }
-.ProseMirror sup.footnote-ref.ProseMirror-selectednode { outline: 1px solid var(--accent); }
-.ProseMirror p.is-editor-empty:first-child::before {
-  content: attr(data-placeholder); color: #9aa0a6; float: left; height: 0; pointer-events: none;
-}
-
-.ProseMirror table { border-collapse: collapse; table-layout: fixed; width: 100%; margin: 0 0 8pt; overflow: hidden; }
-.ProseMirror td, .ProseMirror th { border: 1px solid #000; padding: 3px 6px; vertical-align: top; position: relative; min-width: 1em; }
-.ProseMirror th { font-weight: 700; text-align: left; background: #f3f3f3; }
-.ProseMirror td > p, .ProseMirror th > p { margin: 0; }
-.ProseMirror .selectedCell::after { content: ''; position: absolute; inset: 0; background: rgb(26 115 232 / 0.15); pointer-events: none; }
-.ProseMirror .column-resize-handle { position: absolute; right: -2px; top: 0; bottom: -2px; width: 4px; background: var(--accent); pointer-events: none; }
-.ProseMirror.resize-cursor { cursor: col-resize; }
-.tableWrapper { overflow-x: auto; }
-
-/* Remote carets (CollaborationCaret) */
-.collaboration-carets__caret { position: relative; margin: 0 -1px; border-left: 1px solid; border-right: 1px solid; word-break: normal; pointer-events: none; }
-.collaboration-carets__label {
-  position: absolute; top: -1.4em; left: -1px; font: 600 11px/1 system-ui, sans-serif; color: #fff;
-  padding: 2px 4px; border-radius: 3px 3px 3px 0; white-space: nowrap; user-select: none;
-}
-
 /* ---------- Status bar ---------- */
 
 .statusbar {
@@ -280,13 +167,6 @@ kbd { font-family: inherit; background: var(--bg); border: 1px solid var(--borde
 .doc-list a.current { font-weight: 600; }
 .doc-list small { color: var(--muted); }
 .doc-list button { border: 1px solid var(--border); background: var(--surface); border-radius: 6px; padding: 4px 10px; }
-.hf-dialog { display: flex; flex-direction: column; gap: 6px; }
-.hf-toolbar { display: flex; gap: 2px; background: #edf2fa; border-radius: 8px; padding: 3px; }
-.hf-label { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; margin-top: 6px; }
-.link-btn { border: 0; background: none; color: var(--accent); padding: 0; }
-.hf-editor { border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-family: var(--doc-font); font-size: 10pt; min-height: 48px; }
-.hf-editor .ProseMirror { min-height: 32px; }
-.hf-editor .page-field { background: #e8f0fe; border-radius: 3px; padding: 0 3px; }
 
 .toast {
   position: fixed; bottom: 48px; left: 50%; transform: translateX(-50%); z-index: 2000;
@@ -300,25 +180,11 @@ kbd { font-family: inherit; background: var(--bg); border: 1px solid var(--borde
   .user-name, .save-state, .hide-narrow { display: none; }
   .toolbar { flex-wrap: nowrap; overflow-x: auto; border-radius: 8px; }
   .tb-group { flex: none; }
-  .canvas { padding: 8px; }
-  .find-panel { left: 8px; right: 8px; width: auto; top: 110px; }
 }
 
 /* ---------- Print ---------- */
 
 @media print {
   html, body, .app { height: auto; overflow: visible; background: #fff; }
-  .appbar, .statusbar, .find-panel, .toast, .collaboration-carets__caret, dialog { display: none !important; }
-  .canvas { padding: 0; overflow: visible; background: #fff; }
-  .zoom-wrap { width: auto !important; height: auto !important; margin: 0; }
-  /* Exactly N sheets: absorbs sub-pixel rounding that would add a blank page. */
-  .paper { transform: none !important; box-shadow: none; height: calc(var(--pages, 1) * var(--page-height)); overflow: hidden; }
-  .page-gap { display: none; }
-  .page-fill { height: calc(var(--fill) - 4px); }
-  .page-spacer .page-footer { break-after: page; }
-  .page-header:hover, .page-footer:hover { outline: 0; background: none; }
-  .ProseMirror .page-break { border: 0; margin: 0; }
-  .ProseMirror .page-break::after { display: none; }
-  .ProseMirror sup.footnote-ref { color: inherit; }
-  .find-match { background: none; }
+  .appbar, .statusbar, .toast, dialog { display: none !important; }
 }

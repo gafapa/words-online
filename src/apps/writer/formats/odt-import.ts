@@ -5,7 +5,7 @@ import { getSchema, type JSONContent } from '@tiptap/core'
 import type { Schema } from '@tiptap/pm/model'
 import { allExtensions } from '../editor/extensions'
 import { DEFAULT_FONT, DEFAULT_FONT_SIZE_PT, DEFAULT_PAGE, PAGE_SIZES_MM, type ImportedDocument, type PageSettings, type PageSize } from './types'
-import { attr, bytesToDataUrl, child, children, mimeFromPath, parseXml, toHex } from './util'
+import { attr, bytesToDataUrl, child, children, mimeFromPath, parseXml, toHex } from '../../../core/formats'
 
 const INDENT_CM = 1.27
 const PX_PER_CM = 96 / 2.54

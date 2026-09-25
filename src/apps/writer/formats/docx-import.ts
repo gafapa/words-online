@@ -3,7 +3,7 @@
 import type { JSONContent } from '@tiptap/core'
 import JSZip from 'jszip'
 import { DEFAULT_PAGE, PAGE_SIZES_MM, type ImportedDocument, type PageSettings, type PageSize } from './types'
-import { attr, bytesToDataUrl, child, children, mimeFromPath, parseXml, toHex } from './util'
+import { attr, bytesToDataUrl, child, children, mimeFromPath, parseXml, toHex } from '../../../core/formats'
 
 const TWIPS_PER_INDENT = 720
 const TWIPS_PER_MM = 1440 / 25.4

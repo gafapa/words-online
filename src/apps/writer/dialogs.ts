@@ -4,10 +4,10 @@ import { Editor } from '@tiptap/core'
 import Collaboration from '@tiptap/extension-collaboration'
 import { NodeSelection } from '@tiptap/pm/state'
 import { Bold, Italic, Underline, TextAlignStart, TextAlignCenter, TextAlignEnd, Hash } from 'lucide'
-import { headerFooterExtensions } from '../editor/extensions'
-import { PAGE_SIZES_MM, type PageSettings, type PageSize } from '../formats/types'
-import * as store from '../store'
-import { colorPalette, el, icon, promptText, showDialog, toast } from '../ui/widgets'
+import { headerFooterExtensions } from './editor/extensions'
+import { PAGE_SIZES_MM, type PageSettings, type PageSize } from './formats/types'
+import * as store from '../../core/store'
+import { colorPalette, el, icon, promptText, showDialog, toast } from '../../ui/widgets'
 import type { WriterContext } from './app'
 
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform)
@@ -178,7 +178,7 @@ export async function openDocuments(ctx: WriterContext): Promise<void> {
   const list = el('ul', { class: 'doc-list' })
   const render = () => {
     list.replaceChildren(
-      ...store.listDocs().map((d) => {
+      ...store.listDocs().filter((d) => d.type === 'writer').map((d) => {
         const link = el('a', { href: ctx.openUrl(d.id, d.key), textContent: d.title || 'Untitled document' })
         if (d.id === ctx.session.docId) link.classList.add('current')
         const del = el('button', { type: 'button', textContent: 'Delete', disabled: d.id === ctx.session.docId })
