@@ -10,20 +10,21 @@
     <header class="topbar">
       <input id="doc-title" class="doc-title" placeholder="Untitled document" aria-label="Document title" />
       <div class="actions">
-        <span id="presence" class="presence" title="Connected people"></span>
-        <span id="peer-status" class="status offline">Local only</span>
-        <button id="btn-invite" class="primary">Share</button>
+        <span id="presence" class="presence" title="People in this document"></span>
+        <span id="peer-status" class="status offline">Connecting…</span>
+        <button id="btn-share" class="primary">Share</button>
         <details class="menu">
           <summary>File</summary>
           <div class="menu-items">
             <button id="btn-new">New document</button>
-            <button id="btn-docs">Open…</button>
-            <button id="btn-import">Import file…</button>
-            <button id="btn-export-html">Export HTML</button>
-            <button id="btn-export-txt">Export text</button>
+            <button id="btn-docs">My documents…</button>
+            <button id="btn-open-file">Open file (Word, ODT…)</button>
+            <hr />
+            <button data-export="docx">Download Word (.docx)</button>
+            <button data-export="odt">Download OpenDocument (.odt)</button>
+            <button data-export="html">Download HTML</button>
+            <button data-export="txt">Download text</button>
             <button id="btn-print">Print / PDF</button>
-            <button id="btn-join">Join direct invitation…</button>
-            <button id="btn-disconnect">Disconnect direct peers</button>
           </div>
         </details>
         <input id="user-name" class="user-name" aria-label="Your name" />
@@ -34,78 +35,27 @@
       <div id="editor"></div>
     </main>
 
-    <input id="file-input" type="file" accept=".txt,.html,.htm,.md,text/plain,text/html" hidden />
+    <input id="file-input" type="file" hidden />
 
-    <!-- Share: server mode, the document link is all that is needed -->
     <dialog id="dlg-share">
       <form method="dialog" class="dlg">
         <h2>Share this document</h2>
-        <p>Anyone on your network who opens this link can edit the document:</p>
+        <p>Anyone who opens this link can edit the document with you in real time.</p>
         <div class="code-row">
           <input id="share-link" readonly />
           <button type="button" id="btn-copy-share">Copy</button>
         </div>
         <canvas id="share-qr" class="qr"></canvas>
+        <p class="hint">
+          The link contains the document's secret key. Edits travel directly between browsers; public relays are
+          only used to find each other.
+        </p>
         <div class="dlg-actions">
-          <button type="button" id="btn-direct-invite" class="link">Direct connection (no server)…</button>
           <button value="cancel" class="primary">Done</button>
         </div>
       </form>
     </dialog>
 
-    <!-- Invite (serverless): create an offer and paste back the guest's answer -->
-    <dialog id="dlg-invite">
-      <form method="dialog" class="dlg">
-        <h2>Direct connection (no server)</h2>
-        <ol class="steps">
-          <li>
-            Send this link to the other person (or let them scan the QR code).
-            <div class="code-row">
-              <input id="invite-link" readonly />
-              <button type="button" id="btn-copy-invite">Copy</button>
-            </div>
-            <canvas id="invite-qr" class="qr"></canvas>
-          </li>
-          <li>
-            Paste the answer code they send back:
-            <textarea id="answer-code" rows="3" placeholder="Answer code"></textarea>
-          </li>
-        </ol>
-        <p id="invite-status" class="hint"></p>
-        <div class="dlg-actions">
-          <button value="cancel">Cancel</button>
-          <button type="button" id="btn-accept-answer" class="primary">Connect</button>
-        </div>
-      </form>
-    </dialog>
-
-    <!-- Join: paste an invitation and send back the answer -->
-    <dialog id="dlg-join">
-      <form method="dialog" class="dlg">
-        <h2>Join with a direct invitation</h2>
-        <div id="join-input-step">
-          <p>Paste the invitation link or code you received:</p>
-          <textarea id="invite-code" rows="3" placeholder="Invitation link or code"></textarea>
-          <div class="dlg-actions">
-            <button value="cancel">Cancel</button>
-            <button type="button" id="btn-create-answer" class="primary">Continue</button>
-          </div>
-        </div>
-        <div id="join-answer-step" hidden>
-          <p>Send this answer code back to the person who invited you:</p>
-          <div class="code-row">
-            <input id="answer-output" readonly />
-            <button type="button" id="btn-copy-answer">Copy</button>
-          </div>
-          <p id="join-status" class="hint">Waiting for the other person to connect…</p>
-          <div class="dlg-actions">
-            <button value="cancel">Close</button>
-          </div>
-        </div>
-      </form>
-    </dialog>
-
-    <!-- Local documents stored in this browser -->
     <dialog id="dlg-docs">
       <form method="dialog" class="dlg">
         <h2>Documents in this browser</h2>

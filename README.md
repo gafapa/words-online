@@ -1,100 +1,90 @@
 # Words Online
 
-A collaborative rich-text editor for your local network. One machine runs a tiny
-Node.js server that serves the app, relays edits over WebSockets and stores
-documents on disk. No database, no cloud services: nothing leaves the LAN.
+A collaborative rich-text editor that runs entirely in the browser, with no
+server of its own. Documents live in each browser (IndexedDB) and edits travel
+directly between browsers over WebRTC. Public Nostr relays (WebSockets) are
+only used as a meeting point for browsers to find each other.
 
 ## Features
 
-- Rich-text editing (headings, lists, colors, links, images, code blocks…) with [Quill](https://quilljs.com/).
-- Real-time, conflict-free collaboration with [Yjs](https://yjs.dev/) CRDTs.
-- Live remote cursors and presence avatars.
-- Resilient sync: automatic reconnection with backoff; edits made while offline
-  are kept in the browser (IndexedDB) and merged when the connection returns.
-- Documents persisted on the server (`data/`), listed for every device on the network.
-- Import (`.txt`, `.html`), export (HTML, text) and print / PDF.
-- Serverless fallback: when the app is served from a static host, peers can
-  connect directly over WebRTC with a manual invite/answer exchange.
+- Rich-text editing (headings, fonts, sizes, colors, lists, alignment, links, images, code…) with [Quill](https://quilljs.com/).
+- Real-time, conflict-free collaboration with [Yjs](https://yjs.dev/) CRDTs, live cursors and presence.
+- Share by link or QR code: no accounts, no manual code exchange.
+- Offline-first: every document is saved locally and merges automatically when peers reconnect.
+- **Word (.docx) and OpenDocument (.odt)**: open and download, preserving headings,
+  bold/italic/underline/strike, sub/superscript, colors, highlight, font size,
+  alignment, indentation, nested lists, links, quotes, code blocks and images.
+- Also opens `.html`, `.txt` and `.md`; downloads HTML and text; print / save as PDF.
+- Fully static build: host it anywhere (GitHub Pages, any static host, a local folder served over HTTP).
 
-## Quick start
+## How collaboration works
 
-```bash
-npm install
-npm run serve     # builds the app and starts the server on port 8080
+1. Click **Share** and send the link (or show the QR code).
+2. Whoever opens it joins the document; edits sync in real time.
+
+```
+ Browser A ◄──── WebRTC (direct, encrypted) ────► Browser B
+     │                                                │
+     └──── Nostr relays (public WebSockets) ──────────┘
+           only to find each other and exchange connection offers
 ```
 
-The server prints the addresses to open from other devices, e.g.
-`http://192.168.1.20:8080/`. Click **Share** to get a link (and QR code) to the
-current document; anyone on the network who opens it can edit.
+- The link looks like `…/#doc=<id>&key=<secret>`. The fragment after `#` is
+  never sent to any server.
+- Signaling goes through [Trystero](https://github.com/dmotz/trystero) over
+  several public Nostr relays at once (redundancy). Offers are encrypted with
+  the document key, so only people with the link can connect.
+- Document data never goes through the relays: it travels over WebRTC data
+  channels (DTLS-encrypted). On the same network the traffic stays local.
+- Every peer relays updates to its other peers, so everyone converges even if
+  one pair of browsers cannot connect directly.
+- There is no central copy: the document exists in the browsers that opened it.
+  At least one other participant must be online to receive changes; offline
+  edits merge the next time they meet.
 
-### Configuration
+### Custom relays
 
-| Variable | Default | Description |
-| --- | --- | --- |
-| `PORT` | `8080` | HTTP / WebSocket port. |
-| `HOST` | `0.0.0.0` | Interface to listen on. |
-| `DATA_DIR` | `./data` | Where documents are stored (`<id>.ydoc` + `<id>.json`). |
-| `STATIC_DIR` | `./dist` | Built front-end served by the server. |
+To use your own Nostr relays (e.g. on an isolated network), add them to the URL:
 
-To back up documents, copy the `data/` folder.
+```
+https://your-host/?relays=wss://relay1.example,wss://relay2.example
+```
+
+Share links keep this parameter.
 
 ## Development
 
 ```bash
-npm run dev:server   # server with auto-restart (port 8080)
-npm run dev          # Vite dev server, proxies /ws and /api to the server
-npm run build        # type-check and build the front-end into dist/
+npm install
+npm run dev       # dev server, reachable on the LAN
+npm run build     # type-check and build into dist/
+npm run preview   # serve the production build
 ```
-
-## Architecture
-
-```
- Browser A ──┐                      ┌── data/<id>.ydoc
- Browser B ──┼── WebSocket /ws/<id> ─┤   Node server (relay + persistence)
- Browser C ──┘                      └── dist/ (static app)
-```
-
-- Each document is a Yjs doc identified by the `#doc=<id>` URL fragment.
-- The wire protocol is the standard y-websocket one (sync + awareness messages).
-- The server keeps a document in memory while someone is connected, saves it
-  (debounced, atomic writes) on every change and unloads it when the last client leaves.
-- Every browser also keeps a local copy, so the editor works offline and syncs
-  whatever changed when the server is reachable again.
-
-### Serverless mode (WebRTC)
-
-If no server is reachable (e.g. the app is published on GitHub Pages), the
-status shows *Local only* and **Share** opens a direct connection flow:
-
-1. The inviter sends the generated link / QR code.
-2. The guest opens it and sends back the answer code.
-3. The inviter pastes it and clicks **Connect**.
-
-Only local network candidates are used (no STUN/TURN). Every peer relays
-updates to its other peers, so participants form a tree. Each invitation is
-single-use. Both transports can be active at the same time.
 
 ## Deployment
 
-- **LAN server** (recommended): `npm run serve` on any machine of the network.
-- **Static only**: `.github/workflows/pages.yml` publishes `dist/` to GitHub Pages
-  on every push to `main` (serverless mode only).
+`.github/workflows/pages.yml` builds and publishes `dist/` to GitHub Pages on
+every push to `main` (enable *Settings → Pages → Source: GitHub Actions*).
+The build uses relative paths, so any static host or subfolder works.
 
 ## Limitations
 
-- Anyone who can reach the server can open and edit any document; there is no
-  authentication. Run it only on trusted networks.
-- In serverless mode, networks that block multicast (mDNS) may prevent
-  connections, and collaboration stops when the connecting tabs close.
+- Public relays are community-run with no guarantees; several are used at once
+  to reduce the impact of any one being down.
+- Some restrictive networks (strict corporate firewalls, symmetric NAT) can
+  block direct WebRTC connections between different networks. No TURN server
+  is configured.
+- Word/ODT import flattens tables into paragraphs and ignores headers/footers,
+  footnotes, comments and page layout. Legacy `.doc` is not supported.
 
 ## Project structure
 
 | File | Purpose |
 | --- | --- |
-| `server/index.js` | LAN server: static files, WebSocket relay, disk persistence, `/api/docs`. |
-| `src/main.ts` | UI wiring: editor, dialogs, file menu, presence, status. |
-| `src/ws-provider.ts` | Yjs provider over WebSocket with reconnection and keepalive. |
-| `src/network.ts` | Yjs provider over WebRTC data channels (serverless fallback). |
-| `src/signaling.ts` | Manual WebRTC signaling: offer/answer creation and compact encoding. |
-| `src/protocol.ts` | Message types shared by the transports. |
-| `src/store.ts` | Local document index and user identity. |
+| `src/main.ts` | UI wiring: editor, share dialog, file menu, presence, status. |
+| `src/network.ts` | Yjs sync/awareness provider over Trystero (WebRTC + Nostr signaling). |
+| `src/store.ts` | Local document index (ids, keys, titles) and user identity. |
+| `src/formats/model.ts` | Normalized document model shared by importers/exporters (Delta ↔ lines). |
+| `src/formats/docx.ts`, `docx-import.ts` | Word export (via `docx`) and import (WordprocessingML parser). |
+| `src/formats/odt.ts`, `odt-import.ts` | OpenDocument export and import. |
+| `src/formats/index.ts` | Open/download entry points; converters are loaded on demand. |

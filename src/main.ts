@@ -7,9 +7,8 @@ import { Awareness, removeAwarenessStates } from 'y-protocols/awareness'
 import QRCode from 'qrcode'
 import 'quill/dist/quill.snow.css'
 import './style.css'
-import { PeerNetwork } from './network'
-import { WebSocketProvider } from './ws-provider'
-import { acceptAnswer, createAnswer, createOffer } from './signaling'
+import { RoomProvider } from './network'
+import { exportFile, importFile, OPEN_ACCEPT, type ExportFormat } from './formats'
 import * as store from './store'
 
 Quill.register('modules/cursors', QuillCursors)
@@ -18,21 +17,22 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 
 // ---------- Document bootstrap ----------
 
+// URL fragment: #doc=<id>&key=<secret>. The fragment never reaches any server.
 const params = new URLSearchParams(location.hash.slice(1))
 const docId = params.get('doc') || store.newDocId()
-const pendingInvite = params.get('invite')
-history.replaceState(null, '', `#doc=${docId}`)
+const docKey = params.get('key') || store.getDoc(docId)?.key || store.newDocKey()
+history.replaceState(null, '', docUrl(docId, docKey))
 // Switching documents is done through the URL; a clean reload keeps state simple.
 window.addEventListener('hashchange', () => location.reload())
+
+// Optional custom relays for private deployments: ?relays=wss://a,wss://b
+const relays = new URLSearchParams(location.search).get('relays')?.split(',').filter(Boolean)
 
 const doc = new Y.Doc()
 const persistence = new IndexeddbPersistence(store.dbName(docId), doc)
 const awareness = new Awareness(doc)
-const network = new PeerNetwork(doc, awareness)
-const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}${location.pathname.replace(/[^/]*$/, '')}ws/${docId}`
-let server: WebSocketProvider | null = null
-window.addEventListener('beforeunload', () => removeAwarenessStates(awareness, [doc.clientID], 'unload'))
 const meta = doc.getMap<string>('meta')
+let room: RoomProvider | null = null
 
 const quill = new Quill('#editor', {
   theme: 'snow',
@@ -42,7 +42,7 @@ const quill = new Quill('#editor', {
     history: { userOnly: true },
     toolbar: [
       [{ header: [1, 2, 3, false] }, { font: [] }, { size: ['small', false, 'large', 'huge'] }],
-      ['bold', 'italic', 'underline', 'strike'],
+      ['bold', 'italic', 'underline', 'strike', { script: 'sub' }, { script: 'super' }],
       [{ color: [] }, { background: [] }],
       [{ list: 'ordered' }, { list: 'bullet' }, { list: 'check' }, { indent: '-1' }, { indent: '+1' }],
       [{ align: [] }],
@@ -56,12 +56,25 @@ quill.disable()
 persistence.whenSynced.then(() => {
   new QuillBinding(doc.getText('content'), quill, awareness)
   quill.enable()
-  server = new WebSocketProvider(wsUrl, doc, awareness)
-  server.onStatus(renderStatus)
   syncTitle()
-  store.touchDoc(docId, meta.get('title') || '')
-  if (pendingInvite) joinWithInvite(pendingInvite)
+  saveEntry()
+  room = new RoomProvider(doc, awareness, { roomId: docId, password: docKey, relays })
+  room.onPeersChange(renderStatus)
+  renderStatus()
 })
+
+window.addEventListener('beforeunload', () => {
+  removeAwarenessStates(awareness, [doc.clientID], 'unload')
+  room?.destroy()
+})
+
+function docUrl(id: string, key: string): string {
+  return `${location.pathname}${location.search}#doc=${id}&key=${key}`
+}
+
+function saveEntry() {
+  store.saveDoc({ id: docId, key: docKey, title: meta.get('title') || '' })
+}
 
 // ---------- Title ----------
 
@@ -73,13 +86,10 @@ function syncTitle() {
   document.title = `${title || 'Untitled document'} · Words Online`
 }
 titleInput.addEventListener('input', () => meta.set('title', titleInput.value))
-meta.observe(() => {
-  syncTitle()
-  store.touchDoc(docId, meta.get('title') || '')
-})
-doc.on('update', () => store.touchDoc(docId, meta.get('title') || ''))
+meta.observe(syncTitle)
+doc.on('update', saveEntry)
 
-// ---------- User identity & presence ----------
+// ---------- User identity, presence & status ----------
 
 const user = store.loadUser()
 const nameInput = $<HTMLInputElement>('user-name')
@@ -110,156 +120,36 @@ awareness.on('change', () => {
 })
 
 const statusEl = $('peer-status')
-// Tells apart "server temporarily lost" from "app served without a server".
-let serverSeen = false
-
 function renderStatus() {
-  const peers = network.peers.size
-  const direct = peers > 0 ? ` · ${peers} direct` : ''
-  if (server?.status === 'connected') serverSeen = true
-  if (server?.status === 'connected') {
-    statusEl.textContent = `Connected${direct}`
-    statusEl.className = 'status online'
-  } else if (serverSeen) {
-    statusEl.textContent = `Reconnecting…${direct}`
-    statusEl.className = 'status warn'
+  const peers = room?.peerCount ?? 0
+  if (!navigator.onLine && peers === 0) {
+    statusEl.textContent = 'Offline'
+    statusEl.className = 'status offline'
+    statusEl.title = 'Changes are saved in this browser and synced when others are reachable'
+  } else if (peers === 0) {
+    statusEl.textContent = 'Only you'
+    statusEl.className = 'status offline'
+    statusEl.title = 'Waiting for someone to open the shared link'
   } else {
-    statusEl.textContent = peers > 0 ? `${peers} direct` : 'Local only'
-    statusEl.className = `status ${peers > 0 ? 'online' : 'offline'}`
+    statusEl.textContent = `${peers + 1} connected`
+    statusEl.className = 'status online'
+    statusEl.title = 'Editing together in real time'
   }
-  statusEl.title =
-    server?.status === 'connected'
-      ? 'Synced through the network server'
-      : 'No server reachable: changes are saved in this browser and synced on reconnect'
 }
-network.onPeersChange(renderStatus)
-renderStatus()
+window.addEventListener('online', renderStatus)
+window.addEventListener('offline', renderStatus)
 
-// ---------- Share (server mode) ----------
+// ---------- Share ----------
 
 const dlgShare = $<HTMLDialogElement>('dlg-share')
 const shareLink = $<HTMLInputElement>('share-link')
 
-$('btn-invite').addEventListener('click', async () => {
-  if (server?.status !== 'connected') return openDirectInvite()
-  shareLink.value = `${location.origin}${location.pathname}#doc=${docId}`
+$('btn-share').addEventListener('click', async () => {
+  shareLink.value = new URL(docUrl(docId, docKey), location.href).href
   dlgShare.showModal()
   await QRCode.toCanvas($<HTMLCanvasElement>('share-qr'), shareLink.value, { width: 220, margin: 1 })
 })
 $('btn-copy-share').addEventListener('click', () => copy(shareLink))
-$('btn-direct-invite').addEventListener('click', () => {
-  dlgShare.close()
-  openDirectInvite()
-})
-
-// ---------- Invite (offer side) ----------
-
-const dlgInvite = $<HTMLDialogElement>('dlg-invite')
-const inviteLink = $<HTMLInputElement>('invite-link')
-const answerCode = $<HTMLTextAreaElement>('answer-code')
-const inviteStatus = $('invite-status')
-let pendingOffer: RTCPeerConnection | null = null
-let pendingChannel: RTCDataChannel | null = null
-
-async function openDirectInvite() {
-  pendingOffer?.close()
-  answerCode.value = ''
-  inviteLink.value = 'Generating…'
-  inviteStatus.textContent = ''
-  dlgInvite.showModal()
-  try {
-    const offer = await createOffer()
-    pendingOffer = offer.pc
-    pendingChannel = offer.channel
-    const link = `${location.origin}${location.pathname}#doc=${docId}&invite=${offer.code}`
-    inviteLink.value = link
-    await QRCode.toCanvas($<HTMLCanvasElement>('invite-qr'), link, { width: 220, margin: 1 })
-  } catch (err) {
-    inviteStatus.textContent = `Could not create the invitation: ${(err as Error).message}`
-  }
-}
-
-dlgInvite.addEventListener('close', () => {
-  // An unanswered offer is useless once the dialog is gone.
-  if (pendingOffer && pendingOffer.connectionState === 'new') pendingOffer.close()
-  pendingOffer = null
-  pendingChannel = null
-})
-
-$('btn-copy-invite').addEventListener('click', () => copy(inviteLink))
-
-$('btn-accept-answer').addEventListener('click', async () => {
-  if (!pendingOffer || !pendingChannel) return
-  const pc = pendingOffer
-  const channel = pendingChannel
-  inviteStatus.textContent = 'Connecting…'
-  try {
-    await acceptAnswer(pc, answerCode.value)
-    pendingOffer = null
-    pendingChannel = null
-    await withTimeout(network.addConnection(pc, channel), 15000)
-    dlgInvite.close()
-    toast('Connected')
-  } catch (err) {
-    inviteStatus.textContent = `Connection failed: ${(err as Error).message}`
-  }
-})
-
-// ---------- Join (answer side) ----------
-
-const dlgJoin = $<HTMLDialogElement>('dlg-join')
-const inviteCodeInput = $<HTMLTextAreaElement>('invite-code')
-const joinInputStep = $('join-input-step')
-const joinAnswerStep = $('join-answer-step')
-const answerOutput = $<HTMLInputElement>('answer-output')
-const joinStatus = $('join-status')
-
-$('btn-join').addEventListener('click', () => {
-  inviteCodeInput.value = ''
-  joinInputStep.hidden = false
-  joinAnswerStep.hidden = true
-  dlgJoin.showModal()
-})
-
-$('btn-create-answer').addEventListener('click', () => {
-  const invite = parseInvite(inviteCodeInput.value)
-  if (!invite) return toast('That does not look like an invitation')
-  if (invite.doc !== docId) {
-    // Joining another document: reload into it and continue there.
-    location.hash = `doc=${invite.doc}&invite=${invite.code}`
-    return
-  }
-  joinWithInvite(invite.code)
-})
-
-$('btn-copy-answer').addEventListener('click', () => copy(answerOutput))
-
-async function joinWithInvite(code: string) {
-  joinInputStep.hidden = true
-  joinAnswerStep.hidden = false
-  answerOutput.value = 'Generating…'
-  joinStatus.textContent = 'Waiting for the other person to connect…'
-  if (!dlgJoin.open) dlgJoin.showModal()
-  try {
-    const answer = await createAnswer(code)
-    answerOutput.value = answer.code
-    const channel = await answer.channel
-    await network.addConnection(answer.pc, channel)
-    dlgJoin.close()
-    toast('Connected')
-  } catch (err) {
-    joinStatus.textContent = `Could not join: ${(err as Error).message}`
-  }
-}
-
-function parseInvite(text: string): { doc: string; code: string } | null {
-  const hash = text.trim().split('#')[1]
-  if (!hash) return null
-  const p = new URLSearchParams(hash)
-  const doc = p.get('doc')
-  const code = p.get('invite')
-  return doc && code ? { doc, code } : null
-}
 
 // ---------- File menu ----------
 
@@ -271,66 +161,76 @@ document.addEventListener('click', (e) => {
   if (!menu.contains(e.target as Node)) menu.open = false
 })
 
-$('btn-new').addEventListener('click', () => (location.hash = `doc=${store.newDocId()}`))
+$('btn-new').addEventListener('click', () => (location.hash = `doc=${store.newDocId()}&key=${store.newDocKey()}`))
 $('btn-print').addEventListener('click', () => window.print())
-$('btn-disconnect').addEventListener('click', () => network.disconnectAll())
-$('btn-export-txt').addEventListener('click', () => download(quill.getText(), 'text/plain', 'txt'))
-$('btn-export-html').addEventListener('click', () => {
-  const title = escapeHtml(meta.get('title') || 'Untitled document')
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title></head><body>${quill.getSemanticHTML()}</body></html>`
-  download(html, 'text/html', 'html')
+
+document.querySelectorAll<HTMLButtonElement>('[data-export]').forEach((button) => {
+  button.addEventListener('click', async () => {
+    const format = button.dataset.export as ExportFormat
+    const title = meta.get('title') || 'Untitled document'
+    try {
+      const blob = await exportFile(format, quill.getContents().ops, quill.getSemanticHTML(), quill.getText(), title)
+      download(blob, `${title.replace(/[\\/:*?"<>|]+/g, '_')}.${format}`)
+    } catch (err) {
+      toast(`Export failed: ${(err as Error).message}`)
+    }
+  })
 })
 
+// Opening a file creates a new document, so the current one is never overwritten.
 const fileInput = $<HTMLInputElement>('file-input')
-$('btn-import').addEventListener('click', () => fileInput.click())
+fileInput.accept = OPEN_ACCEPT
+$('btn-open-file').addEventListener('click', () => fileInput.click())
 fileInput.addEventListener('change', async () => {
   const file = fileInput.files?.[0]
   fileInput.value = ''
   if (!file) return
-  const text = await file.text()
-  if (!confirm('Replace the current content with this file? This affects everybody connected.')) return
-  if (/\.html?$/i.test(file.name) || file.type === 'text/html') {
-    quill.setContents(quill.clipboard.convert({ html: text }), 'user')
-  } else {
-    quill.setText(text, 'user')
+  try {
+    const imported = await importFile(file)
+    const ops =
+      'ops' in imported
+        ? imported.ops
+        : 'html' in imported
+          ? quill.clipboard.convert({ html: imported.html }).ops
+          : [{ insert: imported.text.endsWith('\n') ? imported.text : `${imported.text}\n` }]
+    const id = store.newDocId()
+    const key = store.newDocKey()
+    const title = file.name.replace(/\.[^.]+$/, '')
+    const newDoc = new Y.Doc()
+    newDoc.getText('content').applyDelta(ops)
+    newDoc.getMap('meta').set('title', title)
+    // y-indexeddb stores the full current state when it first syncs.
+    const saved = new IndexeddbPersistence(store.dbName(id), newDoc)
+    await saved.whenSynced
+    await saved.destroy()
+    store.saveDoc({ id, key, title })
+    location.hash = `doc=${id}&key=${key}`
+  } catch (err) {
+    toast(`Could not open the file: ${(err as Error).message}`)
   }
-  if (!meta.get('title')) meta.set('title', file.name.replace(/\.[^.]+$/, ''))
 })
 
 const dlgDocs = $<HTMLDialogElement>('dlg-docs')
-$('btn-docs').addEventListener('click', async () => {
-  const list = $('doc-list')
-  const local = store.listDocs()
-  const localIds = new Set(local.map((d) => d.id))
-  const remote = await fetchServerDocs()
-  const remoteIds = new Set(remote.map((d) => d.id))
-  const docs = [...local, ...remote.filter((d) => !localIds.has(d.id))].sort((a, b) => b.updated - a.updated)
-  list.replaceChildren(
-    ...docs.map((d) => {
+$('btn-docs').addEventListener('click', () => {
+  $('doc-list').replaceChildren(
+    ...store.listDocs().map((d) => {
       const li = document.createElement('li')
       const open = document.createElement('a')
-      open.href = `#doc=${d.id}`
+      open.href = docUrl(d.id, d.key)
       open.textContent = d.title || 'Untitled document'
       if (d.id === docId) open.classList.add('current')
       const date = document.createElement('small')
       date.textContent = new Date(d.updated).toLocaleString()
-      const where = document.createElement('span')
-      where.className = 'badge'
-      where.textContent = remoteIds.has(d.id) ? 'network' : 'this browser'
-      li.append(open, where, date)
-      if (localIds.has(d.id)) {
-        const del = document.createElement('button')
-        del.type = 'button'
-        del.textContent = 'Remove local copy'
-        del.disabled = d.id === docId
-        del.addEventListener('click', async () => {
-          if (!confirm(`Remove "${open.textContent}" from this browser?`)) return
-          await store.deleteDoc(d.id)
-          if (remoteIds.has(d.id)) del.remove()
-          else li.remove()
-        })
-        li.append(del)
-      }
+      const del = document.createElement('button')
+      del.type = 'button'
+      del.textContent = 'Delete'
+      del.disabled = d.id === docId
+      del.addEventListener('click', async () => {
+        if (!confirm(`Delete "${open.textContent}" from this browser?`)) return
+        await store.deleteDoc(d.id)
+        li.remove()
+      })
+      li.append(open, date, del)
       return li
     }),
   )
@@ -339,21 +239,10 @@ $('btn-docs').addEventListener('click', async () => {
 
 // ---------- Helpers ----------
 
-async function fetchServerDocs(): Promise<store.DocEntry[]> {
-  if (server?.status !== 'connected') return []
-  try {
-    const res = await fetch(new URL('api/docs', location.href.replace(/#.*$/, '')))
-    return res.ok ? await res.json() : []
-  } catch {
-    return []
-  }
-}
-
-function download(content: string, mime: string, ext: string) {
-  const name = (meta.get('title') || 'document').replace(/[\\/:*?"<>|]+/g, '_')
+function download(blob: Blob, filename: string) {
   const a = document.createElement('a')
-  a.href = URL.createObjectURL(new Blob([content], { type: mime }))
-  a.download = `${name}.${ext}`
+  a.href = URL.createObjectURL(blob)
+  a.download = filename
   a.click()
   setTimeout(() => URL.revokeObjectURL(a.href), 1000)
 }
@@ -375,16 +264,5 @@ function toast(message: string) {
   el.textContent = message
   el.hidden = false
   clearTimeout(toastTimer)
-  toastTimer = window.setTimeout(() => (el.hidden = true), 2500)
-}
-
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('timed out (are you on the same network?)')), ms)),
-  ])
-}
-
-function escapeHtml(s: string) {
-  return s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!)
+  toastTimer = window.setTimeout(() => (el.hidden = true), 3000)
 }

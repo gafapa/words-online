@@ -1,151 +1,110 @@
-// Yjs provider over WebRTC data channels (serverless fallback). Every peer relays updates it
-// receives to its other peers, so any participant can invite new ones and
-// the connections form a tree that keeps everybody in sync.
+// Yjs provider over WebRTC using Trystero. Public Nostr relays (WebSocket)
+// are only used to discover peers and exchange connection offers, encrypted
+// with the room key; document data flows directly between browsers.
+// Every peer also relays what it receives to its other peers, so the
+// document converges even if some pair of peers cannot connect directly.
 
 import * as Y from 'yjs'
 import * as syncProtocol from 'y-protocols/sync'
 import * as awarenessProtocol from 'y-protocols/awareness'
 import * as encoding from 'lib0/encoding'
 import * as decoding from 'lib0/decoding'
-import { MSG_AWARENESS, MSG_SYNC } from './protocol'
+import { joinRoom, type MessageAction, type Room } from '@trystero-p2p/nostr'
 
+const APP_ID = 'words-online'
+const MSG_SYNC = 0
+const MSG_AWARENESS = 1
 
-// Data channels have per-message size limits (~256 KiB in Chromium),
-// so large payloads (e.g. the initial sync) are split into chunks.
-const CHUNK_SIZE = 16 * 1024
-const FRAME_FULL = 0
-const FRAME_PART = 1
-const FRAME_LAST = 2
-
-export class Peer {
+// Used as Yjs transaction / awareness origin to know where a change came from.
+class RemotePeer {
   readonly clientIds = new Set<number>()
-  private pending: Uint8Array[] = []
-
-  constructor(
-    readonly pc: RTCPeerConnection,
-    readonly channel: RTCDataChannel,
-    private readonly onMessage: (peer: Peer, data: Uint8Array) => void,
-  ) {
-    channel.binaryType = 'arraybuffer'
-    channel.addEventListener('message', (e) => this.receive(new Uint8Array(e.data as ArrayBuffer)))
-  }
-
-  get isOpen(): boolean {
-    return this.channel.readyState === 'open'
-  }
-
-  send(data: Uint8Array): void {
-    if (!this.isOpen) return
-    if (data.length <= CHUNK_SIZE) {
-      this.channel.send(concat([Uint8Array.of(FRAME_FULL), data]))
-      return
-    }
-    for (let i = 0; i < data.length; i += CHUNK_SIZE) {
-      const last = i + CHUNK_SIZE >= data.length
-      this.channel.send(concat([Uint8Array.of(last ? FRAME_LAST : FRAME_PART), data.subarray(i, i + CHUNK_SIZE)]))
-    }
-  }
-
-  close(): void {
-    this.channel.close()
-    this.pc.close()
-  }
-
-  private receive(frame: Uint8Array): void {
-    const body = frame.subarray(1)
-    if (frame[0] === FRAME_FULL) {
-      this.onMessage(this, body)
-    } else {
-      this.pending.push(body)
-      if (frame[0] === FRAME_LAST) {
-        const data = concat(this.pending)
-        this.pending = []
-        this.onMessage(this, data)
-      }
-    }
-  }
+  constructor(readonly id: string) {}
 }
 
-type NetworkEvents = { peers: (count: number) => void }
+export interface RoomOptions {
+  roomId: string
+  password: string
+  // Optional custom Nostr relays (defaults to Trystero's public list).
+  relays?: string[]
+}
 
-export class PeerNetwork {
-  readonly peers = new Set<Peer>()
-  private listeners: NetworkEvents['peers'][] = []
+export class RoomProvider {
+  private readonly room: Room
+  private readonly peers = new Map<string, RemotePeer>()
+  private readonly action: MessageAction<Uint8Array>
+  private listeners: ((count: number) => void)[] = []
 
   constructor(
     readonly doc: Y.Doc,
     readonly awareness: awarenessProtocol.Awareness,
+    options: RoomOptions,
   ) {
+    this.room = joinRoom(
+      {
+        appId: APP_ID,
+        password: options.password,
+        ...(options.relays?.length ? { relayConfig: { urls: options.relays, redundancy: options.relays.length } } : {}),
+      },
+      options.roomId,
+    )
+    this.action = this.room.makeAction<Uint8Array>('yjs', {
+      onMessage: (data, { peerId }) => this.onMessage(peerId, toBytes(data)),
+    })
+
+    this.room.onPeerJoin = (peerId) => {
+      this.peers.set(peerId, new RemotePeer(peerId))
+      this.emitPeers()
+      const sync = encoding.createEncoder()
+      encoding.writeVarUint(sync, MSG_SYNC)
+      syncProtocol.writeSyncStep1(sync, doc)
+      this.send(encoding.toUint8Array(sync), peerId)
+      const states = [...awareness.getStates().keys()]
+      if (states.length > 0) this.send(this.encodeAwareness(states), peerId)
+    }
+
+    this.room.onPeerLeave = (peerId) => {
+      const peer = this.peers.get(peerId)
+      if (!peer) return
+      this.peers.delete(peerId)
+      // Drop presence only for clients no other peer can still vouch for.
+      const stillReachable = new Set([...this.peers.values()].flatMap((p) => [...p.clientIds]))
+      const gone = [...peer.clientIds].filter((id) => id !== doc.clientID && !stillReachable.has(id))
+      awarenessProtocol.removeAwarenessStates(awareness, gone, peer)
+      this.emitPeers()
+    }
+
     doc.on('update', this.onDocUpdate)
     awareness.on('update', this.onAwarenessUpdate)
   }
 
-  onPeersChange(listener: NetworkEvents['peers']): void {
+  get peerCount(): number {
+    return this.peers.size
+  }
+
+  onPeersChange(listener: (count: number) => void): void {
     this.listeners.push(listener)
   }
 
-  // Registers a data channel; resolves once it is open and syncing.
-  addConnection(pc: RTCPeerConnection, channel: RTCDataChannel): Promise<Peer> {
-    const peer = new Peer(pc, channel, this.onPeerMessage)
-    return new Promise((resolve, reject) => {
-      const onOpen = () => {
-        this.peers.add(peer)
-        this.emitPeers()
-        this.startSync(peer)
-        resolve(peer)
-      }
-      if (peer.isOpen) onOpen()
-      else channel.addEventListener('open', onOpen, { once: true })
-      channel.addEventListener('close', () => {
-        this.removePeer(peer)
-        reject(new Error('Connection closed'))
-      })
-      pc.addEventListener('connectionstatechange', () => {
-        if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
-          this.removePeer(peer)
-          reject(new Error('Connection failed'))
-        }
-      })
-    })
-  }
-
-  disconnectAll(): void {
-    this.peers.forEach((p) => p.close())
-  }
-
-  destroy(): void {
-    this.disconnectAll()
+  async destroy(): Promise<void> {
     this.doc.off('update', this.onDocUpdate)
     this.awareness.off('update', this.onAwarenessUpdate)
+    await this.room.leave()
   }
 
-  private startSync(peer: Peer): void {
-    const sync = encoding.createEncoder()
-    encoding.writeVarUint(sync, MSG_SYNC)
-    syncProtocol.writeSyncStep1(sync, this.doc)
-    peer.send(encoding.toUint8Array(sync))
-
-    const states = [...this.awareness.getStates().keys()]
-    if (states.length > 0) peer.send(this.encodeAwareness(states))
-  }
-
-  private removePeer(peer: Peer): void {
-    if (!this.peers.delete(peer)) return
-    // Drop presence of everybody that was reachable through this peer.
-    const ids = [...peer.clientIds].filter((id) => id !== this.doc.clientID)
-    awarenessProtocol.removeAwarenessStates(this.awareness, ids, peer)
-    this.emitPeers()
-  }
-
-  private onPeerMessage = (peer: Peer, data: Uint8Array): void => {
+  private onMessage(peerId: string, data: Uint8Array): void {
+    let peer = this.peers.get(peerId)
+    if (!peer) {
+      peer = new RemotePeer(peerId)
+      this.peers.set(peerId, peer)
+      this.emitPeers()
+    }
     const decoder = decoding.createDecoder(data)
     const type = decoding.readVarUint(decoder)
     if (type === MSG_SYNC) {
       const reply = encoding.createEncoder()
       encoding.writeVarUint(reply, MSG_SYNC)
-      // The peer is the transaction origin, so the update is relayed to all other peers.
       syncProtocol.readSyncMessage(decoder, reply, this.doc, peer)
-      if (encoding.length(reply) > 1) peer.send(encoding.toUint8Array(reply))
+      if (encoding.length(reply) > 1) this.send(encoding.toUint8Array(reply), peerId)
     } else if (type === MSG_AWARENESS) {
       awarenessProtocol.applyAwarenessUpdate(this.awareness, decoding.readVarUint8Array(decoder), peer)
     }
@@ -162,13 +121,12 @@ export class PeerNetwork {
     { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
     origin: unknown,
   ): void => {
-    const changed = [...added, ...updated, ...removed]
-    if (origin instanceof Peer) {
+    if (origin instanceof RemotePeer) {
       added.forEach((id) => origin.clientIds.add(id))
       updated.forEach((id) => origin.clientIds.add(id))
       removed.forEach((id) => origin.clientIds.delete(id))
     }
-    this.broadcast(this.encodeAwareness(changed), origin)
+    this.broadcast(this.encodeAwareness([...added, ...updated, ...removed]), origin)
   }
 
   private encodeAwareness(clients: number[]): Uint8Array {
@@ -179,7 +137,14 @@ export class PeerNetwork {
   }
 
   private broadcast(data: Uint8Array, except: unknown): void {
-    this.peers.forEach((peer) => peer !== except && peer.send(data))
+    const targets = [...this.peers.values()].filter((p) => p !== except).map((p) => p.id)
+    if (targets.length > 0) this.send(data, targets)
+  }
+
+  private send(data: Uint8Array, target: string | string[]): void {
+    this.action.send(data, { target }).catch(() => {
+      // Peer vanished mid-send; the next sync on reconnect recovers the state.
+    })
   }
 
   private emitPeers(): void {
@@ -187,12 +152,9 @@ export class PeerNetwork {
   }
 }
 
-function concat(parts: Uint8Array[]): Uint8Array<ArrayBuffer> {
-  const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0))
-  let offset = 0
-  for (const p of parts) {
-    out.set(p, offset)
-    offset += p.length
-  }
-  return out
+function toBytes(data: unknown): Uint8Array {
+  if (data instanceof Uint8Array) return data
+  if (data instanceof ArrayBuffer) return new Uint8Array(data)
+  if (ArrayBuffer.isView(data)) return new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
+  throw new Error('Unexpected payload type')
 }

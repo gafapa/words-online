@@ -8,6 +8,8 @@ const COLORS = ['#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#469990'
 
 export interface DocEntry {
   id: string
+  // Shared secret for the collaboration room; travels only inside share links.
+  key: string
   title: string
   updated: number
 }
@@ -19,19 +21,26 @@ export interface User {
 
 export const dbName = (id: string) => `words-online:${id}`
 
-// crypto.randomUUID is not available on insecure (http) LAN origins.
-export function newDocId(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(9))
-  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_')
+export const newDocId = () => randomToken(9)
+export const newDocKey = () => randomToken(18)
+
+// crypto.randomUUID is not available on insecure (http) origins.
+function randomToken(bytes: number): string {
+  const data = crypto.getRandomValues(new Uint8Array(bytes))
+  return btoa(String.fromCharCode(...data)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
 
 export function listDocs(): DocEntry[] {
   return read<DocEntry[]>(DOCS_KEY, []).sort((a, b) => b.updated - a.updated)
 }
 
-export function touchDoc(id: string, title: string): void {
-  const docs = listDocs().filter((d) => d.id !== id)
-  docs.push({ id, title, updated: Date.now() })
+export function getDoc(id: string): DocEntry | undefined {
+  return listDocs().find((d) => d.id === id)
+}
+
+export function saveDoc(entry: Omit<DocEntry, 'updated'>): void {
+  const docs = listDocs().filter((d) => d.id !== entry.id)
+  docs.push({ ...entry, updated: Date.now() })
   write(DOCS_KEY, docs)
 }
 
