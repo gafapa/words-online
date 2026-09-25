@@ -59,3 +59,12 @@ export function changeOf(node: JSONContent): Change | null {
   if (!mark) return null
   return { kind: mark.type as Change['kind'], author: String(mark.attrs?.author || 'Unknown'), date: Number(mark.attrs?.time) || Date.now() }
 }
+
+const AUTHOR_COLORS = ['#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#469990', '#f032e6', '#9a6324', '#800000', '#000075']
+
+// A stable color for an imported author name.
+export function authorColor(name: string): string {
+  let h = 0
+  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0
+  return AUTHOR_COLORS[h % AUTHOR_COLORS.length]
+}

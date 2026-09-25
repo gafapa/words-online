@@ -91,6 +91,11 @@ function addStyle() {
   styleAdded = true
   const style = document.createElement('style')
   style.textContent = `
+    .eq-overlay { position: fixed; inset: 0; z-index: 1000; background: rgb(0 0 0 / 0.35); display: flex; align-items: flex-start; justify-content: center; overflow: auto; padding: 5vh 16px 40vh; }
+    .eq-overlay .eq-dialog { width: min(680px, calc(100vw - 32px)); border-radius: 12px; box-shadow: var(--shadow); background: var(--surface, #fff); color: var(--text, #1f2328); }
+    body { --keyboard-zindex: 1100; }
+    .eq-overlay .eq-dialog form { padding: 20px 24px; }
+    .eq-overlay .eq-dialog h2 { margin: 0 0 14px; font-size: 20px; font-weight: 500; }
     .eq-dialog math-field { display: block; width: 100%; min-height: 64px; font-size: 26px; padding: 8px 10px; border: 1px solid var(--border, #ccc); border-radius: 8px; }
     .eq-dialog math-field:focus-within { outline: 2px solid var(--accent, #1a73e8); outline-offset: -1px; }
     .eq-dialog .eq-fallback-preview { min-height: 48px; padding: 8px; font-size: 20px; text-align: center; }
@@ -145,10 +150,14 @@ export async function editEquation(options: EquationDialogOptions = {}): Promise
   const initial = options.latex ?? ''
   let display = options.display ?? false
 
-  const dialog = document.createElement('dialog')
+  // Not a modal <dialog>: MathLive's virtual keyboard (in the page) must stay above it.
+  const overlay = document.createElement('div')
+  overlay.className = 'eq-overlay'
+  const dialog = document.createElement('div')
   dialog.className = 'dlg wide eq-dialog'
+  dialog.setAttribute('role', 'dialog')
+  dialog.setAttribute('aria-modal', 'true')
   const form = document.createElement('form')
-  form.method = 'dialog'
   const title = document.createElement('h2')
   title.textContent = options.title ?? (initial ? t('Edit equation') : t('Insert equation'))
   form.append(title)
@@ -243,36 +252,44 @@ export async function editEquation(options: EquationDialogOptions = {}): Promise
 
   const actions = document.createElement('div')
   actions.className = 'dlg-actions'
-  const cancel = Object.assign(document.createElement('button'), { value: 'cancel', textContent: t('Cancel') })
-  const ok = Object.assign(document.createElement('button'), { value: 'ok', textContent: initial ? t('Update') : t('Insert'), className: 'primary' })
+  const cancel = Object.assign(document.createElement('button'), { type: 'button', textContent: t('Cancel') })
+  const ok = Object.assign(document.createElement('button'), { type: 'submit', textContent: initial ? t('Update') : t('Insert'), className: 'primary' })
   actions.append(cancel, ok)
   form.append(actions)
   dialog.append(form)
-  document.body.append(dialog)
-
-  // The keyboard must live inside the modal dialog (top layer) to be visible and usable.
+  overlay.append(dialog)
+  const previousFocus = document.activeElement as HTMLElement | null
+  document.body.append(overlay)
   const keyboard = ml?.keyboard()
-  const previousContainer = keyboard?.container ?? null
-  if (keyboard) keyboard.container = dialog
-
-  field?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      dialog.close('ok')
-    }
-  })
 
   return new Promise((resolve) => {
-    dialog.addEventListener('close', () => {
-      if (keyboard) {
-        keyboard.hide()
-        keyboard.container = previousContainer ?? document.body
-      }
+    const close = (accept: boolean) => {
+      keyboard?.hide()
       const latex = getLatex()
-      dialog.remove()
-      resolve(dialog.returnValue === 'ok' && latex ? { latex, display } : null)
+      overlay.remove()
+      window.removeEventListener('keydown', onKey, true)
+      previousFocus?.focus?.()
+      resolve(accept && latex ? { latex, display } : null)
+    }
+    // Enter inserts, Escape cancels (captured before the math field handles them).
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        e.stopPropagation()
+        close(false)
+      } else if (e.key === 'Enter' && !e.shiftKey && field && e.composedPath().includes(field)) {
+        e.preventDefault()
+        e.stopPropagation()
+        close(true)
+      }
+    }
+    window.addEventListener('keydown', onKey, true)
+    form.addEventListener('submit', (e) => {
+      e.preventDefault()
+      close(true)
     })
-    dialog.showModal()
+    cancel.addEventListener('click', () => close(false))
+    overlay.addEventListener('mousedown', (e) => e.target === overlay && close(false))
     setTimeout(() => (field ?? latexInput).focus())
   })
 }

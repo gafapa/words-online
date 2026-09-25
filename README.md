@@ -105,6 +105,28 @@ replicas the same log order, so replaying it always yields the same workbook.
   per field (one person moves a shape while another recolors it). Remote edits
   never enter the local undo history.
 
+## Templates
+
+The home screen has a **Templates** gallery for schools (Spain / Galicia,
+LOMLOE). Each template's content is written in Spanish and Galician; the gallery
+picks the language from the browser (Galician for `gl`, otherwise Spanish) and a
+switch changes it. Filter by app, click a card and a new local document is
+created and opened.
+
+| App | Templates |
+| --- | --- |
+| Document | Situación de aprendizaje (identification, justification, specific competences, evaluation criteria, basic knowledge, activity sequence, UDL/DUA, evaluation), rubric, student worksheet, student report (cover, index, sections, APA bibliography), meeting minutes, letter to families with a consent slip |
+| Spreadsheet | Gradebook (weighted averages per term from a weights sheet, final grade, IN/SU/BI/NT/SB level, pass/fail colors, group statistics), weekly timetable, monthly attendance register (weekdays from month/year, F/J/R codes, totals and attendance %), rubric with automatic score |
+| Diagram | Concept map, timeline, process flowchart, graphic organizers (KWL, Venn, cause and effect) |
+| Drawing | Brainstorm board |
+| Presentation | Learning situation presentation, student oral presentation |
+
+Templates are generated in code (no network) and go through each app's own
+import path: HTML for documents, a workbook snapshot for spreadsheets,
+`.drawio` XML for diagrams, `.excalidraw` for drawings and `.pptx` for
+presentations. The gallery and each app's templates are separate chunks, loaded
+only when the home screen shows them or a template is used.
+
 ## Accessibility
 
 The **Accessibility** button (app bar and home screen, or `Alt+Shift+A`) opens a
@@ -262,6 +284,7 @@ src/
     widgets.ts       Menus, context menus, popovers, color palette, dialogs, toasts
     base.css
   home/              Home screen: new document buttons, open file, recent documents
+  templates/         Template gallery (catalog, thumbnails) and template content per app
   apps/
     registry.ts      App list: name, icon, loader, supported files
     draw/            Drawing (Excalidraw + Yjs element sync)

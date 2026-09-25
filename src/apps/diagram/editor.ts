@@ -617,6 +617,11 @@ export function createDiagramEditor(session: Session, options: EditorOptions) {
   // ---------- Keyboard ----------
 
   canvas.tabIndex = 0
+  // Clicking the canvas takes the keyboard from fields outside it (e.g. the format panel).
+  canvas.addEventListener('pointerdown', () => {
+    const active = document.activeElement as HTMLElement | null
+    if (active && !canvas.contains(active) && isTyping(active)) active.blur()
+  })
   document.addEventListener('keydown', (e) => {
     if (isTyping(e.target) || graph.isEditing() || document.querySelector('dialog[open]')) return
     if (options.onKey?.(e)) return

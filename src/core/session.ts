@@ -162,6 +162,11 @@ export async function createLocalDocument(type: store.DocType, title: string, fi
   const persistence = new IndexeddbPersistence(store.dbName(id), doc)
   await persistence.whenSynced
   await persistence.destroy()
+  // That write may still be pending, and navigating right away can abort it; a
+  // read on a new connection is ordered after it, so wait for one.
+  const check = new IndexeddbPersistence(store.dbName(id), new Y.Doc())
+  await check.whenSynced
+  await check.destroy()
   const keys = newLinkKeys()
   store.saveDoc({ id, key, type, title, keys, access: 'edit' })
   return docPath(type, id, key, keys)

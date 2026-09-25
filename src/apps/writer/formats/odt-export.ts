@@ -13,7 +13,7 @@ import {
   type PageSettings,
 } from './types'
 import { escapeXml, loadImage, toHex, toPt } from '../../../core/formats'
-import { latexToMathML, measureEquation } from '../../../ui/equation'
+import { latexToMathML } from '../../../ui/equation'
 import { changeOf, commentMarkers, type CommentMarkers } from './review'
 import type { CommentData } from './types'
 
@@ -393,7 +393,6 @@ class Writer {
     if (!latex.trim()) return ''
     const name = `Formula${this.shared.formulas.size + 1}`
     this.shared.formulas.set(name, latexToMathML(latex, display))
-    const size = measureEquation(latex, display)
     const style = this.styles.add(
       'graphic',
       'fr',
@@ -401,8 +400,8 @@ class Writer {
       '<style:graphic-properties style:vertical-pos="middle" style:vertical-rel="text" fo:margin-left="0cm" fo:margin-right="0cm" fo:margin-top="0cm" fo:margin-bottom="0cm" draw:fill="none" draw:ole-draw-aspect="1"/>',
     )
     return (
-      `<draw:frame draw:style-name="${style}" draw:name="${name}" text:anchor-type="as-char" svg:width="${(size.width / PX_PER_CM).toFixed(3)}cm" ` +
-      `svg:height="${(size.height / PX_PER_CM).toFixed(3)}cm" draw:z-index="0"><draw:object xlink:href="./${name}" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/>` +
+      // No size: LibreOffice sizes formula objects itself (a given size would scale them).
+      `<draw:frame draw:style-name="${style}" draw:name="${name}" text:anchor-type="as-char" draw:z-index="0"><draw:object xlink:href="./${name}" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/>` +
       `<svg:desc>${escapeXml(latex)}</svg:desc></draw:frame>`
     )
   }

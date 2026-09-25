@@ -28,6 +28,7 @@ import { editEquation } from '../../ui/equation'
 import type { EquationEditDetail } from './editor/equation'
 import { PositionIndex, encodeAnchor } from './ypos'
 import type { CommentData } from './formats/types'
+import { authorColor } from './formats/review'
 
 const UNTITLED = 'Untitled document'
 const ZOOM_KEY = 'words-online:zoom'
@@ -593,7 +594,7 @@ function writeImportedComments(ydoc: Y.Doc, schema: Schema, ranges: Map<string, 
       id: `i${c.id}`,
       authorId: `import:${c.author}`,
       author: c.author || t('Unknown author'),
-      color: '#9aa0a6',
+      color: authorColor(c.author),
       time: c.date || Date.now(),
       text: c.text,
       ...(parent ? { parent: `i${parent}` } : { anchor: encodeAnchor(index, range!.from, range!.to), quote: range!.quote }),

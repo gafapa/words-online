@@ -79,6 +79,18 @@ const ENTRIES: Entry[] = [
     ['Tabla SQA (KWL), diagrama de Venn y causa-efecto, en tres páginas.', 'Táboa SQA (KWL), diagrama de Venn e causa-efecto, en tres páxinas.'],
   ],
   [
+    'slides-learning-situation',
+    'slides',
+    ['Presentación de la situación de aprendizaje', 'Presentación da situación de aprendizaxe'],
+    ['Reto, objetivos, fases, producto final y evaluación para presentar al alumnado.', 'Reto, obxectivos, fases, produto final e avaliación para presentar ao alumnado.'],
+  ],
+  [
+    'oral-presentation',
+    'slides',
+    ['Exposición oral del alumnado', 'Exposición oral do alumnado'],
+    ['Portada, índice, desarrollo con imagen, conclusiones y fuentes.', 'Portada, índice, desenvolvemento con imaxe, conclusións e fontes.'],
+  ],
+  [
     'brainstorm',
     'draw',
     ['Lluvia de ideas', 'Chuvia de ideas'],
@@ -96,6 +108,8 @@ async function create(id: string, app: DocType, lang: Lang, name: string): Promi
       return (await import('./diagram')).createDiagramTemplate(id, lang, name)
     case 'draw':
       return (await import('./draw')).createDrawTemplate(id, lang, name)
+    case 'slides':
+      return (await import('./slides')).createSlidesTemplate(id, lang, name)
     default:
       throw new Error(`No templates for ${app}`)
   }

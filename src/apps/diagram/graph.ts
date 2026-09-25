@@ -304,8 +304,37 @@ export function createGraph(container: HTMLElement): EditorGraph {
     container.style.cursor = ''
   })
 
+  richTextEditing(graph)
   InternalEvent.disableContextMenu(container)
   return graph
+}
+
+// maxGraph edits every label as plain text; labels with html=1 are edited as
+// HTML instead (bold, lists, colors… typed or applied with execCommand), like draw.io.
+function richTextEditing(graph: Graph): void {
+  const editor = graph.getPlugin<CellEditorHandler>('CellEditorHandler')
+  if (!editor) return
+  const isRich = (cell: Cell) => String((cell.getStyle() as Record<string, unknown> | null)?.html ?? '') === '1'
+  const getInitialValue = editor.getInitialValue.bind(editor)
+  editor.getInitialValue = (state, trigger) => (isRich(state.cell) ? sanitizeHtml(String(graph.getEditingValue(state.cell, trigger) ?? '')) : getInitialValue(state, trigger))
+  const getCurrentValue = editor.getCurrentValue.bind(editor)
+  editor.getCurrentValue = (state) => {
+    if (!isRich(state.cell) || !editor.textarea) return getCurrentValue(state)
+    return sanitizeHtml(editor.textarea.innerHTML).replace(/(<br\s*\/?>|<div><br\s*\/?><\/div>)+$/i, '')
+  }
+}
+
+// Removes scripts, event handlers and script URLs from label HTML.
+export function sanitizeHtml(html: string): string {
+  if (!/<|&/.test(html)) return html
+  const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html')
+  doc.body.querySelectorAll('script, style, iframe, object, embed, link, meta').forEach((n) => n.remove())
+  for (const node of doc.body.querySelectorAll('*')) {
+    for (const attr of [...node.attributes]) {
+      if (/^on/i.test(attr.name) || /^\s*javascript:/i.test(attr.value)) node.removeAttribute(attr.name)
+    }
+  }
+  return doc.body.innerHTML
 }
 
 export function isTyping(target: EventTarget | null): boolean {

@@ -14,7 +14,7 @@ export class NotesEditor {
   }
 
   constructor(readOnly: boolean, private readonly beforeEdit: () => void) {
-    this.area = el('textarea', { class: 'slides-notes-area', placeholder: t('Click to add speaker notes'), spellcheck: true, readOnly })
+    this.area = el('textarea', { class: 'slides-notes-area', placeholder: readOnly ? t('No speaker notes') : t('Click to add speaker notes'), spellcheck: true, readOnly })
     this.area.setAttribute('aria-label', t('Speaker notes'))
     this.element = el('div', { class: 'slides-notes' }, this.area)
     this.area.addEventListener('input', () => this.push())

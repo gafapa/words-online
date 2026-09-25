@@ -123,6 +123,7 @@ export async function parsePptx(buffer: ArrayBuffer): Promise<{ ratio: Ratio; sl
     const masterPath = layout ? relOfType(layout, 'slideMasters/') : null
     const master = masterPath ? await readPart(zip, masterPath) : null
     const ctx: Ctx = { zip, scale, colors, majorFont, minorFont, slide, layout, master, cells: [{ id: '0' }, { id: '1', parent: '0' }], previous: undefined }
+    const background = await backgroundOf(ctx, target.width, target.height)
     const tree = find(slide.doc, 'spTree')
     if (tree) await walkTree(ctx, tree, null)
     const notesPath = relOfType(slide, 'notesSlides/')
@@ -133,7 +134,7 @@ export async function parsePptx(buffer: ArrayBuffer): Promise<{ ratio: Ratio; sl
       name: `Slide ${slides.length + 1}`,
       cells: ctx.cells,
       notes: notes ? notesText(notes) : '',
-      background: backgroundOf(ctx),
+      background,
     })
   }
   if (!slides.length) throw new Error('The presentation has no slides')
@@ -264,7 +265,7 @@ async function shape(ctx: Ctx, node: Element, transform: GroupTransform): Promis
     `html=1;whiteSpace=wrap;overflow=hidden;spacing=0;spacingLeft=${text.insets[3]};spacingRight=${text.insets[1]};spacingTop=${text.insets[0] - 5};spacingBottom=${text.insets[2] - 1};` +
     `fillColor=${fill ?? 'none'};strokeColor=${stroke ?? 'none'};` +
     (stroke ? `strokeWidth=${strokeWidth};` : '') +
-    `align=${text.align};verticalAlign=${text.valign};fontSize=${text.size};fontColor=${text.color};fontFamily=${isTitle ? ctx.majorFont : ctx.minorFont};` +
+    `align=${text.align};verticalAlign=${text.valign};fontSize=${text.size};fontColor=${text.color};fontFamily=${cssFont(isTitle ? ctx.majorFont : ctx.minorFont)};` +
     (x.rot ? `rotation=${round(x.rot)};` : '') +
     (x.flipH ? 'flipH=1;' : '') +
     (x.flipV ? 'flipV=1;' : '')
@@ -300,13 +301,9 @@ async function picture(ctx: Ctx, node: Element, transform: GroupTransform): Prom
   const rid = blip?.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'embed') ?? attr(blip, 'r:embed')
   const path = rid ? ctx.slide.rels.get(rid) : undefined
   if (!x || !path) return
-  const file = ctx.zip.file(path)
-  const ext = path.split('.').pop()!.toLowerCase()
-  const mime = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', svg: 'image/svg+xml', bmp: 'image/bmp', webp: 'image/webp' }[ext]
-  if (!file || !mime) return
-  const base64 = await file.async('base64')
-  // draw.io keeps data URIs without ";base64" in style strings.
-  const style = `shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=0;image=data:${mime},${base64};` + (x.rot ? `rotation=${round(x.rot)};` : '') + (x.flipH ? 'flipH=1;' : '')
+  const image = await imageData(ctx, path)
+  if (!image) return
+  const style = `shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=0;image=${image};` + (x.rot ? `rotation=${round(x.rot)};` : '') + (x.flipH ? 'flipH=1;' : '')
   push(ctx, { vertex: 1, style, geometry: geometry(ctx, x) })
 }
 
@@ -336,7 +333,7 @@ function graphicFrame(ctx: Ctx, node: Element, transform: GroupTransform): void 
         vertex: 1,
         connectable: 0,
         value: text.html,
-        style: `rounded=0;whiteSpace=wrap;html=1;overflow=hidden;slideCell=1;strokeColor=#9aa0a6;fillColor=${fill ?? 'none'};align=${text.align};verticalAlign=${text.valign};fontSize=${text.size};fontColor=${text.color};fontFamily=${ctx.minorFont};`,
+        style: `rounded=0;whiteSpace=wrap;html=1;overflow=hidden;slideCell=1;strokeColor=#9aa0a6;fillColor=${fill ?? 'none'};align=${text.align};verticalAlign=${text.valign};fontSize=${text.size};fontColor=${text.color};fontFamily=${cssFont(ctx.minorFont)};`,
         geometry: JSON.stringify({ x: round(cx), y: round(y), width: round(w), height: round(h) }),
       })
       previous = id
@@ -467,8 +464,12 @@ function textOf(ctx: Ctx, node: Element, parents: Element[], phType: string | nu
   const px = (pt: number) => round((pt / 0.75) * ctx.scale)
 
   const paragraphs = kids(body, 'p')
-  const baseSize = px(defaultSize(0))
-  const baseColor = defaultColor(0)
+  // The box takes the size and color of its first run; other runs set their own.
+  const firstRun = paragraphs.flatMap((p) => kids(p, 'r'))[0]
+  const firstLvl = num(attr(kid(firstRun?.parentElement, 'pPr'), 'lvl'))
+  const firstRPr = kid(firstRun, 'rPr')
+  const baseSize = attr(firstRPr, 'sz') ? px(num(attr(firstRPr, 'sz')) / 100) : px(defaultSize(firstLvl))
+  const baseColor = fillOf(ctx, firstRPr) ?? defaultColor(firstLvl)
   let align = 'left'
   const htmlParts: string[] = []
   let list: 'ul' | 'ol' | null = null
@@ -497,7 +498,7 @@ function textOf(ctx: Ctx, node: Element, parents: Element[], phType: string | nu
         const runColor = fillOf(ctx, rPr) ?? color
         if (runColor !== baseColor) css.push(`color:${runColor}`)
         const face = attr(kid(rPr, 'latin'), 'typeface')
-        if (face && !face.startsWith('+')) css.push(`font-family:${face}`)
+        if (face && !face.startsWith('+')) css.push(`font-family:${cssFont(face)}`)
         let html = css.length ? `<span style="${css.join(';')}">${text}</span>` : text
         if (attr(rPr, 'b') === '1') html = `<b>${html}</b>`
         if (attr(rPr, 'i') === '1') html = `<i>${html}</i>`
@@ -545,15 +546,43 @@ function notesText(part: Part): string {
   return ''
 }
 
-function backgroundOf(ctx: Ctx): string | undefined {
+// The first background found on the slide, its layout or its master: a color,
+// a gradient ("#a,#b") or a picture (added as a full slide image at the back).
+async function backgroundOf(ctx: Ctx, width: number, height: number): Promise<string | undefined> {
   for (const part of [ctx.slide, ctx.layout, ctx.master]) {
     const bg = find(part?.doc, 'bg')
-    if (!bg) continue
+    if (!bg || !part) continue
     const bgPr = kid(bg, 'bgPr')
+    const grad = kid(bgPr, 'gradFill')
+    if (grad) {
+      const stops = findAll(grad, 'gs').map((gs) => colorOf(ctx, gs)).filter(Boolean) as string[]
+      if (stops.length >= 2) return `${stops[0]},${stops[stops.length - 1]}`
+    }
+    const blip = find(kid(bgPr, 'blipFill'), 'blip')
+    const rid = blip?.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'embed') ?? attr(blip, 'r:embed')
+    const image = rid ? await imageData(ctx, part.rels.get(rid)) : null
+    if (image) {
+      push(ctx, { vertex: 1, style: `shape=image;imageAspect=0;image=${image};`, geometry: JSON.stringify({ x: 0, y: 0, width, height }) })
+      return undefined
+    }
     const color = bgPr ? fillOf(ctx, bgPr) : colorOf(ctx, kid(bg, 'bgRef'))
     if (color) return color
   }
   return undefined
+}
+
+// A picture of the package as a data URI for a style (draw.io keeps them without ";base64").
+async function imageData(ctx: Ctx, path: string | undefined): Promise<string | null> {
+  const file = path ? ctx.zip.file(path) : null
+  const ext = path?.split('.').pop()!.toLowerCase() ?? ''
+  const mime = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', svg: 'image/svg+xml', bmp: 'image/bmp', webp: 'image/webp' }[ext]
+  if (!file || !mime) return null
+  return `data:${mime},${await file.async('base64')}`
+}
+
+// A font with a generic fallback, for systems without it.
+function cssFont(face: string): string {
+  return `${face}, ${/serif|times|georgia|garamond|cambria|book|roman/i.test(face) && !/sans/i.test(face) ? 'serif' : 'sans-serif'}`
 }
 
 function escapeHtml(s: string): string {

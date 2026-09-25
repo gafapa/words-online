@@ -196,7 +196,7 @@ function conv(el: Element | undefined): string {
 
 // ---------- To LaTeX ----------
 
-const group = (s: string) => (s.length === 1 || /^\\[a-zA-Z]+ ?$/.test(s) ? s.trim() : `{${s.trim()}}`)
+const group = (s: string) => (s.trim().length === 1 ? s.trim() : `{${s.trim()}}`)
 
 function textToLatex(text: string, upright: boolean): string {
   text = text.replace(INVISIBLE, '')
@@ -208,6 +208,7 @@ function textToLatex(text: string, upright: boolean): string {
     else if ('{}#%&$_'.includes(ch)) out += `\\${ch}`
     else if (ch === '\\') out += '\\backslash '
     else if (ch === ' ') out += '\\quad '
+    else if (ch === '−') out += '-'
     else if (ch === ' ' || ch === ' ') out += '\\,'
     else out += ch
   }

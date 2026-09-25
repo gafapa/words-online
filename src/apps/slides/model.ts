@@ -18,6 +18,7 @@ export interface Theme {
   name: string
   // CSS color, or two colors for a vertical gradient.
   background: string | [string, string]
+  // CSS font lists; exports use the first family.
   titleFont: string
   bodyFont: string
   titleColor: string
@@ -28,10 +29,10 @@ export interface Theme {
 export const THEMES: Theme[] = [
   { id: 'light', name: 'Light', background: '#ffffff', titleFont: 'Helvetica', bodyFont: 'Helvetica', titleColor: '#1f2937', bodyColor: '#374151', accent: '#1a73e8' },
   { id: 'dark', name: 'Dark', background: '#1f2430', titleFont: 'Helvetica', bodyFont: 'Helvetica', titleColor: '#ffffff', bodyColor: '#d7dbe4', accent: '#7cb7ff' },
-  { id: 'ocean', name: 'Ocean', background: ['#0f4c81', '#1d7fb8'], titleFont: 'Trebuchet MS', bodyFont: 'Trebuchet MS', titleColor: '#ffffff', bodyColor: '#e3f1fb', accent: '#ffd166' },
-  { id: 'paper', name: 'Paper', background: '#fbf6ec', titleFont: 'Georgia', bodyFont: 'Georgia', titleColor: '#9a3412', bodyColor: '#3f3a34', accent: '#b45309' },
+  { id: 'ocean', name: 'Ocean', background: ['#0f4c81', '#1d7fb8'], titleFont: 'Trebuchet MS, Helvetica, Arial, sans-serif', bodyFont: 'Trebuchet MS, Helvetica, Arial, sans-serif', titleColor: '#ffffff', bodyColor: '#e3f1fb', accent: '#ffd166' },
+  { id: 'paper', name: 'Paper', background: '#fbf6ec', titleFont: 'Georgia, Times New Roman, serif', bodyFont: 'Georgia, Times New Roman, serif', titleColor: '#9a3412', bodyColor: '#3f3a34', accent: '#b45309' },
   { id: 'chalk', name: 'Chalkboard', background: '#2e4a3b', titleFont: 'Architects Daughter', bodyFont: 'Architects Daughter', titleColor: '#fdfcf5', bodyColor: '#e9efe6', accent: '#ffe08a' },
-  { id: 'fresh', name: 'Fresh', background: ['#f0fdf4', '#dcfce7'], titleFont: 'Verdana', bodyFont: 'Verdana', titleColor: '#166534', bodyColor: '#1f2937', accent: '#16a34a' },
+  { id: 'fresh', name: 'Fresh', background: ['#f0fdf4', '#dcfce7'], titleFont: 'Verdana, Helvetica, Arial, sans-serif', bodyFont: 'Verdana, Helvetica, Arial, sans-serif', titleColor: '#166534', bodyColor: '#1f2937', accent: '#16a34a' },
 ]
 
 export function themeById(id: unknown): Theme {

@@ -152,6 +152,7 @@
 .rv-input { width: 100%; margin-top: 8px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; resize: vertical; font: inherit; background: var(--surface); }
 .rv-input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 .rv-card:not(.active) .rv-reply-input { resize: none; height: 32px; }
+.rv-card:not(.active) .rv-actions { display: none; }
 .rv-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px; }
 .rv-actions button:not(.primary) { border: 1px solid var(--border); background: var(--surface); border-radius: 6px; padding: 4px 10px; }
 .rv-actions button.primary { padding: 4px 12px; }
@@ -176,7 +177,7 @@
 .toolbar .tb-review .tb-mode { width: 118px; }
 .tb-access { align-self: center; padding: 0 8px; color: var(--muted); font-size: 13px; }
 .toolbar.readonly .tb-group:not(.tb-review) :is(button, select, input) { pointer-events: none; opacity: 0.4; }
-.toolbar.readonly .tb-group:first-child :is(button, select, input), .toolbar.readonly .tb-group:nth-child(2) :is(button, select, input) { pointer-events: auto; opacity: 1; }
+.toolbar.readonly .tb-group:is(:first-child, :nth-child(2)) :is(button, select, input):not(:disabled) { pointer-events: auto; opacity: 1; }
 
 .contrib-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .contrib-table th { text-align: left; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--border); padding: 6px; }

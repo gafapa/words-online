@@ -33,8 +33,8 @@ import type { Session } from '../../core/session'
 import { t } from '../../core/i18n'
 import { setupChrome } from '../../ui/chrome'
 import { renderShell } from '../../ui/shell'
+import { documentMenuItems } from '../../ui/versions'
 import { colorPalette, createMenuBar, el, icon, openPopover, showContextMenu, showDialog, tableGrid, toast, type MenuEntry } from '../../ui/widgets'
-import { sessionAccess } from '../diagram/app'
 import { createDiagramEditor, mod, showShortcuts } from '../diagram/editor'
 import { svgToPng } from '../diagram/export'
 import { setStyleKey, styleFromString } from '../diagram/graph'
@@ -77,7 +77,8 @@ export function mountSlides(session: Session, root: HTMLElement): void {
   const info = appInfo('slides')
   const shell = renderShell(info, root)
   setupChrome(session, info.untitled)
-  const readOnly = sessionAccess(session) !== 'edit'
+  // Links with view or comment access open the presentation read-only (presenting and following still work).
+  const readOnly = !session.canEdit
   const doc = session.doc
   const meta = doc.getMap<unknown>('meta')
   let theme = presentationTheme(doc)
@@ -122,7 +123,7 @@ export function mountSlides(session: Session, root: HTMLElement): void {
   })
   const { graph, sync, view } = editor
   const editable = editor.editable
-  installTheme(graph, () => theme, true)
+  installTheme(graph, () => theme, !readOnly)
   // Groups and tables scale their content when resized.
   graph.setRecursiveResize(true)
   canvas.prepend(frame)
@@ -635,6 +636,8 @@ export function mountSlides(session: Session, root: HTMLElement): void {
         { label: t('Download slide as PNG'), run: () => void downloadPng(false) },
         { label: t('Download all slides as PNG (.zip)'), run: () => void downloadPng(true) },
         '-',
+        ...documentMenuItems(session),
+        '-',
         { label: t('Print'), shortcut: mod('P'), run: () => void printPdf() },
       ],
     },
@@ -839,7 +842,7 @@ export function mountSlides(session: Session, root: HTMLElement): void {
       const b = el('button', { type: 'button', class: 'slides-theme-card', title: t(th.name), disabled: readOnly })
       b.style.background = backgroundCss(th.background)
       const aa = el('span', { textContent: 'Aa' })
-      aa.style.cssText = `color:${th.titleColor};font-family:'${th.titleFont}'`
+      aa.style.cssText = `color:${th.titleColor};font-family:${th.titleFont}`
       const name = el('small', { textContent: t(th.name) })
       name.style.color = th.bodyColor
       b.append(aa, name)
@@ -870,8 +873,7 @@ export function mountSlides(session: Session, root: HTMLElement): void {
   const center = el('div', { class: 'slides-center' }, canvas, notes.element)
   const body = el('div', { class: 'diagram-body slides-body' }, left, center, editor.format.element)
   shell.main.append(body)
-  const readOnlyNote = readOnly ? el('span', { class: 'read-only-note', textContent: t('View only') }) : null
-  shell.statusbar.append(slideLabel, el('span', { class: 'spacer' }), readOnlyNote ?? '', editor.selectionLabel, editor.zoomLabel)
+  shell.statusbar.append(slideLabel, el('span', { class: 'spacer' }), editor.selectionLabel, editor.zoomLabel)
   editor.zoomLabel.addEventListener('click', editor.actualSize)
   list.setAspect(size.width, size.height)
   if (window.matchMedia('(max-width: 800px)').matches) {

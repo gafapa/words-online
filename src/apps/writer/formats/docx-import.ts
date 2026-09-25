@@ -2,8 +2,10 @@
 
 import type { JSONContent } from '@tiptap/core'
 import JSZip from 'jszip'
-import { DEFAULT_PAGE, PAGE_SIZES_MM, type ImportedDocument, type PageSettings, type PageSize } from './types'
+import { DEFAULT_PAGE, PAGE_SIZES_MM, type CommentData, type ImportedDocument, type PageSettings, type PageSize } from './types'
 import { attr, bytesToDataUrl, child, children, mimeFromPath, parseXml, toHex } from '../../../core/formats'
+import { ommlToLatex } from './math'
+import { authorColor } from './review'
 
 const TWIPS_PER_INDENT = 720
 const TWIPS_PER_MM = 1440 / 25.4
@@ -58,6 +60,16 @@ interface Context {
   images: Map<string, { src: string; width: number; height: number } | null>
   defaultFont?: string
   defaultSize?: number
+  // Comments whose range is open at the current point of the document.
+  openComments: Set<string>
+}
+
+// Tracked change around the runs being read (w:ins / w:del).
+interface Revision {
+  kind: 'insertion' | 'deletion'
+  id: string
+  author: string
+  time: number
 }
 
 type Kind = 'heading' | 'title' | 'subtitle' | 'quote' | 'code' | 'hr' | 'listContinue' | 'tableHeading' | 'separator' | null
@@ -105,6 +117,7 @@ export async function importDocx(file: ArrayBuffer): Promise<ImportedDocument> {
     usedNums: new Set(),
     notes: new Map(),
     images: new Map(),
+    openComments: new Set(),
   }
   parseNumbering(xmlRoot(await read('word/numbering.xml')), ctx)
   parseNotes(xmlRoot(await read('word/footnotes.xml')), 'footnote', ctx)
@@ -124,7 +137,43 @@ export async function importDocx(file: ArrayBuffer): Promise<ImportedDocument> {
     header: await headerFooter(sectPr, 'headerReference', docPart, ctx),
     footer: await headerFooter(sectPr, 'footerReference', docPart, ctx),
     page: pageSettings(sectPr),
+    comments: parseComments(xmlRoot(await read('word/comments.xml')), xmlRoot(await read('word/commentsExtended.xml'))),
   }
+}
+
+// Comments; replies and resolved state come from commentsExtended (Word 2013+).
+function parseComments(root: Element | null, extended: Element | null): CommentData[] {
+  if (!root) return []
+  const byPara = new Map<string, { parent: string | null; done: boolean }>()
+  for (const ex of extended ? [...extended.getElementsByTagNameNS('*', 'commentEx')] : []) {
+    const para = attrAny(ex, 'paraId')
+    if (para) byPara.set(para, { parent: attrAny(ex, 'paraIdParent'), done: attrAny(ex, 'done') === '1' })
+  }
+  const paraToComment = new Map<string, string>()
+  const out: (CommentData & { para?: string })[] = []
+  for (const c of children(root, 'comment')) {
+    const id = attr(c, 'id')
+    if (id === null) continue
+    const paragraphs = children(c, 'p')
+    const para = paragraphs.length ? attrAny(paragraphs[paragraphs.length - 1], 'paraId') : null
+    if (para) paraToComment.set(para, id)
+    const date = Date.parse(attr(c, 'date') ?? '')
+    out.push({ id, author: attr(c, 'author') ?? '', date: Number.isFinite(date) ? date : 0, text: paragraphs.map((p) => plainText(p)).join('\n').trim(), para: para ?? undefined })
+  }
+  for (const c of out) {
+    const ex = c.para ? byPara.get(c.para) : undefined
+    if (ex?.done) c.resolved = true
+    const parent = ex?.parent ? paraToComment.get(ex.parent) : undefined
+    if (parent && parent !== c.id) c.parentId = parent
+    delete c.para
+  }
+  return out
+}
+
+// Attribute by local name, whatever its namespace prefix (w14:paraId, w15:done…).
+function attrAny(el: Element, name: string): string | null {
+  for (const a of el.attributes) if (a.localName === name) return a.value
+  return null
 }
 
 function xmlRoot(xml: string | null): Element | null {
@@ -341,6 +390,12 @@ async function collectBlocks(parent: Element, ctx: Context, part: Part, items: I
       case 'ins':
         await collectBlocks(el, ctx, part, items)
         break
+      case 'commentRangeStart':
+        ctx.openComments.add(attr(el, 'id') ?? '')
+        break
+      case 'commentRangeEnd':
+        ctx.openComments.delete(attr(el, 'id') ?? '')
+        break
     }
   }
 }
@@ -548,7 +603,17 @@ type Segments = JSONContent[][] & { hr?: boolean }
 async function runs(p: Element, ctx: Context, part: Part, baseRPrs: (Element | null)[], plain: boolean): Promise<Segments> {
   const segments: Segments = [[]]
   const fields: Field[] = []
+  let revision: Revision | null = null
   const push = (node: JSONContent) => {
+    // Review marks: open comment ranges and the tracked change around this run.
+    if (node.type !== 'hardBreak') {
+      const extra: NonNullable<JSONContent['marks']> = [...ctx.openComments].map((id) => ({ type: 'commentRange', attrs: { id } }))
+      if (revision) {
+        const { kind, id, author, time } = revision
+        extra.push({ type: kind, attrs: { id, author, authorId: `import:${author}`, color: authorColor(author), time } })
+      }
+      if (extra.length) node.marks = [...(node.marks ?? []), ...extra]
+    }
     const seg = segments[segments.length - 1]
     const last = seg[seg.length - 1]
     if (node.type === 'text' && last?.type === 'text' && JSON.stringify(last.marks ?? []) === JSON.stringify(node.marks ?? [])) {
@@ -578,13 +643,35 @@ async function runs(p: Element, ctx: Context, part: Part, baseRPrs: (Element | n
           break
         }
         case 'ins':
+        case 'del':
+        case 'moveTo':
+        case 'moveFrom': {
+          const outer = revision
+          const date = Date.parse(attr(el, 'date') ?? '')
+          const kind = el.localName === 'ins' || el.localName === 'moveTo' ? 'insertion' : 'deletion'
+          revision = { kind, id: `w${attr(el, 'id') ?? Math.random()}`, author: attr(el, 'author') ?? '', time: Number.isFinite(date) ? date : 0 }
+          await walk(el, link)
+          revision = outer
+          break
+        }
         case 'smartTag':
         case 'customXml':
-        case 'moveTo':
           await walk(el, link)
           break
         case 'sdt':
           await walk(child(el, 'sdtContent') ?? el, link)
+          break
+        case 'commentRangeStart':
+          ctx.openComments.add(attr(el, 'id') ?? '')
+          break
+        case 'commentRangeEnd':
+          ctx.openComments.delete(attr(el, 'id') ?? '')
+          break
+        case 'oMath':
+          push({ type: 'equation', attrs: { latex: ommlToLatex(el), display: false } })
+          break
+        case 'oMathPara':
+          for (const math of children(el, 'oMath')) push({ type: 'equation', attrs: { latex: ommlToLatex(math), display: true } })
           break
       }
     }
@@ -622,6 +709,7 @@ async function runs(p: Element, ctx: Context, part: Part, baseRPrs: (Element | n
   const runChild = async (el: Element, m: JSONContent['marks']) => {
     switch (el.localName) {
       case 't':
+      case 'delText':
         if (el.textContent) push(withMarks({ type: 'text', text: el.textContent }, m))
         break
       case 'tab':

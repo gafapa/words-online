@@ -197,7 +197,7 @@ function baseRun(style: Style): Run {
     strike: (fontStyle & 8) !== 0,
     color: color(style.fontColor) ?? '#000000',
     size: Number(style.fontSize ?? 12),
-    font: String(style.fontFamily ?? 'Helvetica'),
+    font: String(style.fontFamily ?? 'Helvetica').split(',')[0].replace(/['"]/g, '').trim(),
   }
 }
 

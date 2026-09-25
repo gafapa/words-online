@@ -9,6 +9,7 @@ import type { Session } from '../../core/session'
 import { t } from '../../core/i18n'
 import { setupChrome } from '../../ui/chrome'
 import { renderShell } from '../../ui/shell'
+import { documentMenuItems } from '../../ui/versions'
 import { createMenuBar, el, icon, promptText, showContextMenu, showDialog, toast, type MenuEntry } from '../../ui/widgets'
 import { createDiagramEditor, mod, showShortcuts } from './editor'
 import { renderSvg, svgToPng, svgToString } from './export'
@@ -17,11 +18,6 @@ import { DiagramSync } from './sync'
 export const DIAGRAM_ACCEPT = '.drawio,.xml'
 
 const formats = () => import('./formats/drawio')
-
-// Access granted by the link ('edit' | 'comment' | 'view'); anything but 'edit' is read-only here.
-export function sessionAccess(session: Session): string {
-  return (session as Session & { access?: string }).access ?? 'edit'
-}
 
 export function mountDiagram(session: Session, root: HTMLElement): void {
   const info = appInfo('diagram')
@@ -55,7 +51,8 @@ export function mountDiagram(session: Session, root: HTMLElement): void {
 
   const editor = createDiagramEditor(session, {
     canvas,
-    readOnly: sessionAccess(session) !== 'edit',
+    // Links with view or comment access open the diagram read-only.
+    readOnly: !session.canEdit,
     openFile: (file) => void openFile(file),
     print,
     onPagesChange: () => renderTabs(),
@@ -173,6 +170,8 @@ export function mountDiagram(session: Session, root: HTMLElement): void {
         { label: t('Download SVG'), run: downloadSvg },
         { label: t('Download PNG'), run: () => void downloadPng() },
         '-',
+        ...documentMenuItems(session),
+        '-',
         { label: t('Print'), shortcut: mod('P'), run: print },
       ],
     },
@@ -217,8 +216,7 @@ export function mountDiagram(session: Session, root: HTMLElement): void {
 
   body.append(sidebar.element, canvas, format.element)
   shell.main.append(body)
-  const readOnlyNote = readOnly ? el('span', { class: 'read-only-note', textContent: t('View only') }) : null
-  shell.statusbar.append(pageTabs, el('span', { class: 'spacer' }), readOnlyNote ?? '', editor.selectionLabel, editor.zoomLabel)
+  shell.statusbar.append(pageTabs, el('span', { class: 'spacer' }), editor.selectionLabel, editor.zoomLabel)
   editor.zoomLabel.addEventListener('click', editor.actualSize)
 
   editor.start(() => {

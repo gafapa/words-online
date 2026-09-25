@@ -56,7 +56,6 @@
 @keyframes slides-pulse { 50% { background: #fde7e1; } }
 .tb-text { width: auto !important; padding: 0 8px; font-size: 13px; }
 .slides-count { color: var(--muted); font-size: 12px; white-space: nowrap; }
-.read-only-note { color: var(--muted); font-size: 12px; margin-right: 8px; }
 
 /* Format panel: themes */
 .slides-theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }

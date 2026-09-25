@@ -80,7 +80,7 @@ export class Review {
     o.editor.on('update', () => this.refresh())
     o.rail.addEventListener('mousedown', (e) => {
       const card = (e.target as HTMLElement).closest<HTMLElement>('.rv-card')
-      if (card?.dataset.key && card.dataset.key !== this.active) this.activate(card.dataset.key, false)
+      if (card?.dataset.key && card.dataset.key !== this.active && card.dataset.key !== 'draft') this.activate(card.dataset.key, false)
     })
     // Clicking highlighted text opens its comment or suggestion.
     o.editor.view.dom.addEventListener('click', (e) => {
@@ -92,6 +92,7 @@ export class Review {
       else if (this.active) this.activate(null, false)
     })
     window.addEventListener('resize', () => this.reposition())
+    this.refresh()
   }
 
   // Moves comments of an imported file from the document into the comments channel.
@@ -288,12 +289,12 @@ export class Review {
     const items: { key: string; pos: number; sig: string; build: () => HTMLElement }[] = []
     for (const th of this.threads) {
       const key = `c:${th.comment.id}`
-      const sig = JSON.stringify([th.comment, th.replies, !!th.range && th.range.from < th.range.to, this.active === key])
-      items.push({ key, pos: th.range?.from ?? Number.MAX_SAFE_INTEGER, sig, build: () => this.threadCard(th, this.active === key) })
+      const sig = JSON.stringify([th.comment, th.replies, !!th.range && th.range.from < th.range.to])
+      items.push({ key, pos: th.range?.from ?? Number.MAX_SAFE_INTEGER, sig, build: () => this.threadCard(th) })
     }
     for (const group of this.suggestionGroups()) {
       const key = `s:${group[0].id}`
-      const sig = JSON.stringify([group.map((s) => [s.kind, s.text, s.author, s.time]), this.active === key])
+      const sig = JSON.stringify(group.map((s) => [s.kind, s.text, s.author, s.time]))
       items.push({ key, pos: group[0].from, sig, build: () => this.suggestionCard(group) })
     }
     if (this.draft) items.push({ key: 'draft', pos: this.draft.from, sig: 'draft', build: () => this.draftCard() })
@@ -333,7 +334,10 @@ export class Review {
       }
     }
     // Document order in the DOM (keyboard and narrow-screen list order).
-    for (const item of items) rail.append(this.cards.get(item.key)!.el)
+    // (Only when it changed: moving a card between mousedown and click would cancel the click.)
+    const ordered = items.map((item) => this.cards.get(item.key)!.el)
+    ordered.forEach((card, i) => card.classList.toggle('active', items[i].key === this.active))
+    if (ordered.some((card, i) => rail.children[i] !== card)) rail.append(...ordered)
     const visible = items.length > 0
     if (rail.hidden === visible) {
       rail.hidden = !visible
@@ -418,9 +422,9 @@ export class Review {
     return b
   }
 
-  private threadCard(th: CommentThread, active: boolean): HTMLElement {
+  private threadCard(th: CommentThread): HTMLElement {
     const { comment } = th
-    const card = el('div', { class: `rv-card rv-comment${active ? ' active' : ''}${comment.resolved ? ' resolved' : ''}` })
+    const card = el('div', { class: `rv-card rv-comment${comment.resolved ? ' resolved' : ''}` })
     card.style.setProperty('--rv-color', comment.color)
     const head = el('div', { class: 'rv-head' }, this.header(comment.author, comment.color, comment.time, comment.edited))
     if (this.canComment) {
@@ -458,8 +462,7 @@ export class Review {
         e.stopPropagation()
       })
       actions.append(cancel, send)
-      if (active) card.append(input, actions)
-      else card.append(input)
+      card.append(input, actions)
       input.addEventListener('focus', () => this.active !== `c:${comment.id}` && this.activate(`c:${comment.id}`, false))
     }
     return card
@@ -509,8 +512,7 @@ export class Review {
 
   private suggestionCard(group: Suggestion[]): HTMLElement {
     const first = group[0]
-    const active = this.active === `s:${first.id}`
-    const card = el('div', { class: `rv-card rv-suggestion${active ? ' active' : ''}` })
+    const card = el('div', { class: 'rv-card rv-suggestion' })
     card.style.setProperty('--rv-color', first.color)
     const head = el('div', { class: 'rv-head' }, this.header(first.author, first.color, Math.max(...group.map((g) => g.time))))
     const { editor } = this.o

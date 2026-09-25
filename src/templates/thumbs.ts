@@ -86,6 +86,20 @@ export const THUMBS: Record<string, () => string> = {
         rect(62, 78, 36, 12, '#e6f4ea', '#188038', 6),
     ),
   organizers: () => svg(circle(62, 50, 32, '#8ab4f8', '#1a73e8', 0.5) + circle(98, 50, 32, '#fdd663', '#f9ab00', 0.5)),
+  'slides-learning-situation': () =>
+    svg(
+      rect(14, 12, 132, 76, '#fff', '#dadce0') +
+        rect(14, 12, 4, 76, '#1a73e8') +
+        line(26, 24, 90, 24, '#1f2937', 4) +
+        [0, 1, 2, 3, 4].map((i) => `<polygon points="${26 + i * 23},44 ${44 + i * 23},44 ${49 + i * 23},52 ${44 + i * 23},60 ${26 + i * 23},60 ${31 + i * 23},52" fill="#1a73e8" fill-opacity="${1 - i * 0.14}"/>`).join('') +
+        textLines(70, 2, 26, 100),
+    ),
+  'oral-presentation': () =>
+    svg(
+      rect(14, 12, 132, 76, '#188038') + `<rect x="14" y="64" width="132" height="24" fill="#fff" fill-opacity="0.2"/>` +
+        line(26, 38, 110, 38, '#fff', 5) +
+        line(26, 50, 80, 50, '#e6f4ea', 3),
+    ),
   brainstorm: () =>
     svg(
       [

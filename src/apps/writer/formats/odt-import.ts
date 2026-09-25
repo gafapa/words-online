@@ -4,8 +4,10 @@ import JSZip from 'jszip'
 import { getSchema, type JSONContent } from '@tiptap/core'
 import type { Schema } from '@tiptap/pm/model'
 import { allExtensions } from '../editor/extensions'
-import { DEFAULT_FONT, DEFAULT_FONT_SIZE_PT, DEFAULT_PAGE, PAGE_SIZES_MM, type ImportedDocument, type PageSettings, type PageSize } from './types'
+import { DEFAULT_FONT, DEFAULT_FONT_SIZE_PT, DEFAULT_PAGE, PAGE_SIZES_MM, type CommentData, type ImportedDocument, type PageSettings, type PageSize } from './types'
 import { attr, bytesToDataUrl, child, children, mimeFromPath, parseXml, toHex } from '../../../core/formats'
+import { mathmlToLatex } from './math'
+import { authorColor } from './review'
 
 const INDENT_CM = 1.27
 const PX_PER_CM = 96 / 2.54
@@ -32,6 +34,29 @@ interface Ctx {
   defaultSize?: number
   // Last number of top-level ordered lists, for continued numbering.
   listEnds: Map<string, number>
+  review: Review
+}
+
+interface Change {
+  kind: 'insertion' | 'deletion' | 'other'
+  author: string
+  time: number
+  // Deleted content (text:deletion), shown in place as a suggested deletion.
+  deletion?: Element
+}
+
+// Comments, tracked changes and formulas, shared by all parts of the document.
+interface Review {
+  comments: CommentData[]
+  // Comment ranges open at this point; point comments close after the next text.
+  open: Set<string>
+  points: Set<string>
+  changes: Map<string, Change>
+  // Insertion regions open at this point.
+  inserting: string[]
+  // The deletion being written out.
+  deleting: string | null
+  formulas: Map<string, string>
 }
 
 interface Walk {
@@ -73,7 +98,8 @@ export async function importOdt(file: ArrayBuffer): Promise<ImportedDocument> {
   const images: Ctx['images'] = new Map()
   for (const root of [content, stylesRoot]) if (root) await loadImages(root, zip, images)
 
-  const common: Ctx = { styles: new Map(), defaults: new Map(), lists: new Map(), fonts: new Map(), images, listEnds: new Map() }
+  const review: Review = { comments: [], open: new Set(), points: new Set(), changes: readChanges(content), inserting: [], deleting: null, formulas: await loadFormulas(content, zip) }
+  const common: Ctx = { styles: new Map(), defaults: new Map(), lists: new Map(), fonts: new Map(), images, listEnds: new Map(), review }
   for (const root of [stylesRoot, content]) readFonts(child(root, 'font-face-decls'), common)
   readStyles(child(stylesRoot, 'styles'), common, false)
   const scope = (auto: Element | null): Ctx => {
@@ -116,7 +142,88 @@ export async function importOdt(file: ArrayBuffer): Promise<ImportedDocument> {
     header: header ? normalize(header) : null,
     footer: footer ? normalize(footer) : null,
     page: layout ? pageSettings(layout, !!header, !!footer) : DEFAULT_PAGE,
+    comments: review.comments,
   }
+}
+
+// ---- Review: tracked changes, comments, formulas ----
+
+function readChanges(content: Element): Map<string, Change> {
+  const changes = new Map<string, Change>()
+  for (const region of content.getElementsByTagNameNS('*', 'changed-region')) {
+    const id = attr(region, 'id')
+    const change = [...region.children].find((c) => ['insertion', 'deletion', 'format-change'].includes(c.localName))
+    if (!id || !change) continue
+    const info = child(change, 'change-info')
+    const date = Date.parse(child(info, 'date')?.textContent ?? '')
+    changes.set(id, {
+      kind: change.localName === 'insertion' ? 'insertion' : change.localName === 'deletion' ? 'deletion' : 'other',
+      author: child(info, 'creator')?.textContent ?? '',
+      time: Number.isFinite(date) ? date : 0,
+      deletion: change.localName === 'deletion' ? change : undefined,
+    })
+  }
+  return changes
+}
+
+// Embedded formula objects (MathML) as LaTeX, by the href of their draw:object.
+async function loadFormulas(content: Element, zip: JSZip): Promise<Map<string, string>> {
+  const formulas = new Map<string, string>()
+  for (const object of content.getElementsByTagNameNS('*', 'object')) {
+    const href = attr(object, 'href')
+    if (!href || formulas.has(href)) continue
+    const inline = [...object.children].find((c) => c.localName === 'math')
+    let math = inline ?? null
+    if (!math) {
+      const path = decodeURIComponent(href.replace(/^\.\//, '').replace(/\/$/, ''))
+      const xml = await zip.file(`${path}/content.xml`)?.async('text')
+      const root = xml ? parseXml(xml).documentElement : null
+      math = root?.localName === 'math' ? root : (root?.getElementsByTagNameNS('*', 'math')[0] ?? null)
+    }
+    if (math) {
+      const latex = mathmlToLatex(math)
+      if (latex) formulas.set(href, latex)
+    }
+  }
+  return formulas
+}
+
+// Marks for review information at the current point.
+function reviewMarks(ctx: Ctx): NonNullable<JSONContent['marks']> {
+  const r = ctx.review
+  const marks: NonNullable<JSONContent['marks']> = [...r.open].map((id) => ({ type: 'commentRange', attrs: { id } }))
+  const changeId = r.deleting ?? r.inserting[r.inserting.length - 1]
+  const change = changeId ? r.changes.get(changeId) : undefined
+  if (change && change.kind !== 'other') {
+    marks.push({
+      type: change.kind,
+      attrs: { id: `o${changeId}`, author: change.author, authorId: `import:${change.author}`, color: authorColor(change.author), time: change.time },
+    })
+  }
+  return marks
+}
+
+function annotation(el: Element, ctx: Ctx): void {
+  const name = attr(el, 'name')
+  const id = name ?? `point${ctx.review.comments.length + 1}`
+  const date = Date.parse(child(el, 'date')?.textContent ?? '')
+  const parent = attr(el, 'parent-name')
+  ctx.review.comments.push({
+    id,
+    author: child(el, 'creator')?.textContent ?? '',
+    date: Number.isFinite(date) ? date : 0,
+    text: [...el.children]
+      .filter((c) => c.localName === 'p' || c.localName === 'h')
+      .map((p) => plainText(p))
+      .join('\n')
+      .trim(),
+    resolved: attr(el, 'resolved') === 'true' || undefined,
+    parentId: parent ?? undefined,
+  })
+  ctx.review.open.add(id)
+  // Without a matching end it is a point comment: it covers the next piece of text.
+  const hasEnd = name && [...(el.ownerDocument?.getElementsByTagNameNS('*', 'annotation-end') ?? [])].some((e) => attr(e, 'name') === name)
+  if (!hasEnd) ctx.review.points.add(id)
 }
 
 let schema: Schema | undefined
@@ -447,15 +554,28 @@ class InlineBuilder {
       if (!text) return
       this.space = text.endsWith(' ')
     } else this.space = false
-    const marks = marksOf(fmt, ctx)
+    const review = reviewMarks(ctx)
+    const own = marksOf(fmt, ctx)
+    const marks = review.length ? [...(own ?? []), ...review] : own
     const last = this.nodes[this.nodes.length - 1]
     if (last?.type === 'text' && JSON.stringify(last.marks) === JSON.stringify(marks)) last.text += text
     else this.nodes.push(marks ? { type: 'text', text, marks } : { type: 'text', text })
+    this.closePoints(ctx)
   }
 
-  node(node: JSONContent): void {
+  node(node: JSONContent, ctx?: Ctx): void {
+    if (ctx && node.type !== 'hardBreak') {
+      const review = reviewMarks(ctx)
+      if (review.length) node.marks = [...(node.marks ?? []), ...review]
+      this.closePoints(ctx)
+    }
     this.nodes.push(node)
     this.space = false
+  }
+
+  private closePoints(ctx: Ctx) {
+    for (const id of ctx.review.points) ctx.review.open.delete(id)
+    ctx.review.points.clear()
   }
 }
 
@@ -493,6 +613,15 @@ function inlineElement(el: Element, ctx: Ctx, fmt: Fmt, out: InlineBuilder): voi
       break
     }
     case 'frame': {
+      const object = child(el, 'object')
+      const latex = object ? ctx.review.formulas.get(attr(object, 'href') ?? '') : undefined
+      if (latex) {
+        // A formula alone in its paragraph is a display equation.
+        const p = el.parentElement
+        const alone = !!p && (p.localName === 'p' || p.localName === 'h') && p.children.length === 1 && [...p.childNodes].every((n) => n === el || !(n.textContent ?? '').trim())
+        out.node({ type: 'equation', attrs: { latex, display: alone } }, ctx)
+        break
+      }
       const image = child(el, 'image')
       const src = image ? (ctx.images.get(imageKey(image)) ?? null) : null
       if (src) {
@@ -507,7 +636,7 @@ function inlineElement(el: Element, ctx: Ctx, fmt: Fmt, out: InlineBuilder): voi
             width: width ? Math.round(width * PX_PER_CM) : null,
             height: height ? Math.round(height * PX_PER_CM) : null,
           },
-        })
+        }, ctx)
       } else {
         // Text frames (e.g. captioned images): inline their paragraphs' content.
         const box = child(el, 'text-box')
@@ -517,7 +646,7 @@ function inlineElement(el: Element, ctx: Ctx, fmt: Fmt, out: InlineBuilder): voi
     }
     case 'note': {
       const content = paragraphsText(child(el, 'note-body'))
-      out.node({ type: 'footnote', attrs: { content } })
+      out.node({ type: 'footnote', attrs: { content } }, ctx)
       break
     }
     case 'page-number':
@@ -527,7 +656,34 @@ function inlineElement(el: Element, ctx: Ctx, fmt: Fmt, out: InlineBuilder): voi
       out.node({ type: 'pageNumber', attrs: { kind: 'total' } })
       break
     case 'annotation':
+      annotation(el, ctx)
+      break
     case 'annotation-end':
+      ctx.review.open.delete(attr(el, 'name') ?? '')
+      break
+    case 'change-start':
+      ctx.review.inserting.push(attr(el, 'change-id') ?? '')
+      break
+    case 'change-end': {
+      const id = attr(el, 'change-id')
+      ctx.review.inserting = ctx.review.inserting.filter((x) => x !== id)
+      break
+    }
+    case 'change': {
+      // Deleted text is shown where it was, as a suggested deletion.
+      const id = attr(el, 'change-id') ?? ''
+      const change = ctx.review.changes.get(id)
+      if (change?.deletion && !ctx.review.deleting) {
+        ctx.review.deleting = id
+        const paragraphs = [...change.deletion.children].filter((c) => c.localName === 'p' || c.localName === 'h')
+        paragraphs.forEach((p, i) => {
+          if (i > 0) out.text(' ', fmt, ctx, false)
+          inline(p, ctx, fmt, out)
+        })
+        ctx.review.deleting = null
+      }
+      break
+    }
     case 'bookmark':
     case 'bookmark-start':
     case 'bookmark-end':
@@ -535,9 +691,6 @@ function inlineElement(el: Element, ctx: Ctx, fmt: Fmt, out: InlineBuilder): voi
     case 'reference-mark-start':
     case 'reference-mark-end':
     case 'soft-page-break':
-    case 'change':
-    case 'change-start':
-    case 'change-end':
     case 'toc-mark':
     case 'toc-mark-start':
     case 'toc-mark-end':

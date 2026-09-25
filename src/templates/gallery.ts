@@ -27,6 +27,7 @@ const APP_LABELS: Partial<Record<DocType, () => string>> = {
   sheet: () => t('Spreadsheets'),
   diagram: () => t('Diagrams'),
   draw: () => t('Drawings'),
+  slides: () => t('Presentations'),
 }
 
 export function mountTemplates(container: HTMLElement): void {
