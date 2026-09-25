@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "fetch:drawio": "node scripts/fetch-drawio.mjs",
+    "predev": "node scripts/fetch-drawio.mjs",
     "dev": "vite --host",
+    "prebuild": "node scripts/fetch-drawio.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host"
   },

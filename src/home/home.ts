@@ -1,7 +1,7 @@
 // Home screen: create documents of every type, open files and list the
 // documents stored in this browser.
 
-import { APPS, appForFile, appInfo, type AppInfo } from '../apps/registry'
+import { ALL_ACCEPT, APPS, appForFile, appInfo, type AppInfo } from '../apps/registry'
 import { docPath, newDocPath } from '../core/router'
 import * as store from '../core/store'
 import { el, showContextMenu, toast } from '../ui/widgets'
@@ -39,12 +39,8 @@ export function mountHome(root: HTMLElement): void {
     }
   })
   const openButton = el('button', { type: 'button', class: 'home-open', textContent: 'Open file…' })
-  openButton.addEventListener('click', async () => {
-    // Accept every extension any available app can open.
-    const accepts = await Promise.all(APPS.filter((a) => a.load).map(async (a) => (await a.load!()).accept))
-    fileInput.accept = accepts.join(',')
-    fileInput.click()
-  })
+  fileInput.accept = ALL_ACCEPT
+  openButton.addEventListener('click', () => fileInput.click())
 
   const newCards = el(
     'div',
