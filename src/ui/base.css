@@ -11,6 +11,7 @@
   --ok: #188038;
   --shadow: 0 1px 3px rgb(60 64 67 / 0.3), 0 4px 8px 3px rgb(60 64 67 / 0.12);
   --doc-font: Calibri, Carlito, 'Segoe UI', Arial, sans-serif;
+  --focus: #1a73e8;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   color: var(--text);
@@ -172,6 +173,18 @@ kbd { font-family: inherit; background: var(--bg); border: 1px solid var(--borde
   position: fixed; bottom: 48px; left: 50%; transform: translateX(-50%); z-index: 2000;
   padding: 10px 18px; border-radius: 8px; background: #323232; color: #fff;
 }
+
+/* ---------- Keyboard focus ---------- */
+
+:where(a[href], button, input, select, textarea, summary, [tabindex]):focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.menu-row:focus-visible, .menubar-item:focus-visible { background: var(--hover); }
+dialog.dlg { background: var(--surface); color: var(--text); }
+.skip-link {
+  position: fixed; left: 8px; top: -60px; z-index: 3000; padding: 8px 14px; border: 0; border-radius: 6px;
+  background: var(--accent); color: var(--on-accent, #fff); font-weight: 600;
+}
+.skip-link:focus { top: 8px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* ---------- Small screens ---------- */
 

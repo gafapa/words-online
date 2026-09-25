@@ -37,54 +37,135 @@ export interface Menu {
   items: MenuEntry[]
 }
 
+// UI zoom from the accessibility preferences: fixed positions are given in unzoomed pixels.
+const uiZoom = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--a11y-ui-zoom')) || 1
+
+const ownRows = (list: HTMLElement) =>
+  [...list.children].filter((n): n is HTMLButtonElement => n instanceof HTMLButtonElement && !n.disabled)
+
+function focusRow(list: HTMLElement, index: number): void {
+  const rows = ownRows(list)
+  rows[index < 0 ? rows.length - 1 : index]?.focus()
+}
+
+// Menu bar with mouse and keyboard support (F10 or Alt+Shift+M focuses it;
+// arrows move, Enter opens, Escape goes back to where the user was).
 export function createMenuBar(container: HTMLElement, menus: Menu[]): void {
   let openIndex = -1
   const buttons: HTMLButtonElement[] = []
   let panel: HTMLElement | null = null
+  let returnFocus: HTMLElement | null = null
+
+  container.setAttribute('role', 'menubar')
 
   const close = () => {
     panel?.remove()
     panel = null
-    buttons.forEach((b) => b.classList.remove('open'))
+    buttons.forEach((b) => {
+      b.classList.remove('open')
+      b.setAttribute('aria-expanded', 'false')
+    })
     openIndex = -1
   }
 
-  const open = (index: number) => {
+  // Keyboard users go back to the editor before a command runs.
+  const restore = () => {
+    if (returnFocus?.isConnected) returnFocus.focus()
+    returnFocus = null
+  }
+
+  const focusButton = (index: number) => {
+    buttons.forEach((b, i) => (b.tabIndex = i === index ? 0 : -1))
+    buttons[index].focus()
+  }
+
+  const open = (index: number, focus?: 'first' | 'last') => {
     close()
     openIndex = index
     const button = buttons[index]
     button.classList.add('open')
-    panel = renderItems(menus[index].items, close)
-    panel.classList.add('menu-panel')
+    button.setAttribute('aria-expanded', 'true')
+    const list = renderItems(menus[index].items, close, restore)
+    panel = list
+    list.classList.add('menu-panel')
     const rect = button.getBoundingClientRect()
-    panel.style.left = `${rect.left}px`
-    panel.style.top = `${rect.bottom + 2}px`
-    document.body.append(panel)
+    const z = uiZoom()
+    list.style.left = `${rect.left / z}px`
+    list.style.top = `${(rect.bottom + 2) / z}px`
+    list.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        e.preventDefault()
+        const next = (index + (e.key === 'ArrowLeft' ? -1 : 1) + buttons.length) % buttons.length
+        focusButton(next)
+        open(next, 'first')
+      } else if (e.key === 'Escape' || e.key === 'Tab') {
+        e.preventDefault()
+        e.stopPropagation()
+        close()
+        focusButton(index)
+      }
+    })
+    document.body.append(list)
+    if (focus) focusRow(list, focus === 'first' ? 0 : -1)
   }
 
   menus.forEach((menu, i) => {
-    const button = el('button', { type: 'button', class: 'menubar-item', textContent: menu.label })
+    const button = el('button', { type: 'button', class: 'menubar-item', textContent: menu.label, tabIndex: i ? -1 : 0 })
+    button.setAttribute('role', 'menuitem')
+    button.setAttribute('aria-haspopup', 'menu')
+    button.setAttribute('aria-expanded', 'false')
     button.addEventListener('mousedown', (e) => {
       e.preventDefault() // keep the editor selection
       if (openIndex === i) close()
       else open(i)
     })
+    // Clicks without a pointer (assistive technologies).
+    button.addEventListener('click', (e) => e.detail === 0 && openIndex !== i && open(i, 'first'))
     button.addEventListener('mouseenter', () => openIndex >= 0 && openIndex !== i && open(i))
+    button.addEventListener('keydown', (e) => {
+      const n = buttons.length
+      const go: Record<string, () => void> = {
+        ArrowRight: () => focusButton((i + 1) % n),
+        ArrowLeft: () => focusButton((i - 1 + n) % n),
+        Home: () => focusButton(0),
+        End: () => focusButton(n - 1),
+        ArrowDown: () => open(i, 'first'),
+        Enter: () => open(i, 'first'),
+        ' ': () => open(i, 'first'),
+        ArrowUp: () => open(i, 'last'),
+        Escape: () => (close(), restore()),
+      }
+      if (!go[e.key]) return
+      e.preventDefault()
+      go[e.key]()
+    })
     buttons.push(button)
     container.append(button)
   })
 
+  container.addEventListener('focusin', (e) => {
+    const from = e.relatedTarget as HTMLElement | null
+    if (from && !container.contains(from) && !from.closest('.menu-panel')) returnFocus = from
+  })
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') close()
+    const f10 = e.key === 'F10' && !e.ctrlKey && !e.metaKey && !e.shiftKey
+    if ((f10 || (e.altKey && e.shiftKey && e.code === 'KeyM')) && container.isConnected && buttons.length) {
+      e.preventDefault()
+      focusButton(0)
+    }
+  })
   document.addEventListener('mousedown', (e) => {
     const target = e.target as Node
     if (panel && !panel.contains(target) && !buttons.some((b) => b.contains(target))) close()
   })
-  document.addEventListener('keydown', (e) => e.key === 'Escape' && close())
   window.addEventListener('resize', close)
 }
 
 // Context menu at the pointer position.
 export function showContextMenu(x: number, y: number, items: MenuEntry[]): void {
   document.querySelector('.context-menu')?.remove()
+  const previous = document.activeElement as HTMLElement | null
   const close = () => {
     panel.remove()
     document.removeEventListener('mousedown', outside)
@@ -93,38 +174,64 @@ export function showContextMenu(x: number, y: number, items: MenuEntry[]): void 
   const panel = renderItems(items, close)
   panel.classList.add('menu-panel', 'context-menu')
   document.body.append(panel)
-  panel.style.left = `${Math.min(x, window.innerWidth - panel.offsetWidth - 8)}px`
-  panel.style.top = `${Math.min(y, window.innerHeight - panel.offsetHeight - 8)}px`
+  const z = uiZoom()
+  panel.style.left = `${Math.max(0, Math.min(x, window.innerWidth - panel.offsetWidth * z - 8)) / z}px`
+  panel.style.top = `${Math.max(0, Math.min(y, window.innerHeight - panel.offsetHeight * z - 8)) / z}px`
   setTimeout(() => document.addEventListener('mousedown', outside))
+  panel.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' && e.key !== 'Tab') return
+    e.preventDefault()
+    close()
+    previous?.focus()
+  })
   document.addEventListener('keydown', (e) => e.key === 'Escape' && close(), { once: true })
+  // Opened from a button (keyboard or "more" buttons): move focus into the menu.
+  if (previous instanceof HTMLButtonElement) focusRow(panel, 0)
 }
 
-function renderItems(items: MenuEntry[], close: () => void): HTMLElement {
+function renderItems(items: MenuEntry[], close: () => void, beforeRun = () => {}, parentRow?: HTMLElement): HTMLElement {
   const list = el('div', { class: 'menu-list', role: 'menu' })
   let submenu: HTMLElement | null = null
+  const openSubmenu = (row: HTMLElement, entries: MenuEntry[], focus: boolean) => {
+    submenu?.remove()
+    submenu = renderItems(entries, close, beforeRun, row)
+    submenu.classList.add('menu-panel')
+    const rect = row.getBoundingClientRect()
+    const z = uiZoom()
+    submenu.style.left = `${(rect.right - 2) / z}px`
+    submenu.style.top = `${(rect.top - 4) / z}px`
+    row.setAttribute('aria-expanded', 'true')
+    list.append(submenu)
+    if (focus) focusRow(submenu, 0)
+  }
   for (const item of items) {
     if (item === '-') {
-      list.append(el('div', { class: 'menu-sep' }))
+      list.append(el('div', { class: 'menu-sep', role: 'separator' }))
       continue
     }
     const enabled = item.enabled ? item.enabled() : true
+    const checked = item.active?.()
     const row = el(
       'button',
-      { type: 'button', class: 'menu-row', disabled: !enabled, role: 'menuitem' },
-      el('span', { class: 'menu-check', textContent: item.active?.() ? '✓' : '' }),
+      { type: 'button', class: 'menu-row', disabled: !enabled, tabIndex: -1 },
+      el('span', { class: 'menu-check', textContent: checked ? '✓' : '' }),
       el('span', { class: 'menu-label', textContent: item.label }),
       el('span', { class: 'menu-shortcut', textContent: item.submenu ? '▸' : (item.shortcut ?? '') }),
     )
+    row.setAttribute('role', item.active ? 'menuitemcheckbox' : 'menuitem')
+    if (item.active) row.setAttribute('aria-checked', String(!!checked))
+    if (item.shortcut) row.setAttribute('aria-keyshortcuts', item.shortcut.replace(/\s/g, ''))
     row.addEventListener('mousedown', (e) => e.preventDefault())
     if (item.submenu) {
-      row.addEventListener('mouseenter', () => {
-        submenu?.remove()
-        submenu = renderItems(item.submenu!, close)
-        submenu.classList.add('menu-panel')
-        const rect = row.getBoundingClientRect()
-        submenu.style.left = `${rect.right - 2}px`
-        submenu.style.top = `${rect.top - 4}px`
-        list.append(submenu)
+      row.setAttribute('aria-haspopup', 'menu')
+      row.setAttribute('aria-expanded', 'false')
+      row.addEventListener('mouseenter', () => openSubmenu(row, item.submenu!, false))
+      row.addEventListener('click', (e) => e.detail === 0 && openSubmenu(row, item.submenu!, true))
+      row.addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowRight' && e.key !== 'Enter' && e.key !== ' ') return
+        e.preventDefault()
+        e.stopPropagation()
+        openSubmenu(row, item.submenu!, true)
       })
     } else {
       row.addEventListener('mouseenter', () => {
@@ -133,11 +240,29 @@ function renderItems(items: MenuEntry[], close: () => void): HTMLElement {
       })
       row.addEventListener('click', () => {
         close()
+        beforeRun()
         item.run?.()
       })
     }
     list.append(row)
   }
+  list.addEventListener('keydown', (e) => {
+    const rows = ownRows(list)
+    const current = rows.indexOf(document.activeElement as HTMLButtonElement)
+    if (current < 0) return // handled by a submenu
+    const next = { ArrowDown: (current + 1) % rows.length, ArrowUp: (current - 1 + rows.length) % rows.length, Home: 0, End: rows.length - 1 }[e.key]
+    if (next !== undefined) {
+      e.preventDefault()
+      e.stopPropagation()
+      rows[next].focus()
+    } else if (parentRow && (e.key === 'ArrowLeft' || e.key === 'Escape')) {
+      e.preventDefault()
+      e.stopPropagation()
+      list.remove()
+      parentRow.setAttribute('aria-expanded', 'false')
+      parentRow.focus()
+    }
+  })
   return list
 }
 
@@ -156,10 +281,24 @@ export function openPopover(anchor: HTMLElement, content: HTMLElement): void {
   const pop = el('div', { class: 'popover' }, content)
   document.body.append(pop)
   const rect = anchor.getBoundingClientRect()
-  const left = Math.min(rect.left, window.innerWidth - pop.offsetWidth - 8)
-  pop.style.left = `${Math.max(8, left)}px`
-  pop.style.top = `${rect.bottom + 4}px`
+  const z = uiZoom()
+  const left = Math.min(rect.left, window.innerWidth - pop.offsetWidth * z - 8)
+  pop.style.left = `${Math.max(8, left) / z}px`
+  pop.style.top = `${(rect.bottom + 4) / z}px`
   activePopover = { el: pop, anchor }
+  // Keyboard: focus moves into the popover; Tab past either end or Escape returns to the anchor.
+  const focusable = () => [...pop.querySelectorAll<HTMLElement>('button, input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+  pop.addEventListener('keydown', (e) => {
+    const items = focusable()
+    const edge = e.shiftKey ? items[0] : items[items.length - 1]
+    if (e.key === 'Escape' || (e.key === 'Tab' && document.activeElement === edge)) {
+      e.preventDefault()
+      e.stopPropagation()
+      closePopover()
+      anchor.focus()
+    }
+  })
+  if (document.activeElement === anchor || anchor.contains(document.activeElement)) focusable()[0]?.focus()
 }
 
 document.addEventListener('mousedown', (e) => {
@@ -247,6 +386,8 @@ export interface DialogButton {
   value: string
 }
 
+let dialogCount = 0
+
 // Shows a modal dialog; resolves with the pressed button value ('' when dismissed).
 export function showDialog(title: string, body: HTMLElement, buttons: DialogButton[], wide = false): Promise<string> {
   return new Promise((resolve) => {
@@ -254,7 +395,9 @@ export function showDialog(title: string, body: HTMLElement, buttons: DialogButt
     const form = el('form', { method: 'dialog' })
     const actions = el('div', { class: 'dlg-actions' })
     for (const b of buttons) actions.append(el('button', { value: b.value, textContent: b.label, class: b.primary ? 'primary' : '' }))
-    form.append(el('h2', { textContent: title }), body, actions)
+    const heading = el('h2', { textContent: title, id: `dlg-title-${++dialogCount}` })
+    dialog.setAttribute('aria-labelledby', heading.id)
+    form.append(heading, body, actions)
     dialog.append(form)
     document.body.append(dialog)
     dialog.addEventListener('close', () => {

@@ -3,6 +3,7 @@
 
 import type { AppInfo } from '../apps/registry'
 import { homePath } from '../core/router'
+import { accessibilityButton } from './accessibility'
 
 export interface Shell {
   menubar: HTMLElement
@@ -36,6 +37,7 @@ export function renderShell(app: AppInfo, root: HTMLElement): Shell {
       <main id="app-main" class="app-main"></main>
       <footer id="statusbar" class="statusbar"></footer>
     </div>`
+  root.querySelector('.appbar-actions')!.prepend(accessibilityButton())
   return {
     menubar: root.querySelector('#menubar')!,
     toolbar: root.querySelector('#toolbar')!,
