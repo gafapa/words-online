@@ -13,7 +13,7 @@
 //   session.authors       Y.Map in the document: String(Yjs clientID) -> {name, color},
 //                         written by editors when they first change the document
 //                         in a session (authorship colors, version authors)
-//   session.hooks         optional app hooks (hand in, restore, print); main.ts
+//   session.hooks         optional app hooks (hand in, restore, print, export formats); main.ts
 //                         fills submitFiles / restoreVersion from the app's index.ts
 //   session.shareUrl(a)   link granting access `a` (never more than this browser has)
 //   session.copyUrl()     link that makes a private copy for whoever opens it
@@ -39,7 +39,16 @@ export interface SubmitFile {
   blob: Blob
 }
 
+// A file format the document can be saved in (e.g. to Nextcloud).
+export interface ExportOption {
+  ext: string // 'docx'
+  label: string // 'Word (.docx)'
+  build: () => Promise<Blob>
+}
+
 export interface SessionHooks {
+  // Formats for "Save to Nextcloud", the app's usual download formats (first: default).
+  exportFormats?: () => ExportOption[]
   // Files in the app's original formats for "Hand in".
   submitFiles?: () => Promise<SubmitFile[]>
   // Replaces the document content with a version's state (default: generic restore).

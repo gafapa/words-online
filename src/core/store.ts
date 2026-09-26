@@ -23,6 +23,19 @@ export interface DocEntry {
   keys?: LinkKeys
   // What this browser may do, from the keys it holds (absent means 'edit').
   access?: Access
+  // File in Nextcloud this document saves to (only in this browser).
+  remote?: RemoteLink
+}
+
+export interface RemoteLink {
+  account: string // NcAccount.id
+  path: string // relative to the user's files, e.g. /Documents/Essay.docx
+  format: string // export format (extension), e.g. 'docx'
+  etag?: string // version last opened or saved (If-Match)
+  fileId?: string
+  savedAt?: number
+  // Yjs state vector (base64) when last opened or saved: differs → unsaved changes.
+  savedVector?: string
 }
 
 export interface User {
@@ -54,9 +67,22 @@ export function getDoc(id: string): DocEntry | undefined {
   return listDocs().find((d) => d.id === id)
 }
 
+// Adds or updates an entry; fields not given (e.g. `remote`) are kept.
 export function saveDoc(entry: Omit<DocEntry, 'updated'>): void {
-  const docs = listDocs().filter((d) => d.id !== entry.id)
-  docs.push({ ...entry, updated: Date.now() })
+  const all = listDocs()
+  const previous = all.find((d) => d.id === entry.id)
+  const docs = all.filter((d) => d.id !== entry.id)
+  docs.push({ ...previous, ...entry, updated: Date.now() })
+  write(DOCS_KEY, docs)
+}
+
+// Links a document to a file in Nextcloud (undefined: unlinks it).
+export function setRemoteLink(id: string, remote: RemoteLink | undefined): void {
+  const docs = listDocs()
+  const entry = docs.find((d) => d.id === id)
+  if (!entry) return
+  if (remote) entry.remote = remote
+  else delete entry.remote
   write(DOCS_KEY, docs)
 }
 

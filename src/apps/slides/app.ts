@@ -592,6 +592,10 @@ export function mountSlides(session: Session, root: HTMLElement): void {
   })
   // "Hand in" → print: one slide per page.
   session.hooks.print = () => void printPdf()
+  session.hooks.exportFormats = () => [
+    { ext: 'pptx', label: t('PowerPoint (.pptx)'), build: async () => (await import('./formats/pptx')).exportPptx(presentationData(), renderer) },
+    { ext: 'odp', label: t('OpenDocument presentation (.odp)'), build: async () => (await import('./formats/odp')).exportOdp(presentationData(), renderer) },
+  ]
 
   // ---------- Menus ----------
 

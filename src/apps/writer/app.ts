@@ -389,6 +389,14 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
     }
   }
 
+  const exportBlob = (format: ExportFormat) => () => exportFile(format, documentData(), editor.getHTML(), editor.getText({ blockSeparator: '\n' }))
+  session.hooks.exportFormats = () => [
+    { ext: 'docx', label: t('Word (.docx)'), build: exportBlob('docx') },
+    { ext: 'odt', label: t('OpenDocument text (.odt)'), build: exportBlob('odt') },
+    { ext: 'html', label: t('Web page (.html)'), build: exportBlob('html') },
+    { ext: 'txt', label: t('Plain text (.txt)'), build: exportBlob('txt') },
+  ]
+
   const print = () => {
     // Printing uses the same page geometry as the screen at 100%.
     paper.style.transform = 'none'

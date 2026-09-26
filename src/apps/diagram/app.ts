@@ -87,6 +87,12 @@ export function mountDiagram(session: Session, root: HTMLElement): void {
     fileInput.value = ''
     if (file) void openFile(file)
   })
+  // Formats for "Save to Nextcloud" (the whole current page for images).
+  session.hooks.exportFormats = () => [
+    { ext: 'drawio', label: t('draw.io diagram (.drawio)'), build: async () => new Blob([(await formats()).serializeDrawio(DiagramSync.readPages(session.doc))], { type: 'application/vnd.jgraph.mxfile' }) },
+    { ext: 'svg', label: t('SVG image (current page)'), build: async () => new Blob([svgToString(renderSvg(graph))], { type: 'image/svg+xml' }) },
+    { ext: 'png', label: t('PNG image (current page)'), build: () => svgToPng(renderSvg(graph)) },
+  ]
 
   // ---------- Pages ----------
 

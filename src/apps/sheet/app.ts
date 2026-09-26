@@ -104,6 +104,12 @@ export async function mountSheet(session: Session, root: HTMLElement): Promise<v
   })
 
   session.hooks.print = print
+  const exportBlob = (format: SheetExportFormat) => () => exportSheetFile(format, snapshot(), univerAPI.getActiveWorkbook()!.getActiveSheet().getSheetId())
+  session.hooks.exportFormats = () => [
+    { ext: 'xlsx', label: t('Microsoft Excel (.xlsx)'), build: exportBlob('xlsx') },
+    { ext: 'ods', label: t('OpenDocument spreadsheet (.ods)'), build: exportBlob('ods') },
+    { ext: 'csv', label: t('Comma-separated values (.csv, current sheet)'), build: exportBlob('csv') },
+  ]
 
   // ---------- Menus ----------
 

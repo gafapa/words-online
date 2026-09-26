@@ -131,6 +131,17 @@ export function mountDraw(session: Session, root: HTMLElement): void {
     )
   }
 
+  const exportBlob = (format: 'png' | 'svg' | 'excalidraw') => async () => {
+    const api = drawApis.get(session)
+    if (!api) throw new Error(t('The drawing is still loading'))
+    return exportDrawing(api, format)
+  }
+  session.hooks.exportFormats = () => [
+    { ext: 'excalidraw', label: t('Excalidraw drawing (.excalidraw)'), build: exportBlob('excalidraw') },
+    { ext: 'png', label: t('PNG image'), build: exportBlob('png') },
+    { ext: 'svg', label: t('SVG image'), build: exportBlob('svg') },
+  ]
+
   session.hooks.print = async () => {
     const api = drawApis.get(session)
     if (api) await printImages([await exportDrawing(api, 'png')])
