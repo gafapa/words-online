@@ -17,6 +17,8 @@ import {
   PaintBucket,
   List,
   ListOrdered,
+  MessageSquarePlus,
+  Sparkles,
   PanelRight,
   Play,
   Plus,
@@ -68,6 +70,10 @@ import { NotesEditor } from './notes'
 import { Presentation, presenters } from './present'
 import { SlideRenderer, editingCell, installTheme, svgDataUrl } from './render'
 import { SlideList } from './slidelist'
+import { TRANSITION_NAMES, animationsMap, copyAnimations, readAnimations, timeline, type TransitionType } from './animations'
+import { AnimationPane } from './animpane'
+import { CommentsPane } from './comments'
+import type { PlayableSlide } from './player'
 
 export const SLIDES_ACCEPT = '.pptx'
 const THUMB_WIDTH = 176
@@ -117,7 +123,7 @@ export function mountSlides(session: Session, root: HTMLElement): void {
     openFile: (file) => void openFile(file),
     print: () => void printPdf(),
     onKey: (e) => onKey(e),
-    contextItems: (selected) => (selected ? [] : slideContextItems()),
+    contextItems: (selected) => (selected ? objectContextItems() : slideContextItems()),
     onPagesChange: () => refreshList(),
     onPageShown: () => pageShown(),
     blankPage: blankSlide,
@@ -174,7 +180,8 @@ export function mountSlides(session: Session, root: HTMLElement): void {
     const id = sync.addPage(`${page.name} (${t('copy')})`, sync.pageRecords(source))
     placeAfter(id, source)
     const m = readSlideMeta(doc, source)
-    writeSlideMeta(doc, id, { layout: m.layout ?? null, background: m.background ?? null })
+    writeSlideMeta(doc, id, { layout: m.layout ?? null, background: m.background ?? null, transition: m.transition ?? null, transitionDuration: m.transitionDuration ?? null })
+    copyAnimations(doc, source, id)
     const notes = notesText(doc, source).toString()
     if (notes) notesText(doc, id).insert(0, notes)
     sync.showPage(id)
@@ -368,6 +375,44 @@ export function mountSlides(session: Session, root: HTMLElement): void {
     readOnly,
   )
   const notes = new NotesEditor(readOnly, () => sync.materialize())
+
+  // Animation and comment panes (right side).
+  const relayout = () => requestAnimationFrame(() => editor.fit())
+  const animPane = new AnimationPane({
+    doc,
+    graph,
+    canvas,
+    readOnly,
+    page: () => sync.page,
+    materialize: () => sync.materialize(),
+    preview: () => present(true),
+    onToggle: relayout,
+  })
+  const commentsPane = new CommentsPane({
+    session,
+    graph,
+    canvas,
+    page: () => sync.page,
+    slides: () => slides(),
+    showSlide: (id) => showSlide(id),
+    onToggle: relayout,
+    onCounts: (counts) => {
+      list.setComments(counts)
+      refreshList()
+    },
+  })
+  const toggleAnimations = () => {
+    if (!animPane.visible) commentsPane.toggle(false)
+    animPane.toggle()
+  }
+  const toggleComments = () => {
+    if (!commentsPane.visible) animPane.toggle(false)
+    commentsPane.toggle()
+  }
+  const addComment = () => {
+    animPane.toggle(false)
+    commentsPane.startComment()
+  }
   const leftTabs = el('div', { class: 'slides-left-tabs', role: 'tablist' })
   const left = el('aside', { class: 'slides-left' }, leftTabs, list.element, editor.sidebar.element)
   const tabButton = (label: string, panel: 'slides' | 'shapes') => {
@@ -436,6 +481,7 @@ export function mountSlides(session: Session, root: HTMLElement): void {
         markDirty(page.id)
         presentation.refresh()
       })
+      animationsMap(doc, page.id).observeDeep(() => presentation.refresh())
     }
   }
   slideMetaMap(doc).observeDeep((events) => {
@@ -445,6 +491,7 @@ export function mountSlides(session: Session, root: HTMLElement): void {
     }
     updateFrame()
     editor.format.render()
+    animPane.schedule()
     presentation.refresh()
   })
   meta.observe((e) => {
@@ -462,6 +509,7 @@ export function mountSlides(session: Session, root: HTMLElement): void {
 
   // ---------- Status, list and page changes ----------
 
+  let lastContext = { x: 0, y: 0 }
   const slideLabel = el('span', { class: 'slides-count' })
   const refreshList = () => {
     observePages()
@@ -475,6 +523,8 @@ export function mountSlides(session: Session, root: HTMLElement): void {
     if (slides().some((p) => !thumbKeys.has(p.id))) markDirty()
   }
   const pageShown = () => {
+    animPane.pageShown()
+    commentsPane.pageShown()
     notes.bind(notesText(doc, sync.page))
     updateFrame()
     refreshList()
@@ -482,9 +532,29 @@ export function mountSlides(session: Session, root: HTMLElement): void {
 
   // ---------- Presenting ----------
 
+  // A slide as layers with its animations and transition, for presenting.
+  const playable = (id: string): PlayableSlide => {
+    const cells = sync.pageRecords(id)
+    const rootId = cells.find((c) => !c.parent)?.id
+    const layers = new Set(cells.filter((c) => c.parent === rootId).map((c) => c.id))
+    const top = new Set(cells.filter((c) => c.parent && layers.has(c.parent)).map((c) => c.id))
+    const tl = timeline(readAnimations(doc, id), top)
+    const animated = new Set(tl.steps.flatMap((st) => st.effects.map((e) => e.anim.cell)))
+    const m = readSlideMeta(doc, id)
+    const type = (m.transition && m.transition in TRANSITION_NAMES ? m.transition : 'none') as TransitionType
+    return {
+      id,
+      width: size.width,
+      height: size.height,
+      layers: renderer.renderLayers({ cells, background: slideBackground(id) }, animated, size.width, size.height),
+      timeline: tl,
+      transition: { type, duration: Number(m.transitionDuration) || 500 },
+    }
+  }
   const presentation = new Presentation({
     slides: () => slides(),
     render: (id) => renderer.render({ cells: sync.pageRecords(id), background: slideBackground(id) }, size.width, size.height),
+    playable,
     notes: (id) => notesText(doc, id).toString(),
     size: () => size,
     awareness: session.awareness,
@@ -521,7 +591,17 @@ export function mountSlides(session: Session, root: HTMLElement): void {
     theme,
     slides: slides().map((p) => {
       const m = readSlideMeta(doc, p.id)
-      return { id: p.id, name: p.name, cells: sync.pageRecords(p.id), notes: notesText(doc, p.id).toString(), background: m.background, layout: m.layout }
+      return {
+        id: p.id,
+        name: p.name,
+        cells: sync.pageRecords(p.id),
+        notes: notesText(doc, p.id).toString(),
+        background: m.background,
+        layout: m.layout,
+        animations: readAnimations(doc, p.id),
+        transition: m.transition,
+        transitionDuration: Number(m.transitionDuration) || undefined,
+      }
     }),
   })
   const download = (blob: Blob, name: string) => {
@@ -619,6 +699,23 @@ export function mountSlides(session: Session, root: HTMLElement): void {
     { label: t('Layout'), submenu: layoutMenu(), enabled: editable() },
     { label: t('Background color…'), run: () => chooseBackground(), enabled: editable() },
     { label: t('Reset background'), run: () => setBackground(null), enabled: editable(() => !!readSlideMeta(doc, sync.page).background) },
+    '-',
+    { label: t('Transition'), submenu: transitionMenu(), enabled: editable() },
+    { label: t('Animations…'), run: () => animPane.toggle(true), active: () => animPane.visible },
+  ]
+  const transitionMenu = (): MenuEntry[] =>
+    (Object.entries(TRANSITION_NAMES) as [TransitionType, string][]).map(([id, name]) => ({
+      label: name,
+      run: () => {
+        sync.materialize()
+        writeSlideMeta(doc, sync.page, { transition: id === 'none' ? null : id })
+      },
+      active: () => (readSlideMeta(doc, sync.page).transition ?? 'none') === id,
+      enabled: editable(),
+    }))
+  const objectContextItems = (): MenuEntry[] => [
+    { label: t('Add animation…'), run: () => animPane.addMenu(lastContext.x, lastContext.y), enabled: editable() },
+    { label: t('Comment'), run: addComment, enabled: () => session.canComment },
   ]
   const slideContextItems = (): MenuEntry[] => [
     { label: t('New slide'), run: () => addSlide(), enabled: editable() },
@@ -654,6 +751,8 @@ export function mountSlides(session: Session, root: HTMLElement): void {
       items: [
         { label: t('Slides panel'), run: toggleLeft, active: () => !left.hidden },
         { label: t('Speaker notes'), run: toggleNotes, active: () => !notes.element.hidden },
+        { label: t('Animations'), run: toggleAnimations, active: () => animPane.visible },
+        { label: t('Comments'), run: toggleComments, active: () => commentsPane.visible },
         ...editor.panelMenu().filter((item) => item === '-' || item.label !== t('Shapes')),
         '-',
         ...editor.zoomMenu(),
@@ -667,6 +766,7 @@ export function mountSlides(session: Session, root: HTMLElement): void {
         { label: t('Image…'), run: () => imageInput.click(), enabled: editable() },
         { label: t('Table…'), run: () => openPopover(tableButton, tableGrid(insertTable, 8)), enabled: editable() },
         { label: t('Equation…'), run: () => void insertEquation(), enabled: editable() },
+        { label: t('Comment'), shortcut: mod('Alt+M'), run: addComment, enabled: () => session.canComment },
         { label: t('Shapes'), run: () => showLeft('shapes'), enabled: editable() },
       ],
     },
@@ -773,6 +873,9 @@ export function mountSlides(session: Session, root: HTMLElement): void {
     )
     tbGroup(bgButton, tbButton(PanelRight, t('Format panel'), () => editor.togglePanel(editor.format.element), undefined, () => !editor.format.element.hidden))
   }
+  const animButton = tbButton(Sparkles, t('Animations'), toggleAnimations, undefined, () => animPane.visible)
+  const commentButton = tbButton(MessageSquarePlus, t('Comments'), toggleComments, undefined, () => commentsPane.visible)
+  tbGroup(...(readOnly ? [] : [animButton]), ...(session.canComment ? [commentButton] : []))
   const followGroup = el('div', { class: 'tb-group slides-present-group' }, followBtn, presentButton)
   shell.toolbar.append(el('span', { class: 'spacer' }), followGroup)
 
@@ -788,6 +891,10 @@ export function mountSlides(session: Session, root: HTMLElement): void {
     }
     if (key === 'F5') {
       present(e.shiftKey)
+      return done()
+    }
+    if (modKey && e.altKey && e.code === 'KeyM') {
+      addComment()
       return done()
     }
     if (modKey && key.toLowerCase() === 'm' && !readOnly) {
@@ -869,7 +976,9 @@ export function mountSlides(session: Session, root: HTMLElement): void {
   // ---------- Layout ----------
 
   const center = el('div', { class: 'slides-center' }, canvas, notes.element)
-  const body = el('div', { class: 'diagram-body slides-body' }, left, center, editor.format.element)
+  const body = el('div', { class: 'diagram-body slides-body' }, left, center, editor.format.element, animPane.element, commentsPane.element)
+  // Where the last context menu opened (for menus opened from it).
+  canvas.addEventListener('contextmenu', (e) => (lastContext = { x: e.clientX, y: e.clientY }), true)
   shell.main.append(body)
   shell.statusbar.append(slideLabel, el('span', { class: 'spacer' }), editor.selectionLabel, editor.zoomLabel)
   editor.zoomLabel.addEventListener('click', editor.actualSize)

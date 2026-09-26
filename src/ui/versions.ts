@@ -16,6 +16,8 @@ export function documentMenuItems(session: Session): MenuEntry[] {
     ...nextcloudMenuItems(session),
     '-',
     { label: t('Make a copy'), run: () => void makeCopy(session) },
+    { label: t('Save as template…'), run: () => void import('../home/save-template').then((m) => m.saveAsTemplate(session)) },
+    { label: t('Storage and backup…'), run: () => void import('../home/storage').then((m) => m.openStorageDialog()) },
     { label: t('Save version…'), enabled: () => session.canEdit, run: () => void saveNamedVersion(session) },
     { label: t('Version history…'), run: () => void openVersionHistory(session) },
   ]

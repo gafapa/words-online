@@ -1,63 +1,63 @@
-# Condiciones de uso
+# Nutzungsbedingungen
 
-Estas condiciones regulan el uso de {{siteName}}, una suite ofimática colaborativa gratuita que funciona en el navegador, pensada especialmente para centros educativos. Al utilizarla aceptas estas condiciones y el [Aviso legal](notice.md).
+Diese Bedingungen regeln die Nutzung von {{siteName}}, einer kostenlosen kollaborativen Office-Suite, die im Browser läuft und besonders für Schulen gedacht ist. Mit der Nutzung akzeptieren Sie diese Bedingungen und das [Impressum und die rechtlichen Hinweise](notice.md).
 
-## 1. Qué ofrece {{siteName}}
+## 1. Was {{siteName}} bietet
 
-- Aplicaciones para crear documentos, hojas de cálculo, dibujos, diagramas y presentaciones, abrir y descargar archivos en formatos habituales y colaborar en tiempo real.
-- No hay cuentas ni un servidor central con copias de los documentos: se guardan en el navegador de cada persona y se sincronizan directamente entre quienes colaboran cuando coinciden conectados.
-- El uso es gratuito y no requiere registro.
+- Anwendungen zum Erstellen von Dokumenten, Tabellen, Zeichnungen, Diagrammen und Präsentationen, zum Öffnen und Herunterladen von Dateien in gängigen Formaten und zur Zusammenarbeit in Echtzeit.
+- Es gibt keine Konten und keinen zentralen Server mit Kopien der Dokumente: Sie werden im Browser jeder Person gespeichert und direkt zwischen den Mitwirkenden synchronisiert, wenn diese gleichzeitig online sind.
+- Die Nutzung ist kostenlos und erfordert keine Registrierung.
 
-## 2. Uso aceptable
+## 2. Zulässige Nutzung
 
-Te comprometes a utilizar {{siteName}} de forma lícita y respetuosa y, en particular, a no:
+Sie verpflichten sich, {{siteName}} rechtmäßig und respektvoll zu nutzen und insbesondere nicht:
 
-- crear o difundir contenidos ilícitos, violentos, discriminatorios, que inciten al odio o que atenten contra la dignidad, la intimidad o la propia imagen de otras personas;
-- acosar, amenazar o humillar a otras personas (incluido el ciberacoso entre alumnado);
-- incluir datos personales o imágenes de otras personas sin su autorización o la de sus representantes legales, o datos especialmente sensibles (por ejemplo, de salud) en documentos compartidos;
-- infringir derechos de propiedad intelectual o industrial de terceros;
-- introducir programas maliciosos, eludir los permisos de los enlaces (editar, comentar, ver) o interferir en el funcionamiento de la aplicación, de los servidores de señalización o de los equipos de otras personas;
-- utilizar la aplicación para enviar publicidad no solicitada.
+- rechtswidrige, gewaltverherrlichende, diskriminierende oder zu Hass aufstachelnde Inhalte oder Inhalte, die die Würde, die Privatsphäre oder das Recht am eigenen Bild anderer verletzen, zu erstellen oder zu verbreiten;
+- andere zu belästigen, zu bedrohen oder bloßzustellen (einschließlich Cybermobbing unter Schülerinnen und Schülern);
+- personenbezogene Daten oder Bilder anderer ohne deren Zustimmung oder die ihrer gesetzlichen Vertreter oder besonders sensible Daten (z. B. Gesundheitsdaten) in geteilte Dokumente aufzunehmen;
+- geistige oder gewerbliche Schutzrechte Dritter zu verletzen;
+- Schadsoftware einzuschleusen, die Berechtigungen der Links (bearbeiten, kommentieren, ansehen) zu umgehen oder den Betrieb der Anwendung, der Signalisierungsserver oder der Geräte anderer zu stören;
+- die Anwendung zum Versand unerwünschter Werbung zu verwenden.
 
-En el ámbito escolar se aplican además las normas de convivencia y de uso de medios digitales del centro y las indicaciones del profesorado.
+Im schulischen Umfeld gelten zusätzlich die Schulordnung, die Regeln der Schule zur Nutzung digitaler Medien und die Anweisungen der Lehrkräfte.
 
-## 3. Tus contenidos
+## 3. Ihre Inhalte
 
-- Los documentos que creas son tuyos o, si los creas con otras personas, de todas ellas conforme a la Ley de Propiedad Intelectual (obra en colaboración). En el ámbito escolar, el centro puede establecer reglas sobre el uso de los trabajos del alumnado.
-- El titular no adquiere ningún derecho sobre tus contenidos, no tiene acceso a ellos y no los supervisa. Eres responsable de lo que escribes y compartes.
-- Quien tiene un enlace para compartir puede acceder al documento con el permiso que ese enlace otorga, y conserva su copia aunque dejes de compartir. Comparte los enlaces solo con quien deba tenerlos. Si un enlace llega a quien no debía, crea una copia del documento (*Archivo → Hacer una copia*), que tendrá claves nuevas, y deja de usar el original.
-- El historial de versiones y la autoría (quién escribió cada parte) se guardan en el propio documento y los ven todas las personas con acceso a él.
+- Die von Ihnen erstellten Dokumente gehören Ihnen oder, wenn Sie sie mit anderen erstellen, allen Beteiligten gemeinsam als Werk in Miturheberschaft nach spanischem Urheberrecht. Im schulischen Umfeld kann die Schule Regeln für die Verwendung von Schülerarbeiten festlegen.
+- Der Inhaber erwirbt keine Rechte an Ihren Inhalten, hat keinen Zugriff darauf und überwacht sie nicht. Sie sind für das verantwortlich, was Sie schreiben und teilen.
+- Wer einen Freigabelink hat, kann mit der darin gewährten Berechtigung auf das Dokument zugreifen und behält seine Kopie, auch wenn Sie nicht mehr teilen. Teilen Sie Links nur mit Personen, die sie haben sollen. Gelangt ein Link an eine unbefugte Person, erstellen Sie eine Kopie des Dokuments (*Datei → Kopie erstellen*), die neue Schlüssel erhält, und verwenden Sie das Original nicht mehr.
+- Versionsverlauf und Urheberschaft (wer welchen Teil geschrieben hat) werden im Dokument selbst gespeichert und sind für alle Personen mit Zugriff sichtbar.
 
-## 4. Disponibilidad y ausencia de garantías
+## 4. Verfügbarkeit und Gewährleistungsausschluss
 
-{{siteName}} se ofrece gratuitamente y «tal cual», sin garantía de disponibilidad, continuidad, ausencia de errores o idoneidad para un fin concreto. En particular:
+{{siteName}} wird kostenlos und „wie besehen“ angeboten, ohne Gewähr für Verfügbarkeit, Fortbestand, Fehlerfreiheit oder Eignung für einen bestimmten Zweck. Insbesondere:
 
-- la colaboración depende de servidores de terceros (relays Nostr, STUN/TURN) y de que las redes permitan conexiones directas entre navegadores;
-- las conversiones de formato (Word, OpenDocument, Excel, PowerPoint, draw.io, etc.) pueden no conservar todos los elementos del archivo original;
-- el titular puede modificar, suspender o dejar de ofrecer la aplicación en cualquier momento.
+- hängt die Zusammenarbeit von Servern Dritter (Nostr-Relays, STUN/TURN) und davon ab, dass die Netzwerke direkte Verbindungen zwischen Browsern zulassen;
+- können Formatkonvertierungen (Word, OpenDocument, Excel, PowerPoint, draw.io usw.) nicht alle Elemente der Originaldatei erhalten;
+- kann der Inhaber die Anwendung jederzeit ändern, aussetzen oder einstellen.
 
-## 5. Copias de seguridad
+## 5. Datensicherung
 
-Los documentos se guardan solo en los navegadores de quienes los usan. **Hacer copias de seguridad es responsabilidad tuya.** Los documentos pueden perderse si borras los datos del navegador, usas la navegación privada, cambias de dispositivo o el navegador libera espacio (algunos navegadores, como Safari, borran los datos de sitios no utilizados durante un tiempo si la aplicación no está instalada).
+Dokumente werden nur in den Browsern der Personen gespeichert, die sie nutzen. **Für Sicherungskopien sind Sie selbst verantwortlich.** Dokumente können verloren gehen, wenn Sie die Browserdaten löschen, den privaten Modus verwenden, das Gerät wechseln oder der Browser Speicherplatz freigibt (einige Browser wie Safari löschen die Daten von Websites, die eine Zeit lang nicht genutzt wurden, wenn die Anwendung nicht installiert ist).
 
-Te recomendamos instalar la aplicación, descargar tus documentos con regularidad (*Archivo → Descargar* o *Entregar*) o guardarlos en el Nextcloud de tu centro.
+Wir empfehlen, die Anwendung zu installieren, Ihre Dokumente regelmäßig herunterzuladen (*Datei → Herunterladen* oder *Abgeben*) oder sie in der Nextcloud Ihrer Schule zu speichern.
 
-## 6. Servicios de terceros
+## 6. Dienste Dritter
 
-Algunas funciones usan servicios de terceros: relays y servidores STUN/TURN para la colaboración y, si los activas, Nextcloud, un servidor LanguageTool, asistentes de inteligencia artificial mediante WebMCP y el reconocimiento o la síntesis de voz del navegador. Estos servicios se rigen por sus propias condiciones y políticas de privacidad, y el titular no responde de ellos. Consulta la [Política de privacidad](privacy.md) y la [Nota sobre inteligencia artificial](ai.md).
+Einige Funktionen nutzen Dienste Dritter: Relays und STUN/TURN-Server für die Zusammenarbeit und, sofern Sie sie aktivieren, Nextcloud, einen LanguageTool-Server, KI-Assistenten über WebMCP sowie die Spracherkennung oder Sprachausgabe des Browsers. Diese Dienste unterliegen ihren eigenen Bedingungen und Datenschutzerklärungen; der Inhaber haftet nicht für sie. Siehe die [Datenschutzerklärung](privacy.md) und den [Hinweis zu künstlicher Intelligenz](ai.md).
 
-## 7. Responsabilidad
+## 7. Haftung
 
-El titular no responde de los daños derivados del uso de la aplicación, de la pérdida de documentos, de los contenidos creados o compartidos por las personas usuarias ni de los servicios de terceros, salvo en los casos en que la ley no permita excluir o limitar la responsabilidad (en particular, dolo o culpa grave) y sin perjuicio de los derechos de las personas consumidoras.
+Der Inhaber haftet nicht für Schäden aus der Nutzung der Anwendung, den Verlust von Dokumenten, von Nutzerinnen und Nutzern erstellte oder geteilte Inhalte oder Dienste Dritter, soweit das Gesetz einen Haftungsausschluss oder eine Haftungsbeschränkung zulässt (also nicht bei Vorsatz oder grober Fahrlässigkeit) und unbeschadet der Rechte von Verbrauchern.
 
-## 8. Propiedad intelectual del programa
+## 8. Geistiges Eigentum am Programm
 
-El programa, su diseño y sus componentes están protegidos por derechos de propiedad intelectual, según se indica en el [Aviso legal](notice.md) y en [Licencias de software de terceros](../../THIRD_PARTY_NOTICES.md).
+Das Programm, seine Gestaltung und seine Komponenten sind urheberrechtlich geschützt, wie im [Impressum und den rechtlichen Hinweisen](notice.md) und unter [Lizenzen von Drittanbieter-Software](../../THIRD_PARTY_NOTICES.md) angegeben.
 
-## 9. Modificación de las condiciones
+## 9. Änderung der Bedingungen
 
-El titular puede modificar estas condiciones. La versión vigente es la publicada en esta página, con su fecha de actualización.
+Der Inhaber kann diese Bedingungen ändern. Maßgeblich ist die auf dieser Seite veröffentlichte Fassung mit ihrem Aktualisierungsdatum.
 
-## 10. Ley aplicable y jurisdicción
+## 10. Anwendbares Recht und Gerichtsstand
 
-Estas condiciones se rigen por la legislación española, en los términos indicados en el [Aviso legal](notice.md).
+Diese Bedingungen unterliegen spanischem Recht, wie im [Impressum und den rechtlichen Hinweisen](notice.md) angegeben.

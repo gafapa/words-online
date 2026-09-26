@@ -1,30 +1,30 @@
-# Nota sobre inteligencia artificial
+# Hinweis zu künstlicher Intelligenz
 
-{{siteName}} no incluye sistemas de inteligencia artificial. Esta nota explica, a efectos de transparencia y del Reglamento (UE) 2024/1689 de Inteligencia Artificial, qué funciones podrían confundirse con IA y cómo funciona la conexión opcional con asistentes externos mediante WebMCP.
+{{siteName}} enthält keine Systeme künstlicher Intelligenz. Aus Gründen der Transparenz und im Sinne der Verordnung (EU) 2024/1689 über künstliche Intelligenz (KI-Verordnung) erläutert dieser Hinweis, welche Funktionen mit KI verwechselt werden könnten und wie die optionale Verbindung mit externen Assistenten über WebMCP funktioniert.
 
-## 1. {{siteName}} no incorpora IA
+## 1. {{siteName}} enthält keine KI
 
-- **Ortografía y gramática:** diccionarios Hunspell y reglas escritas a mano que se ejecutan en tu navegador; para el inglés, además, Harper, un corrector gramatical basado en reglas. No se usan modelos de aprendizaje automático ni se envía texto a ningún servidor (salvo que actives un servidor LanguageTool).
-- **Plantillas:** se generan con código fijo, sin IA.
-- **Lectura en voz alta y dictado:** usan las funciones de voz del navegador. Algunos navegadores emplean para ello servicios de reconocimiento o síntesis de voz de su fabricante, que pueden basarse en IA; esos servicios los presta el fabricante del navegador bajo sus propias condiciones.
-- {{siteName}} no genera contenidos, no evalúa al alumnado, no elabora perfiles ni toma decisiones automatizadas.
+- **Rechtschreibung und Grammatik:** Hunspell-Wörterbücher und von Hand geschriebene Regeln, die in Ihrem Browser laufen; für Englisch zusätzlich Harper, eine regelbasierte Grammatikprüfung. Es werden keine Modelle des maschinellen Lernens verwendet und keine Texte an Server gesendet (außer Sie aktivieren einen LanguageTool-Server).
+- **Vorlagen:** mit festem Programmcode erzeugt, ohne KI.
+- **Vorlesen und Diktieren:** nutzen die Sprachfunktionen des Browsers. Manche Browser verwenden dafür Spracherkennungs- oder Sprachausgabedienste ihres Herstellers, die auf KI beruhen können; diese Dienste erbringt der Browserhersteller nach seinen eigenen Bedingungen.
+- {{siteName}} erzeugt keine Inhalte, bewertet keine Schülerinnen und Schüler, erstellt keine Profile und trifft keine automatisierten Entscheidungen.
 
-## 2. Asistentes externos mediante WebMCP (opcional)
+## 2. Externe Assistenten über WebMCP (optional)
 
-WebMCP es una forma estándar de que una página web ofrezca «herramientas» a un asistente de IA que funciona en el navegador (por ejemplo, una extensión o un agente elegido por la persona usuaria). Cuando esta función está disponible y la activas expresamente (está **desactivada por defecto**), el asistente que tú elijas puede leer el documento abierto y proponer o realizar cambios en él a través de esas herramientas.
+WebMCP ist ein standardisierter Weg, über den eine Webseite einem im Browser laufenden KI-Assistenten (zum Beispiel einer Erweiterung oder einem von der Nutzerin oder dem Nutzer gewählten Agenten) „Werkzeuge“ anbieten kann. Wenn diese Funktion verfügbar ist und Sie sie ausdrücklich aktivieren (sie ist **standardmäßig ausgeschaltet**), kann der von Ihnen gewählte Assistent das geöffnete Dokument lesen und über diese Werkzeuge Änderungen vorschlagen oder vornehmen.
 
-- {{siteName}} no elige, no incluye ni recomienda ningún asistente. El proveedor del asistente es el proveedor del sistema de IA a efectos del Reglamento de IA y trata el contenido que lee conforme a sus propias condiciones y política de privacidad.
-- Quien decide usar un asistente (la persona usuaria o, en el ámbito escolar, el centro) puede tener la consideración de responsable del despliegue, con las obligaciones que correspondan (por ejemplo, alfabetización en IA, art. 4, y transparencia, art. 50).
-- Los cambios que realiza un asistente se registran como sugerencias o con su propia autoría, de modo que las demás personas pueden distinguirlos, revisarlos y aceptarlos o rechazarlos. El historial de versiones permite volver a un estado anterior.
-- Desactiva la función cuando no la uses. Puedes desactivarla en cualquier momento.
+- {{siteName}} wählt, enthält oder empfiehlt keinen Assistenten. Der Anbieter des Assistenten ist Anbieter des KI-Systems im Sinne der KI-Verordnung und verarbeitet die gelesenen Inhalte nach seinen eigenen Bedingungen und seiner Datenschutzerklärung.
+- Wer sich für einen Assistenten entscheidet (die Nutzerin oder der Nutzer bzw. im schulischen Umfeld die Schule), kann als Betreiber gelten und die entsprechenden Pflichten haben (z. B. KI-Kompetenz, Art. 4, und Transparenz, Art. 50).
+- Änderungen eines Assistenten werden als Vorschläge oder unter seiner eigenen Urheberschaft erfasst, sodass andere sie erkennen, prüfen und annehmen oder ablehnen können. Über den Versionsverlauf lässt sich ein früherer Stand wiederherstellen.
+- Schalten Sie die Funktion aus, wenn Sie sie nicht nutzen. Sie können sie jederzeit ausschalten.
 
-## 3. Recomendaciones para el uso educativo
+## 3. Empfehlungen für den Unterricht
 
-- Seguir las normas del centro y de la Administración educativa sobre el uso de IA, especialmente en tareas evaluables.
-- No proporcionar a los asistentes datos personales del alumnado ni documentos con información sensible.
-- Con menores, usar asistentes solo con la supervisión del profesorado o de la familia y, para menores de 14 años, cuando el servicio lo requiera, con el consentimiento de sus madres, padres o tutores (art. 7 LOPDGDD).
-- Indicar claramente qué partes de un trabajo se han elaborado con ayuda de IA.
+- Die Regeln der Schule und der Bildungsbehörde zur KI-Nutzung beachten, besonders bei bewerteten Arbeiten.
+- Assistenten keine personenbezogenen Daten von Schülerinnen und Schülern und keine Dokumente mit sensiblen Informationen geben.
+- Mit Minderjährigen Assistenten nur unter Aufsicht von Lehrkräften oder der Familie nutzen und bei Kindern unter 14 Jahren, sofern der Dienst dies verlangt, nur mit Einwilligung der Eltern oder gesetzlichen Vertreter (Art. 7 LOPDGDD).
+- Deutlich kennzeichnen, welche Teile einer Arbeit mit Hilfe von KI entstanden sind.
 
-## 4. Más información
+## 4. Weitere Informationen
 
-Consulta la [Política de privacidad](privacy.md) y la [Información para centros educativos](schools.md).
+Siehe die [Datenschutzerklärung](privacy.md) und die [Informationen für Schulen](schools.md).

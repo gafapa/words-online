@@ -1,30 +1,30 @@
-# Nota sobre inteligencia artificial
+# Note sur l’intelligence artificielle
 
-{{siteName}} no incluye sistemas de inteligencia artificial. Esta nota explica, a efectos de transparencia y del Reglamento (UE) 2024/1689 de Inteligencia Artificial, qué funciones podrían confundirse con IA y cómo funciona la conexión opcional con asistentes externos mediante WebMCP.
+{{siteName}} ne comprend aucun système d’intelligence artificielle. Dans un souci de transparence et aux fins du règlement (UE) 2024/1689 sur l’intelligence artificielle, cette note explique quelles fonctions pourraient être confondues avec de l’IA et comment fonctionne la connexion facultative avec des assistants externes via WebMCP.
 
-## 1. {{siteName}} no incorpora IA
+## 1. {{siteName}} n’intègre pas d’IA
 
-- **Ortografía y gramática:** diccionarios Hunspell y reglas escritas a mano que se ejecutan en tu navegador; para el inglés, además, Harper, un corrector gramatical basado en reglas. No se usan modelos de aprendizaje automático ni se envía texto a ningún servidor (salvo que actives un servidor LanguageTool).
-- **Plantillas:** se generan con código fijo, sin IA.
-- **Lectura en voz alta y dictado:** usan las funciones de voz del navegador. Algunos navegadores emplean para ello servicios de reconocimiento o síntesis de voz de su fabricante, que pueden basarse en IA; esos servicios los presta el fabricante del navegador bajo sus propias condiciones.
-- {{siteName}} no genera contenidos, no evalúa al alumnado, no elabora perfiles ni toma decisiones automatizadas.
+- **Orthographe et grammaire :** dictionnaires Hunspell et règles écrites à la main, exécutés dans votre navigateur ; pour l’anglais, également Harper, un correcteur grammatical à base de règles. Aucun modèle d’apprentissage automatique n’est utilisé et aucun texte n’est envoyé à un serveur (sauf si vous activez un serveur LanguageTool).
+- **Modèles de documents :** générés par un code fixe, sans IA.
+- **Lecture à voix haute et dictée :** elles utilisent les fonctions vocales du navigateur. Certains navigateurs font appel pour cela à des services de reconnaissance ou de synthèse vocale de leur éditeur, qui peuvent reposer sur l’IA ; ces services sont fournis par l’éditeur du navigateur selon ses propres conditions.
+- {{siteName}} ne génère pas de contenu, n’évalue pas les élèves, ne réalise pas de profilage et ne prend pas de décisions automatisées.
 
-## 2. Asistentes externos mediante WebMCP (opcional)
+## 2. Assistants externes via WebMCP (facultatif)
 
-WebMCP es una forma estándar de que una página web ofrezca «herramientas» a un asistente de IA que funciona en el navegador (por ejemplo, una extensión o un agente elegido por la persona usuaria). Cuando esta función está disponible y la activas expresamente (está **desactivada por defecto**), el asistente que tú elijas puede leer el documento abierto y proponer o realizar cambios en él a través de esas herramientas.
+WebMCP est un moyen standard permettant à une page web de proposer des « outils » à un assistant d’IA fonctionnant dans le navigateur (par exemple une extension ou un agent choisi par l’utilisateur). Lorsque cette fonction est disponible et que vous l’activez expressément (elle est **désactivée par défaut**), l’assistant de votre choix peut lire le document ouvert et y proposer ou apporter des modifications au moyen de ces outils.
 
-- {{siteName}} no elige, no incluye ni recomienda ningún asistente. El proveedor del asistente es el proveedor del sistema de IA a efectos del Reglamento de IA y trata el contenido que lee conforme a sus propias condiciones y política de privacidad.
-- Quien decide usar un asistente (la persona usuaria o, en el ámbito escolar, el centro) puede tener la consideración de responsable del despliegue, con las obligaciones que correspondan (por ejemplo, alfabetización en IA, art. 4, y transparencia, art. 50).
-- Los cambios que realiza un asistente se registran como sugerencias o con su propia autoría, de modo que las demás personas pueden distinguirlos, revisarlos y aceptarlos o rechazarlos. El historial de versiones permite volver a un estado anterior.
-- Desactiva la función cuando no la uses. Puedes desactivarla en cualquier momento.
+- {{siteName}} ne choisit, n’intègre ni ne recommande aucun assistant. Le fournisseur de l’assistant est le fournisseur du système d’IA au sens du règlement sur l’IA et traite le contenu qu’il lit selon ses propres conditions et sa politique de confidentialité.
+- La personne qui décide d’utiliser un assistant (l’utilisateur ou, en milieu scolaire, l’établissement) peut être considérée comme déployeur, avec les obligations correspondantes (par exemple, maîtrise de l’IA, art. 4, et transparence, art. 50).
+- Les modifications effectuées par un assistant sont enregistrées comme suggestions ou sous sa propre paternité, afin que les autres personnes puissent les distinguer, les examiner et les accepter ou les refuser. L’historique des versions permet de revenir à un état antérieur.
+- Désactivez la fonction lorsque vous ne l’utilisez pas. Vous pouvez la désactiver à tout moment.
 
-## 3. Recomendaciones para el uso educativo
+## 3. Recommandations pour l’usage éducatif
 
-- Seguir las normas del centro y de la Administración educativa sobre el uso de IA, especialmente en tareas evaluables.
-- No proporcionar a los asistentes datos personales del alumnado ni documentos con información sensible.
-- Con menores, usar asistentes solo con la supervisión del profesorado o de la familia y, para menores de 14 años, cuando el servicio lo requiera, con el consentimiento de sus madres, padres o tutores (art. 7 LOPDGDD).
-- Indicar claramente qué partes de un trabajo se han elaborado con ayuda de IA.
+- Respecter les règles de l’établissement et de l’administration de l’éducation sur l’usage de l’IA, en particulier pour les travaux évalués.
+- Ne pas fournir aux assistants de données personnelles des élèves ni de documents contenant des informations sensibles.
+- Avec des mineurs, n’utiliser des assistants que sous la supervision des enseignants ou de la famille et, pour les moins de 14 ans, lorsque le service l’exige, avec le consentement de leurs parents ou tuteurs (art. 7 LOPDGDD).
+- Indiquer clairement quelles parties d’un travail ont été réalisées avec l’aide de l’IA.
 
-## 4. Más información
+## 4. En savoir plus
 
-Consulta la [Política de privacidad](privacy.md) y la [Información para centros educativos](schools.md).
+Consultez la [Politique de confidentialité](privacy.md) et les [Informations pour les établissements scolaires](schools.md).

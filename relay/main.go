@@ -350,6 +350,7 @@ func run(ctx context.Context, cfg Config, banner bool) error {
 	for _, l := range turnTLS {
 		_ = l.Close()
 	}
+	logger.Info("stopped")
 	return err
 }
 

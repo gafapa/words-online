@@ -39,12 +39,12 @@ export const lowercaseMonthDay: Rule = {
       const date = /\d{1,2}(?:er)?\s+(?:de\s+)?$/u.test(head)
       if (ALSO_NAMES.has(lower) && !date) continue
       if (p.lang === 'fr' && FR_DAYS.test(head + m[0])) continue
-      // Part of a name ("Hospital 12 de Octubre", "Plaza Dos de Mayo", "Lunes y Martes"): the
+      // Part of a name ("Hospital 12 de Octubre", "Plaza Dos de Mayo"): the
       // content word before (skipping "de", "del", numbers) is capitalized and not at a sentence start.
       const words = [...head.matchAll(/[\p{L}\p{N}]+/gu)]
       let k = words.length - 1
       while (k >= 0 && /^(?:\d+|de|del|do|da|du|des|of|d|er|y|e|et)$/iu.test(words[k][0])) k--
-      if (k >= 0 && /^\p{Lu}/u.test(words[k][0]) && !SENTENCE_START.test(head.slice(0, words[k].index))) continue
+      if (k >= 0 && /^\p{Lu}/u.test(words[k][0]) && !names.has(words[k][0].toLowerCase()) && !SENTENCE_START.test(head.slice(0, words[k].index))) continue
       // Headings and labels in capitals.
       if (text === text.toUpperCase()) continue
       out.push({ from: m.index, to: m.index + m[0].length, replacements: [lower], vars: { word: m[0], fix: lower } })

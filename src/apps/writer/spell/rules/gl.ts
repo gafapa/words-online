@@ -320,6 +320,8 @@ const CONTRACT: Record<string, Record<string, string>> = {
 }
 const NOT_INFINITIVE = new Set('muller mar lugar fogar altar colar par bar azar militar familiar particular escolar popular solar polar circular similar nivel xantar pesar parecer amencer amanecer luar ser poder deber haber interior exterior superior inferior anterior posterior maior menor mellor peor profesor director autor lector escritor pintor doutor motor calor color amor tractor ordenador computador'.split(' '))
 
+const STOP = new Set('para e ou que a de en con por sen ata desde se mais pero cando onde como'.split(' '))
+
 export const glContraction: Rule = {
   id: 'gl-contraction',
   langs: ['gl'],
@@ -330,11 +332,14 @@ export const glContraction: Rule = {
     for (const m of text.matchAll(/(?<![\p{L}'’-])(de|en|a|por) (o|a|os|as)(?![\p{L}'’-])/giu)) {
       const [, prep, art] = m
       if (art !== art.toLowerCase()) continue
-      const next = /^\s+([\p{L}]+)/u.exec(text.slice(m.index + m[0].length))?.[1] ?? ''
-      if (!next) continue
-      const lower = next.toLowerCase()
-      if (/(?:ar|er|ir|ír|or|ór|ndo)$/u.test(lower) && !NOT_INFINITIVE.has(lower)) continue
-      if (prep.toLowerCase() === 'de' && /^(?:pé|cabalo)$/.test(lower)) continue
+      // The next words (up to the end of the clause): an infinitive among the
+      // first three means the article belongs to its subject ("despois de o sol saír").
+      const next = [...(/^[^,.;:!?()«»"“”]*/u.exec(text.slice(m.index + m[0].length))![0].matchAll(/\p{L}+/gu))].map((x) => x[0].toLowerCase())
+      const stop = next.findIndex((word, i) => i > 0 && STOP.has(word))
+      next.splice(Math.min(stop < 0 ? 3 : stop, 3))
+      if (!next.length) continue
+      if (next.some((word) => /(?:ar|er|ir|ír|or|ór|ndo)$/u.test(word) && !NOT_INFINITIVE.has(word))) continue
+      if (prep.toLowerCase() === 'de' && /^(?:pé|cabalo)$/.test(next[0])) continue
       const fix = matchCase(prep, CONTRACT[prep.toLowerCase()][art])
       out.push({ from: m.index, to: m.index + m[0].length, replacements: [fix], vars: { word: m[0], fix } })
     }

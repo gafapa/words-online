@@ -515,6 +515,36 @@ Credentials (server, user and app password) are stored in this browser's
 To use your own Nostr relays, add them to the URL (share links keep it):
 `https://your-host/?relays=wss://relay1.example,wss://relay2.example`
 
+### School networks: connection test and Ofimeo Relay
+
+Content filters that block public relays, strict firewalls and Wi-Fi client
+isolation (devices on the same Wi-Fi cannot reach each other) all end in
+"Only you". Browsers cannot find each other on the LAN by themselves, so for
+those networks there is **Ofimeo Relay** (`relay/`, guide:
+[docs/relay.md](docs/relay.md)): one small program (Go, a single static binary
+for Windows, macOS, Linux and Raspberry Pi) that a school runs on its network.
+It is a Nostr relay (signaling) plus a STUN/TURN server (pion/turn) that relays
+WebRTC when devices cannot connect directly, with a status page, time-limited
+TURN credentials, TLS (Let's Encrypt, the school's certificate, or its own
+local CA) and, optionally, the web app itself (`--serve-app`).
+
+- **Connection test** (Help → Connection test…, or click the connection status
+  next to Share): checks Internet access, every Nostr relay in use (time to
+  EOSE), ICE candidates (local, STUN, TURN), a real data channel through the
+  school relay's TURN, and how each person in the document is connected
+  (direct on the LAN, direct over the Internet, or through TURN, with round-trip
+  time). It ends with a plain-language verdict and **Copy report** for the IT
+  department (`src/ui/connection.ts`, `src/core/connectivity.ts`).
+- **Using a school relay**: paste its address in the connection test, open
+  `…/?relay=https://relay-host:port` (saved in the browser), or open the app
+  served by the relay (detected automatically). The app fetches
+  `<relay>/ofimeo/config` (its Nostr relay and ICE servers with fresh TURN
+  credentials, renewed before they expire) and uses it together with the public
+  relays, or alone ("Use only the school relay", or `&relaymode=only`). Share
+  links carry `?relay=…`, so students get it by opening the link. Nothing
+  changes when no relay is configured.
+- Development aid: `?ice=relay` forces relayed (TURN) connections.
+
 ### Permissions (edit, comment, view)
 
 Permissions are enforced with signatures, not only in the interface
@@ -584,6 +614,7 @@ src/
     session.ts       Y.Doc + IndexedDB + awareness + P2P room for a document, access level
     keys.ts          Permission keys in links, Ed25519 signing
     network.ts       Yjs sync/awareness provider over Trystero (WebRTC + Nostr), signed sync
+    connectivity.ts  School relay settings (?relay=, /ofimeo/config, TURN credentials) and network checks
     store.ts         Local document index (id, key, type, title, access) and user identity
     copy.ts          Copies of documents, template links
     versions.ts      Version history, generic restore
@@ -601,6 +632,7 @@ src/
     statusbar.ts     Status bar: info · language · save state · zoom; zoom.ts: zoom control
     about.ts         About Ofimeo, Document details; brand.ts: the Ofimeo mark
     chrome.ts        Title, save state, presence, connection status, share dialog + QR, hand in
+    connection.ts    Connection test dialog (verdict, checks, report, school relay setting)
     tokens.css       Design tokens (colors, spacing, radii, type, layers) and the themes
     versions.ts      Make a copy / Save version / Version history (File menu items)
     nextcloud.ts     Nextcloud dialogs: account, CORS help, file browser, save, status, hand in
@@ -660,6 +692,8 @@ src/
                      hunspell.ts, tokenize.ts, rules/ (offline rules and tests),
                      ui.ts (Tools menu, context menu, status), dialog.ts (F7),
                      lang.ts (paragraph language)
+relay/               Ofimeo Relay (Go): Nostr relay + STUN/TURN + status page for school
+                     networks; build.sh cross-compiles it, docs/relay.md is the guide
 ```
 
 Each app and each converter is a separate chunk, loaded only when used.
@@ -689,10 +723,16 @@ npm test          # grammar rule tests + end-to-end tests (build first)
   build (`vite preview`) and a local Nostr relay (`tests/relay.mjs`), never
   public relays: every app opens without errors, the UI language follows the
   browser, two browsers edit the same document, `.drawio`/HTML files open from
-  the home screen, and the installed app works offline.
+  the home screen, the installed app works offline, and the connection test
+  and a school relay from the link work.
+- `cd relay && go test ./...`: Ofimeo Relay (Nostr messages and signatures,
+  TURN allocations with time-limited credentials, certificates, the TLS port
+  shared by HTTPS and TURN, `/ofimeo/config`, serving the app).
 - GitHub Actions (`.github/workflows/ci.yml`) runs the type check, both test
-  suites and the build on every pull request and on pushes to `main`; the
-  Playwright report is attached to failed runs.
+  suites and the build on every pull request and on pushes to `main`, plus
+  `go vet` and `go test` for the relay; the Playwright report is attached to
+  failed runs. Pushing a tag `relay-v1.2.3` builds the relay for every platform
+  and publishes a GitHub Release (`.github/workflows/relay-release.yml`).
 
 ## Deployment
 

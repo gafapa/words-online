@@ -6,6 +6,7 @@
 import * as Y from 'yjs'
 import { t } from '../../core/i18n'
 import { emptyPage, newCellId, type CellRecord, type PageRecord } from '../diagram/model'
+import type { Animation } from './animations'
 
 export type Ratio = '16:9' | '4:3'
 export const SLIDE_SIZES: Record<Ratio, { width: number; height: number }> = {
@@ -158,8 +159,9 @@ const notesKey = (pageId: string) => `slides-notes:${pageId}`
 export interface SlideMeta {
   layout?: LayoutId
   background?: string
-  // Transition when presenting (fade or none).
+  // Transition when presenting: none, fade, push or wipe (animations.ts), and its length in ms.
   transition?: string
+  transitionDuration?: string
 }
 
 export function slideMetaMap(doc: Y.Doc): Y.Map<Y.Map<string>> {
@@ -207,6 +209,9 @@ export interface SlideData {
   notes: string
   background?: string
   layout?: LayoutId
+  animations?: Animation[]
+  transition?: string
+  transitionDuration?: number
 }
 
 export interface PresentationData {

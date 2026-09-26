@@ -1,119 +1,119 @@
-# Información para centros educativos
+# Informationen für Schulen
 
-Guía para equipos directivos, coordinación TIC y delegados de protección de datos (DPD) de los centros y Administraciones educativas que quieran usar {{siteName}}: qué datos se tratan, dónde están, quién es responsable, qué riesgos hay y cómo configurarlo. Incluye un modelo de entrada para el registro de actividades de tratamiento y un texto informativo para las familias.
+Ein Leitfaden für Schulleitungen, IT-Koordination und Datenschutzbeauftragte (DSB) von Schulen und Bildungsbehörden, die {{siteName}} nutzen möchten: welche Daten verarbeitet werden, wo sie liegen, wer verantwortlich ist, welche Risiken bestehen und wie die Konfiguration aussehen sollte. Enthalten sind ein Muster für das Verzeichnis von Verarbeitungstätigkeiten und ein Informationstext für Familien.
 
-## 1. Resumen para la dirección
+## 1. Zusammenfassung für die Schulleitung
 
-- {{siteName}} es una aplicación web estática: no tiene cuentas, ni servidor de aplicación, ni base de datos central. El titular del sitio no recibe los documentos ni los datos del alumnado.
-- Los documentos se guardan en el navegador de cada dispositivo y se sincronizan directamente entre los navegadores de quienes colaboran, cifrados de extremo a extremo.
-- Para que los navegadores se encuentren se usan, por defecto, relays Nostr públicos y servidores STUN de terceros, que ven direcciones IP y mensajes de conexión cifrados, pero no el contenido. El centro puede sustituirlos por su propio relay.
-- Las funciones que envían datos a terceros (LanguageTool, asistentes de IA mediante WebMCP) están desactivadas por defecto. El dictado depende del navegador.
-- En la actividad docente, el responsable del tratamiento es el centro o la Administración educativa (disposición adicional vigesimotercera de la Ley Orgánica 2/2006, de Educación, y art. 6.1.e RGPD).
+- {{siteName}} ist eine statische Webanwendung: keine Konten, kein Anwendungsserver, keine zentrale Datenbank. Der Inhaber der Website erhält weder die Dokumente noch Daten der Schülerinnen und Schüler.
+- Die Dokumente werden im Browser des jeweiligen Geräts gespeichert und Ende-zu-Ende-verschlüsselt direkt zwischen den Browsern der Mitwirkenden synchronisiert.
+- Damit sich die Browser finden, werden standardmäßig öffentliche Nostr-Relays und STUN-Server Dritter genutzt; diese sehen IP-Adressen und verschlüsselte Verbindungsnachrichten, aber nicht den Inhalt. Die Schule kann sie durch ein eigenes Relay ersetzen.
+- Funktionen, die Daten an Dritte senden (LanguageTool, KI-Assistenten über WebMCP), sind standardmäßig ausgeschaltet. Das Diktieren hängt vom Browser ab.
+- Im Unterricht ist Verantwortlicher die Schule bzw. die Bildungsbehörde (dreiundzwanzigste Zusatzbestimmung des spanischen Organgesetzes 2/2006 über das Bildungswesen und Art. 6 Abs. 1 lit. e DSGVO).
 
-## 2. Flujos de datos
+## 2. Datenflüsse
 
 ```text
- Navegador del alumno ◄── WebRTC cifrado (DTLS), directo ──► Navegador del docente
-        │                                                          │
-        ├── Señalización cifrada ──► relays Nostr (públicos o del centro)
-        ├── Consulta de dirección IP ──► servidores STUN/TURN (públicos o del centro)
-        ├── Descarga de la aplicación ──► servidor web (GitHub Pages o del centro)
-        └── Opcional: Nextcloud del centro · LanguageTool · asistente de IA
+ Browser der Schülerin ◄── verschlüsseltes WebRTC (DTLS), direkt ──► Browser der Lehrkraft
+        │                                                                  │
+        ├── Verschlüsselte Signalisierung ──► Nostr-Relays (öffentlich oder der Schule)
+        ├── Ermittlung der IP-Adresse ──► STUN/TURN-Server (öffentlich oder der Schule)
+        ├── Laden der Anwendung ──► Webserver (GitHub Pages oder der Schule)
+        └── Optional: Nextcloud der Schule · LanguageTool · KI-Assistent
 ```
 
-| Dato | Dónde se guarda | Quién accede | Observaciones |
+| Daten | Speicherort | Zugriff | Hinweise |
 | --- | --- | --- | --- |
-| Contenido de documentos, comentarios, versiones y autoría | Navegador de cada participante (IndexedDB) | Participantes con el enlace | No pasa por ningún servidor del titular |
-| Nombre o seudónimo y color | Navegador; se envía a los colaboradores | Participantes | Recomendable usar nombre de pila, iniciales o seudónimo |
-| Dirección IP | No se guarda en la aplicación | Otros participantes, relays, servidores STUN/TURN, servidor web | Inherente a las conexiones directas |
-| Claves de acceso | En los enlaces (tras `#`) y en el navegador | Quien tenga el enlace | Los enlaces equivalen a contraseñas |
-| Credenciales de Nextcloud | Navegador (localStorage) | Solo el navegador y el servidor Nextcloud | Usar contraseñas de aplicación, nunca la principal |
-| Texto revisado por LanguageTool | Servidor LanguageTool configurado | Operador del servidor | Desactivado por defecto |
-| Contenido leído por un asistente de IA | Proveedor del asistente | Proveedor | Desactivado por defecto |
+| Dokumentinhalt, Kommentare, Versionen und Urheberschaft | Browser aller Beteiligten (IndexedDB) | Beteiligte mit dem Link | Läuft über keinen Server des Inhabers |
+| Name oder Pseudonym und Farbe | Browser; wird an Mitwirkende gesendet | Beteiligte | Vorname, Initialen oder Pseudonym empfohlen |
+| IP-Adresse | Wird von der Anwendung nicht gespeichert | Andere Beteiligte, Relays, STUN/TURN-Server, Webserver | Bei direkten Verbindungen unvermeidlich |
+| Zugriffsschlüssel | In Links (nach `#`) und im Browser | Wer den Link hat | Links sind wie Passwörter zu behandeln |
+| Nextcloud-Zugangsdaten | Browser (localStorage) | Nur Browser und Nextcloud-Server | App-Passwörter verwenden, nie das Hauptpasswort |
+| Von LanguageTool geprüfter Text | Konfigurierter LanguageTool-Server | Serverbetreiber | Standardmäßig aus |
+| Von einem KI-Assistenten gelesener Inhalt | Anbieter des Assistenten | Anbieter | Standardmäßig aus |
 
-## 3. Papel de cada parte
+## 3. Rollen der Beteiligten
 
-| Parte | Papel en protección de datos |
+| Beteiligte | Datenschutzrechtliche Rolle |
 | --- | --- |
-| Centro o Administración educativa | Responsable del tratamiento de los datos del alumnado y del profesorado en la actividad docente. Decide el uso, la configuración y las normas. |
-| Profesorado | Actúa por cuenta del centro, siguiendo sus instrucciones. |
-| Titular de este sitio ({{owner.name}}) | Pone a disposición el programa. No accede al contenido de los documentos, por lo que no es encargado del tratamiento respecto de ellos. Es responsable únicamente de los registros técnicos del alojamiento web. |
-| Centro que publica su propia instalación | Responsable también del servidor web, de sus registros y de los textos legales de su instalación. |
-| Operador del relay y TURN del centro | El centro o la Administración, como responsable (o su proveedor, como encargado). |
-| Relays públicos y servidores STUN | Terceros independientes, sin contrato con el titular ni con el centro. Se recomienda sustituirlos. |
-| Nextcloud, LanguageTool, asistentes de IA | La entidad que presta cada servicio, según el contrato o las condiciones que el centro tenga con ella. |
+| Schule oder Bildungsbehörde | Verantwortliche für die Daten von Schülerinnen, Schülern und Lehrkräften im Unterricht. Entscheidet über Nutzung, Konfiguration und Regeln. |
+| Lehrkräfte | Handeln im Auftrag der Schule nach deren Weisungen. |
+| Inhaber dieser Website ({{owner.name}}) | Stellt das Programm bereit. Hat keinen Zugriff auf Dokumentinhalte und ist insoweit kein Auftragsverarbeiter. Verantwortlich nur für die technischen Protokolle des Webhostings. |
+| Schule mit eigener Installation | Zusätzlich verantwortlich für den Webserver, seine Protokolle und die Rechtstexte ihrer Installation. |
+| Betreiber von Relay und TURN der Schule | Die Schule oder Behörde als Verantwortliche (oder ihr Dienstleister als Auftragsverarbeiter). |
+| Öffentliche Relays und STUN-Server | Unabhängige Dritte ohne Vertrag mit dem Inhaber oder der Schule. Ersetzen wird empfohlen. |
+| Nextcloud, LanguageTool, KI-Assistenten | Die jeweils anbietende Einrichtung, gemäß Vertrag oder Bedingungen mit der Schule. |
 
-## 4. Modelo de entrada en el registro de actividades de tratamiento
+## 4. Muster für das Verzeichnis von Verarbeitungstätigkeiten
 
-Modelo orientativo para el registro previsto en el artículo 30 del RGPD y el artículo 31 de la LOPDGDD. Debe adaptarlo el DPD del centro o de la Administración.
+Unverbindliches Muster für das Verzeichnis nach Artikel 30 DSGVO und Artikel 31 LOPDGDD. Es ist vom DSB der Schule oder Behörde anzupassen.
 
-| Campo | Contenido propuesto |
+| Feld | Vorgeschlagener Inhalt |
 | --- | --- |
-| Actividad de tratamiento | Elaboración y edición colaborativa de documentos didácticos con {{siteName}} |
-| Responsable | [Centro educativo / Consellería u órgano titular], con sus datos de contacto |
-| Delegado de Protección de Datos | [Datos del DPD del centro o de la Administración educativa] |
-| Finalidad | Realización de actividades de enseñanza y aprendizaje: redacción, corrección, comentario y entrega de trabajos; trabajo en grupo |
-| Base jurídica | Art. 6.1.e RGPD (misión de interés público) en relación con la disposición adicional vigesimotercera de la Ley Orgánica 2/2006, de Educación |
-| Categorías de interesados | Alumnado, profesorado |
-| Categorías de datos | Nombre o seudónimo; contenido de trabajos y comentarios; correcciones y valoraciones; historial de versiones y autoría; dirección IP de conexión. No deben incluirse categorías especiales de datos |
-| Destinatarios | Otros participantes del documento; operadores de relays y servidores STUN/TURN (públicos o del centro); servidor Nextcloud del centro, si se usa. No se prevén cesiones |
-| Transferencias internacionales | Ninguna si se usan relay, TURN y servidor web propios en la UE; en otro caso, posibles transferencias a relays públicos y servidores STUN fuera del EEE |
-| Plazo de supresión | El que fije el centro (por ejemplo, al finalizar el curso o el plazo de reclamación de las calificaciones); los documentos se borran de cada dispositivo |
-| Medidas de seguridad | Cifrado de extremo a extremo; firma digital de los cambios; enlaces con permisos (editar, comentar, ver); dispositivos con cuentas individuales; medidas del Esquema Nacional de Seguridad (Real Decreto 311/2022) en los servidores propios |
+| Verarbeitungstätigkeit | Gemeinsames Erstellen und Bearbeiten von Unterrichtsdokumenten mit {{siteName}} |
+| Verantwortlicher | [Schule / Regionalministerium oder zuständige Stelle] mit Kontaktdaten |
+| Datenschutzbeauftragter | [Angaben zum DSB der Schule oder Bildungsbehörde] |
+| Zweck | Lehr- und Lernaktivitäten: Verfassen, Korrigieren, Kommentieren und Abgeben von Arbeiten; Gruppenarbeit |
+| Rechtsgrundlage | Art. 6 Abs. 1 lit. e DSGVO (Aufgabe im öffentlichen Interesse) in Verbindung mit der dreiundzwanzigsten Zusatzbestimmung des spanischen Organgesetzes 2/2006 über das Bildungswesen |
+| Kategorien betroffener Personen | Schülerinnen und Schüler, Lehrkräfte |
+| Datenkategorien | Name oder Pseudonym; Inhalt von Arbeiten und Kommentaren; Korrekturen und Bewertungen; Versionsverlauf und Urheberschaft; IP-Adresse der Verbindung. Keine besonderen Kategorien personenbezogener Daten |
+| Empfänger | Andere Beteiligte am Dokument; Betreiber von Relays und STUN/TURN-Servern (öffentlich oder der Schule); Nextcloud-Server der Schule, falls genutzt. Keine Weitergaben vorgesehen |
+| Drittlandübermittlungen | Keine bei Nutzung eigener Relays, TURN- und Webserver in der EU; andernfalls mögliche Übermittlungen an öffentliche Relays und STUN-Server außerhalb des EWR |
+| Löschfrist | Von der Schule festgelegt (z. B. zum Schuljahresende oder nach Ablauf der Widerspruchsfrist gegen Noten); Dokumente werden auf jedem Gerät gelöscht |
+| Sicherheitsmaßnahmen | Ende-zu-Ende-Verschlüsselung; digitale Signatur der Änderungen; Links mit Berechtigungen (bearbeiten, kommentieren, ansehen); Geräte mit individuellen Konten; Maßnahmen des spanischen Nationalen Sicherheitsrahmens (Königliches Dekret 311/2022) auf eigenen Servern |
 
-## 5. Riesgos y medidas
+## 5. Risiken und Maßnahmen
 
-| Riesgo | Medidas recomendadas |
+| Risiko | Empfohlene Maßnahmen |
 | --- | --- |
-| Terceros ven las direcciones IP y los horarios de conexión | Usar el relay y el servidor TURN del centro y el parámetro `?relays=` en los enlaces |
-| Un enlace llega a personas no autorizadas | Compartir enlaces por los canales oficiales (aula virtual); dar al alumnado enlaces de ver o comentar cuando baste; si se filtra, *Archivo → Hacer una copia* y dejar de usar el original |
-| Pérdida de trabajos guardados solo en el navegador | Usar Nextcloud del centro, la función *Entregar* y descargas periódicas; instalar la aplicación |
-| Dispositivos compartidos (aulas de informática, carros de portátiles) | Cuentas o perfiles de navegador individuales; quitar los documentos y cerrar la sesión de Nextcloud al terminar |
-| Exposición de datos personales del alumnado | Usar nombres de pila, iniciales o seudónimos; no tratar datos de salud, informes psicopedagógicos o de necesidades educativas en documentos compartidos, sino en los sistemas oficiales |
-| Servicios opcionales que envían contenido a terceros | Mantener desactivados LanguageTool y los asistentes de IA, o usar servidores del centro; valorar el dictado del navegador |
-| Menores de 14 años y servicios de terceros | No activar servicios que requieran su consentimiento sin el de sus familias (art. 7 LOPDGDD) |
+| Dritte sehen IP-Adressen und Verbindungszeiten | Relay und TURN-Server der Schule sowie den Parameter `?relays=` in Links verwenden |
+| Ein Link gelangt an Unbefugte | Links über offizielle Kanäle (Lernplattform) teilen; Schülerinnen und Schülern Ansichts- oder Kommentarlinks geben, wenn das genügt; bei einem Leck *Datei → Kopie erstellen* und das Original nicht mehr verwenden |
+| Verlust nur im Browser gespeicherter Arbeiten | Nextcloud der Schule, die Funktion *Abgeben* und regelmäßige Downloads nutzen; die Anwendung installieren |
+| Gemeinsam genutzte Geräte (Computerräume, Laptopwagen) | Individuelle Konten oder Browserprofile; Dokumente entfernen und von Nextcloud abmelden, wenn die Arbeit beendet ist |
+| Offenlegung personenbezogener Daten von Schülerinnen und Schülern | Vornamen, Initialen oder Pseudonyme verwenden; Gesundheitsdaten, psychologische Gutachten oder Angaben zu sonderpädagogischem Förderbedarf nicht in geteilten Dokumenten, sondern in den offiziellen Systemen verarbeiten |
+| Optionale Dienste, die Inhalte an Dritte senden | LanguageTool und KI-Assistenten ausgeschaltet lassen oder Server der Schule nutzen; das Diktieren des Browsers bewerten |
+| Kinder unter 14 Jahren und Dienste Dritter | Keine Dienste aktivieren, die ihre Einwilligung erfordern, ohne die ihrer Familien (Art. 7 LOPDGDD) |
 
-El DPD debe valorar si es necesaria una evaluación de impacto (art. 35 RGPD y lista de tratamientos de la AEPD), especialmente si se activan servicios de terceros o se usa de forma generalizada con menores.
+Der DSB sollte prüfen, ob eine Datenschutz-Folgenabschätzung erforderlich ist (Art. 35 DSGVO und Liste der spanischen Datenschutzbehörde), insbesondere wenn Dienste Dritter aktiviert werden oder das Werkzeug breit mit Minderjährigen eingesetzt wird.
 
-## 6. Configuración recomendada
+## 6. Empfohlene Konfiguration
 
-1. **Servidor propio.** Publicar {{siteName}} en un servidor del centro o de la Consellería (idealmente en la misma dirección que Nextcloud) y adaptar los textos legales de esa instalación (archivo `legal.config.json`).
-2. **Relay del centro.** Instalar el relay de {{siteName}} (Nostr + STUN/TURN) en la red del centro y usar enlaces con `?relays=wss://relay.centro.example`, para no depender de relays públicos.
-3. **Nextcloud del centro** para abrir, guardar y entregar trabajos.
-4. **LanguageTool desactivado**, o apuntando a un servidor del centro o de la Administración.
-5. **Asistentes de IA (WebMCP) desactivados.** Si se usan, solo con proveedores contratados por la Administración, sin datos personales del alumnado y con las precauciones de la [Nota sobre inteligencia artificial](ai.md).
-6. **Dictado.** Informar de que, en algunos navegadores, el audio lo procesa el fabricante del navegador; usarlo solo cuando sea necesario.
-7. **Registro e información.** Incluir el tratamiento en el registro de actividades e informar a las familias (apartado 7).
-8. **Formación** del profesorado y del alumnado sobre el uso seguro de los enlaces y la competencia digital (art. 83 LOPDGDD).
+1. **Eigener Server.** {{siteName}} auf einem Server der Schule oder Behörde veröffentlichen (idealerweise unter derselben Adresse wie Nextcloud) und die Rechtstexte dieser Installation anpassen (Datei `legal.config.json`).
+2. **Relay der Schule.** Das Relay von {{siteName}} (Nostr + STUN/TURN) im Schulnetz installieren und Links mit `?relays=wss://relay.schule.example` verwenden, um nicht von öffentlichen Relays abzuhängen.
+3. **Nextcloud der Schule** zum Öffnen, Speichern und Abgeben von Arbeiten.
+4. **LanguageTool ausgeschaltet** oder auf einen Server der Schule bzw. Behörde gerichtet.
+5. **KI-Assistenten (WebMCP) ausgeschaltet.** Falls genutzt, nur mit von der Behörde beauftragten Anbietern, ohne personenbezogene Daten von Schülerinnen und Schülern und mit den Vorsichtsmaßnahmen aus dem [Hinweis zu künstlicher Intelligenz](ai.md).
+6. **Diktieren.** Darauf hinweisen, dass in manchen Browsern der Browserhersteller das Audio verarbeitet; nur bei Bedarf verwenden.
+7. **Verzeichnis und Information.** Die Verarbeitung ins Verzeichnis von Verarbeitungstätigkeiten aufnehmen und die Familien informieren (Abschnitt 7).
+8. **Schulung** von Lehrkräften sowie Schülerinnen und Schülern zum sicheren Umgang mit Links und zur digitalen Kompetenz (Art. 83 LOPDGDD).
 
-## 7. Texto modelo de información a las familias
+## 7. Mustertext zur Information der Familien
 
-> **Información sobre el uso de la aplicación {{siteName}}**
+> **Information über die Nutzung der Anwendung {{siteName}}**
 >
-> El centro [nombre del centro] utiliza en sus actividades de enseñanza la aplicación {{siteName}}, que permite al alumnado y al profesorado crear y editar documentos en común desde el navegador.
+> Die Schule [Name der Schule] nutzt im Unterricht die Anwendung {{siteName}}, mit der Schülerinnen, Schüler und Lehrkräfte im Browser gemeinsam Dokumente erstellen und bearbeiten können.
 >
-> **Responsable:** [centro educativo / Consellería], [dirección y correo]. **Delegado de Protección de Datos:** [contacto].
+> **Verantwortlicher:** [Schule / Behörde], [Anschrift und E-Mail]. **Datenschutzbeauftragter:** [Kontakt].
 >
-> **Finalidad y base jurídica:** realización de actividades educativas, en ejercicio de la función educativa (art. 6.1.e RGPD y disposición adicional vigesimotercera de la Ley Orgánica 2/2006, de Educación).
+> **Zweck und Rechtsgrundlage:** Durchführung von Bildungsaktivitäten in Wahrnehmung des Bildungsauftrags (Art. 6 Abs. 1 lit. e DSGVO und dreiundzwanzigste Zusatzbestimmung des spanischen Organgesetzes 2/2006 über das Bildungswesen).
 >
-> **Datos:** nombre o seudónimo del alumno o alumna, trabajos y comentarios, historial de cambios y dirección IP de conexión.
+> **Daten:** Name oder Pseudonym des Kindes, Arbeiten und Kommentare, Änderungsverlauf und IP-Adresse der Verbindung.
 >
-> **Dónde se guardan:** en los dispositivos que se usan en clase y en el Nextcloud del centro, si se utiliza. La aplicación no tiene servidor central y su titular no recibe los documentos. Para conectar los dispositivos se utiliza [el servidor del centro / servidores públicos de terceros, que conocen la dirección IP pero no el contenido].
+> **Speicherort:** auf den im Unterricht genutzten Geräten und, falls verwendet, in der Nextcloud der Schule. Die Anwendung hat keinen zentralen Server, und ihr Inhaber erhält die Dokumente nicht. Zur Verbindung der Geräte werden [der Server der Schule / öffentliche Server Dritter, die die IP-Adresse, aber nicht den Inhalt kennen] genutzt.
 >
-> **Destinatarios:** el profesorado y los compañeros y compañeras con quienes se comparte cada documento. No se ceden datos a terceros.
+> **Empfänger:** die Lehrkräfte und Mitschülerinnen und Mitschüler, mit denen das jeweilige Dokument geteilt wird. Es werden keine Daten an Dritte weitergegeben.
 >
-> **Conservación:** [hasta el final del curso / plazo que fije el centro].
+> **Speicherdauer:** [bis zum Ende des Schuljahres / von der Schule festgelegte Frist].
 >
-> **Derechos:** pueden ejercer los derechos de acceso, rectificación, supresión, oposición y limitación ante el centro ([correo]) y presentar una reclamación ante la Agencia Española de Protección de Datos (www.aepd.es).
+> **Rechte:** Sie können Ihre Rechte auf Auskunft, Berichtigung, Löschung, Widerspruch und Einschränkung gegenüber der Schule ([E-Mail]) geltend machen und Beschwerde bei der spanischen Datenschutzbehörde einlegen (www.aepd.es).
 >
-> **Uso en casa:** los documentos se guardan en el navegador del dispositivo. Recomendamos no usar el nombre completo en documentos compartidos, no compartir los enlaces fuera del grupo y no activar servicios externos (corrector en línea, asistentes de inteligencia artificial) sin supervisión.
+> **Nutzung zu Hause:** Die Dokumente werden im Browser des Geräts gespeichert. Wir empfehlen, in geteilten Dokumenten nicht den vollständigen Namen zu verwenden, Links nicht außerhalb der Gruppe weiterzugeben und externe Dienste (Online-Rechtschreibprüfung, KI-Assistenten) nicht ohne Aufsicht zu aktivieren.
 
-## 8. Normativa de referencia
+## 8. Rechtsgrundlagen
 
-- Reglamento (UE) 2016/679, General de Protección de Datos (RGPD).
-- Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales (LOPDGDD): arts. 7 (menores), 12.6, 31, 34, 83 (educación digital), 84 (protección de menores en Internet) y 92.
-- Ley Orgánica 2/2006, de Educación, modificada por la Ley Orgánica 3/2020 (LOMLOE): disposición adicional vigesimotercera.
-- Real Decreto 311/2022, Esquema Nacional de Seguridad.
-- Real Decreto 1112/2018, sobre accesibilidad de los sitios web y aplicaciones móviles del sector público.
-- Reglamento (UE) 2024/1689, de Inteligencia Artificial.
-- Agencia Española de Protección de Datos: guías para centros educativos (https://www.aepd.es).
+- Verordnung (EU) 2016/679, Datenschutz-Grundverordnung (DSGVO).
+- Spanisches Organgesetz 3/2018 über den Schutz personenbezogener Daten und die Garantie digitaler Rechte (LOPDGDD): Art. 7 (Minderjährige), 12 Abs. 6, 31, 34, 83 (digitale Bildung), 84 (Schutz Minderjähriger im Internet) und 92.
+- Spanisches Organgesetz 2/2006 über das Bildungswesen, geändert durch das Organgesetz 3/2020 (LOMLOE): dreiundzwanzigste Zusatzbestimmung.
+- Königliches Dekret 311/2022, Nationaler Sicherheitsrahmen.
+- Königliches Dekret 1112/2018 über die Barrierefreiheit von Websites und mobilen Anwendungen öffentlicher Stellen.
+- Verordnung (EU) 2024/1689 über künstliche Intelligenz.
+- Spanische Datenschutzbehörde: Leitfäden für Schulen (https://www.aepd.es).

@@ -7,6 +7,7 @@ import { DiagramSync } from '../diagram/sync'
 import { SLIDES_ACCEPT, mountSlides } from './app'
 import { notesText, parseBackground, presentationSize, presentationTheme, readSlideMeta, writePresentation, type PresentationData } from './model'
 import { SlideRenderer } from './render'
+import { readAnimations } from './animations'
 import { t } from '../../core/i18n'
 import '../diagram/diagram.css'
 import './slides.css'
@@ -34,7 +35,17 @@ export function readPresentation(session: Session): PresentationData {
     theme,
     slides: DiagramSync.readPages(doc).map((p) => {
       const meta = readSlideMeta(doc, p.id)
-      return { id: p.id, name: p.name, cells: p.cells, notes: notesText(doc, p.id).toString(), background: meta.background, layout: meta.layout }
+      return {
+        id: p.id,
+        name: p.name,
+        cells: p.cells,
+        notes: notesText(doc, p.id).toString(),
+        background: meta.background,
+        layout: meta.layout,
+        animations: readAnimations(doc, p.id),
+        transition: meta.transition,
+        transitionDuration: Number(meta.transitionDuration) || undefined,
+      }
     }),
   }
 }

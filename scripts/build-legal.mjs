@@ -75,6 +75,20 @@ function conditionals(text) {
   })
 }
 
+// French typography: no-break space before a colon and inside « », narrow one before ; ! ? (not in code blocks).
+function typography(lang, text) {
+  if (lang !== 'fr') return text
+  let code = false
+  return text
+    .split('\n')
+    .map((line) => {
+      if (/^(```|~~~)/.test(line)) code = !code
+      if (code) return line
+      return line.replace(/ :(?=\s|$)/g, '\u00a0:').replace(/ ([;!?])(?=\s|$)/g, '\u202f$1').replace(/« /g, '«\u00a0').replace(/ »/g, '\u00a0»')
+    })
+    .join('\n')
+}
+
 // ---------- Markdown (the subset the legal texts use) ----------
 
 function inline(text, ctx) {
@@ -230,7 +244,7 @@ for (const lang of LANGS) {
     const file = join(src, lang, `${page}.md`)
     if (!existsSync(file)) throw new Error(`build-legal: missing ${file}`)
     const ctx = context(lang, page)
-    const text = conditionals(readFileSync(file, 'utf8'))
+    const text = typography(lang, conditionals(readFileSync(file, 'utf8')))
     const { html, headings } = markdown(text, ctx)
     const title = (/<h1[^>]*>(.*?)<\/h1>/.exec(html) ?? [, page])[1]
     const lead = (/<p>(.*?)<\/p>/.exec(html) ?? [, ''])[1]

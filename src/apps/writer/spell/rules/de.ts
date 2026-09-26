@@ -57,7 +57,39 @@ export const deSpelling: Rule = {
     { re: w('Standart'), fix: () => ['Standard'] },
     { re: w('garnicht'), fix: () => ['gar nicht'] },
     { re: w('garkein(e|en|er|es|em)?'), fix: (m) => [`gar kein${m[1] ?? ''}`] },
+    { re: w('garnichts'), fix: () => ['gar nichts'] },
+    { re: w('vorallem'), fix: () => ['vor allem'] },
+    { re: w('aufjedenfall'), fix: () => ['auf jeden Fall'] },
+    { re: w('nichtmal'), fix: () => ['nicht mal'] },
+    { re: w('zuende'), fix: () => ['zu Ende'] },
+    { re: w('inbezug'), fix: () => ['in Bezug'] },
+    { re: w('imnachhinein'), fix: () => ['im Nachhinein'] },
+    { re: w('bisjetzt'), fix: () => ['bis jetzt'] },
+    { re: w('zumindestens'), fix: () => ['zumindest', 'mindestens'] },
   ]),
 }
 
-export const deRules: Rule[] = [dasDass, seitSeid, alsWie, deSpelling]
+// "einzig" has no superlative.
+export const einzigste: Rule = {
+  id: 'de-einzigste',
+  langs: ['de'],
+  category: 'grammar',
+  kind: 'grammar',
+  check: patternRule([{ re: w('einzigst(e|en|er|es|em)'), fix: (m) => [`einzig${m[1]}`] }]),
+}
+
+// wider (against) / wieder (again).
+export const widerWieder: Rule = {
+  id: 'de-wider-wieder',
+  langs: ['de'],
+  category: 'confusion',
+  kind: 'grammar',
+  check: patternRule([
+    {
+      re: w('wieder(spiegeln|spiegelt|spiegelte|spiegelten|gespiegelt|spruch|sprüche|sprüchlich|sprüchliche|sprüchlichen|sprechen|spricht|sprach|sprachen|sprochen|stand|stände|stehen|steht|legen|legt|legte|legten|legung|willig|willige|willigen|lich|liche|lichen|licher|sinnig|sinnige|sinnigen|setzen|setzte|stand)'),
+      fix: (m) => [`wider${m[1]}`],
+    },
+  ]),
+}
+
+export const deRules: Rule[] = [dasDass, seitSeid, alsWie, deSpelling, einzigste, widerWieder]

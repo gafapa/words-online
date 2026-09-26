@@ -1,129 +1,129 @@
-# Política de privacidad
+# Datenschutzerklärung
 
-{{siteName}} está diseñado para que el titular no reciba tus documentos ni tus datos: todo se guarda en tu dispositivo y se intercambia, cifrado, directamente con las personas con quienes compartes. Esta política explica qué datos existen, dónde están y quién puede tratarlos, conforme a los artículos 13 y 14 del Reglamento (UE) 2016/679 (RGPD) y a la Ley Orgánica 3/2018 (LOPDGDD).
+{{siteName}} ist so gestaltet, dass der Inhaber weder Ihre Dokumente noch Ihre Daten erhält: Alles wird auf Ihrem Gerät gespeichert und verschlüsselt direkt mit den Personen ausgetauscht, mit denen Sie teilen. Diese Erklärung beschreibt, welche Daten es gibt, wo sie sich befinden und wer sie verarbeiten kann, gemäß Artikel 13 und 14 der Verordnung (EU) 2016/679 (DSGVO) und dem spanischen Organgesetz 3/2018 (LOPDGDD).
 
-## 1. Información básica
+## 1. Das Wichtigste in Kürze
 
-| Epígrafe | Información |
+| Punkt | Information |
 | --- | --- |
-| Responsable | {{owner.name}} (datos en el apartado 2) |
-| Finalidad | Poner a disposición la aplicación web y proteger la seguridad del sitio. El titular no trata el contenido de los documentos. |
-| Legitimación | Interés legítimo en la seguridad del sitio o, si el titular es una Administración pública, cumplimiento de una misión de interés público (art. 6.1.f o 6.1.e RGPD). |
-| Destinatarios | Proveedor de alojamiento ({{hosting.provider}}). La colaboración se apoya en servicios de terceros que actúan bajo su propia responsabilidad (apartado 6). |
-| Transferencias | Posibles transferencias a Estados Unidos y a otros países (apartado 9). |
-| Derechos | Acceso, rectificación, supresión, oposición, limitación y portabilidad, y reclamación ante la Agencia Española de Protección de Datos (apartado 10). |
-| Menores | Ver apartados 11 y 12 y la [Información para centros educativos](schools.md). |
+| Verantwortlicher | {{owner.name}} (Angaben in Abschnitt 2) |
+| Zweck | Bereitstellung der Webanwendung und Schutz der Sicherheit der Website. Der Inhaber verarbeitet keine Dokumentinhalte. |
+| Rechtsgrundlage | Berechtigtes Interesse an der Sicherheit der Website oder, wenn der Inhaber eine Behörde ist, Wahrnehmung einer Aufgabe im öffentlichen Interesse (Art. 6 Abs. 1 lit. f bzw. lit. e DSGVO). |
+| Empfänger | Hosting-Anbieter ({{hosting.provider}}). Die Zusammenarbeit stützt sich auf Dienste Dritter, die in eigener Verantwortung handeln (Abschnitt 6). |
+| Übermittlungen | Mögliche Übermittlungen in die USA und andere Länder (Abschnitt 9). |
+| Rechte | Auskunft, Berichtigung, Löschung, Widerspruch, Einschränkung und Datenübertragbarkeit sowie Beschwerde bei der spanischen Datenschutzbehörde (Abschnitt 10). |
+| Minderjährige | Siehe Abschnitte 11 und 12 sowie die [Informationen für Schulen](schools.md). |
 
-## 2. Responsable del tratamiento
+## 2. Verantwortlicher
 
-- Titular: {{owner.name}}
-- NIF/CIF: {{owner.nif}}
-- Domicilio: {{owner.address}}
-- Correo electrónico para cuestiones de privacidad: {{privacyEmail}}
-- Delegado de Protección de Datos: {{#if dpo.email}}{{dpo.name}}, {{dpo.email}}{{else}}no se ha designado, por no ser obligatorio para el titular (art. 37 RGPD y art. 34 LOPDGDD); las consultas sobre protección de datos se atienden en {{privacyEmail}}{{/if}}
+- Inhaber: {{owner.name}}
+- Steuer-ID (NIF/CIF): {{owner.nif}}
+- Anschrift: {{owner.address}}
+- E-Mail für Datenschutzfragen: {{privacyEmail}}
+- Datenschutzbeauftragter: {{#if dpo.email}}{{dpo.name}}, {{dpo.email}}{{else}}nicht benannt, da für den Inhaber nicht vorgeschrieben (Art. 37 DSGVO und Art. 34 LOPDGDD); Datenschutzanfragen werden unter {{privacyEmail}} beantwortet{{/if}}
 
-Cuando un centro educativo, una Administración educativa u otra entidad publica su propia instalación de {{siteName}}, esa entidad es la responsable del tratamiento en su instalación y debe adaptar esta política con sus datos.
+Wenn eine Schule, eine Bildungsbehörde oder eine andere Einrichtung eine eigene Installation von {{siteName}} veröffentlicht, ist diese Einrichtung für ihre Installation verantwortlich und muss diese Erklärung mit ihren eigenen Angaben anpassen.
 
-## 3. Cómo funciona {{siteName}} y qué datos recibe el titular
+## 3. Wie {{siteName}} funktioniert und welche Daten der Inhaber erhält
 
-{{siteName}} es un sitio web estático: el servidor solo entrega los archivos de la aplicación, que después funciona en tu navegador, incluso sin conexión. No hay cuentas de usuario ni servidor de aplicación propio.
+{{siteName}} ist eine statische Website: Der Server liefert nur die Dateien der Anwendung aus, die anschließend in Ihrem Browser läuft, auch offline. Es gibt keine Benutzerkonten und keinen eigenen Anwendungsserver.
 
-- **El titular no recibe** el contenido de los documentos, los comentarios, el historial de versiones, los nombres que escriben las personas usuarias, las claves de los enlaces ni las credenciales de servicios externos.
-- **Lo único que llega a un servidor contratado por el titular** son los datos técnicos que cualquier navegador envía al descargar una página: dirección IP, fecha y hora, dirección solicitada, navegador y sistema operativo (user agent) y página de procedencia. Los registra el proveedor de alojamiento para servir el sitio y protegerlo frente a abusos.
-- {{siteName}} no utiliza cookies, analítica, publicidad, perfiles ni decisiones automatizadas.
+- **Der Inhaber erhält nicht** den Inhalt der Dokumente, Kommentare, den Versionsverlauf, die von Nutzerinnen und Nutzern eingegebenen Namen, die Schlüssel in Links oder Zugangsdaten externer Dienste.
+- **Einen vom Inhaber beauftragten Server erreichen nur** die technischen Daten, die jeder Browser beim Laden einer Seite sendet: IP-Adresse, Datum und Uhrzeit, angeforderte Adresse, Browser und Betriebssystem (User-Agent) und verweisende Seite. Der Hosting-Anbieter protokolliert sie, um die Website auszuliefern und vor Missbrauch zu schützen.
+- {{siteName}} verwendet keine Cookies, keine Reichweitenmessung, keine Werbung, kein Profiling und keine automatisierten Entscheidungen.
 
-## 4. Datos que se guardan en tu dispositivo
+## 4. Auf Ihrem Gerät gespeicherte Daten
 
-La aplicación guarda en el almacenamiento de tu navegador (IndexedDB, localStorage y la caché del service worker) la información necesaria para funcionar. Esta información no se envía al titular. El detalle figura en la [Política de cookies y almacenamiento local](cookies.md).
+Die Anwendung speichert die für ihren Betrieb nötigen Informationen im Speicher Ihres Browsers (IndexedDB, localStorage und Cache des Service Workers). Diese Informationen werden nicht an den Inhaber gesendet. Einzelheiten finden Sie in der [Richtlinie zu Cookies und lokaler Speicherung](cookies.md).
 
-| Información | Contenido | Quién puede verla |
+| Information | Inhalt | Wer sie sehen kann |
 | --- | --- | --- |
-| Documentos | Texto, tablas, dibujos, imágenes, comentarios, sugerencias, historial de versiones y autoría (nombre y color de quien escribió cada parte) | Tú y las personas con las que compartes el documento |
-| Índice de documentos | Títulos, fechas, claves de acceso de cada documento y, si lo vinculas, la ruta del archivo en Nextcloud | Solo tú |
-| Tu identidad en la aplicación | El nombre que escribes y un color | Tú y tus colaboradores |
-| Preferencias | Idioma, accesibilidad, ortografía, diccionario personal, zoom | Solo tú |
-| Credenciales de Nextcloud (opcional) | Dirección del servidor, usuario y contraseña de aplicación | Solo tú; se envían únicamente a ese servidor |
-| Caché de la aplicación | Archivos del programa para usarlo sin conexión | No contiene datos personales |
+| Dokumente | Text, Tabellen, Zeichnungen, Bilder, Kommentare, Vorschläge, Versionsverlauf und Urheberschaft (Name und Farbe der Person, die den jeweiligen Teil geschrieben hat) | Sie und die Personen, mit denen Sie das Dokument teilen |
+| Dokumentenverzeichnis | Titel, Daten, Zugriffsschlüssel jedes Dokuments und, falls verknüpft, der Pfad der Datei in Nextcloud | Nur Sie |
+| Ihre Identität in der Anwendung | Der Name, den Sie eingeben, und eine Farbe | Sie und Ihre Mitwirkenden |
+| Einstellungen | Sprache, Barrierefreiheit, Rechtschreibung, persönliches Wörterbuch, Zoom | Nur Sie |
+| Nextcloud-Zugangsdaten (optional) | Serveradresse, Benutzername und App-Passwort | Nur Sie; sie werden nur an diesen Server gesendet |
+| Anwendungs-Cache | Programmdateien für die Offline-Nutzung | Enthält keine personenbezogenen Daten |
 
-En el uso personal o doméstico, este tratamiento lo realizas tú en tu propio dispositivo. En el uso escolar, corresponde al centro o a la Administración educativa (apartado 12).
+Bei persönlicher oder familiärer Nutzung führen Sie diese Verarbeitung selbst auf Ihrem Gerät durch. Bei schulischer Nutzung liegt sie in der Verantwortung der Schule oder Bildungsbehörde (Abschnitt 12).
 
-## 5. Colaboración: qué ven otras personas
+## 5. Zusammenarbeit: was andere sehen
 
-- **Enlaces para compartir.** Cada enlace contiene, después del signo `#`, las claves del documento. Los navegadores no envían esa parte del enlace a ningún servidor, pero cualquiera que tenga el enlace puede acceder al documento con el permiso que este otorga (editar, comentar, ver o hacer una copia). Trátalo como una contraseña.
-- **Datos que reciben tus colaboradores:** el contenido del documento, sus comentarios, versiones y autoría, el nombre y el color que hayas elegido, tu presencia (cursor, selección, página o diapositiva que estás viendo) y, por la propia naturaleza de las conexiones directas, la dirección IP de tu conexión.
-- **Transmisión.** Los datos viajan directamente entre navegadores por WebRTC, cifrados con DTLS; los mensajes para establecer la conexión se cifran con la clave del documento. Los cambios se firman digitalmente, de modo que solo quien tiene el permiso de edición puede modificar el documento.
-- **Copias.** Cada participante conserva una copia completa del documento en su navegador. Borrar tu copia no borra las de los demás.
-- Recomendación: usa tu nombre de pila, iniciales o un seudónimo y no incluyas en documentos compartidos datos especialmente sensibles (salud, datos de terceros, etc.).
+- **Freigabelinks.** Jeder Link enthält nach dem Zeichen `#` die Schlüssel des Dokuments. Browser senden diesen Teil des Links an keinen Server, aber jede Person mit dem Link kann mit der darin gewährten Berechtigung (bearbeiten, kommentieren, ansehen oder eine Kopie erstellen) auf das Dokument zugreifen. Behandeln Sie ihn wie ein Passwort.
+- **Daten, die Ihre Mitwirkenden erhalten:** den Inhalt des Dokuments, seine Kommentare, Versionen und Urheberschaft, den von Ihnen gewählten Namen und die Farbe, Ihre Anwesenheit (Cursor, Auswahl, angezeigte Seite oder Folie) und, bedingt durch direkte Verbindungen, die IP-Adresse Ihrer Verbindung.
+- **Übertragung.** Die Daten werden direkt zwischen Browsern über WebRTC übertragen und mit DTLS verschlüsselt; die Nachrichten zum Verbindungsaufbau werden mit dem Dokumentschlüssel verschlüsselt. Änderungen werden digital signiert, sodass nur Personen mit Bearbeitungsrecht das Dokument ändern können.
+- **Kopien.** Alle Beteiligten behalten eine vollständige Kopie des Dokuments in ihrem Browser. Wenn Sie Ihre Kopie löschen, bleiben die der anderen erhalten.
+- Empfehlung: Verwenden Sie Ihren Vornamen, Initialen oder ein Pseudonym und nehmen Sie keine besonders sensiblen Daten (Gesundheit, Daten Dritter usw.) in geteilte Dokumente auf.
 
-## 6. Terceros que intervienen
+## 6. Beteiligte Dritte
 
-| Servicio | Datos a los que accede | Papel | Ubicación |
+| Dienst | Zugängliche Daten | Rolle | Standort |
 | --- | --- | --- | --- |
-| Alojamiento web: {{hosting.provider}} | Datos técnicos de la descarga (IP, fecha, dirección, navegador) | Encargado del tratamiento del titular o responsable independiente, según sus condiciones: {{hosting.privacyUrl}} | {{hosting.country}} |
-| Relays públicos Nostr (señalización) | Dirección IP, momento de conexión, mensajes de señalización cifrados, un identificador de sala derivado del documento y claves públicas efímeras. No pueden leer los documentos | Terceros independientes, sin relación contractual con el titular | Distintos países, dentro y fuera del Espacio Económico Europeo |
-| Servidores STUN (por defecto, Google LLC y Cloudflare, Inc.) | Dirección IP y puerto, para averiguar la dirección pública de tu conexión | Terceros independientes | Estados Unidos y otros países |
-| Navegadores de tus colaboradores | Lo indicado en el apartado 5, incluida tu dirección IP | Personas usuarias | Donde se encuentren |
-| Relay y servidor TURN del centro (opcional) | Dirección IP, momento de conexión, tráfico cifrado | El centro o la Administración que lo gestiona, como responsable | Según su instalación |
-| Nextcloud (opcional) | Los archivos que abres o guardas y tus credenciales | La entidad que gestiona ese servidor | Según el servidor |
-| Servidor LanguageTool (opcional, desactivado por defecto) | El texto de los párrafos que se revisan | La entidad que gestiona el servidor que indiques | Según el servidor |
-| Dictado y lectura en voz alta del navegador | Según el navegador, el audio del dictado o el texto leído pueden enviarse al fabricante del navegador | El fabricante del navegador, según sus condiciones | Según el fabricante |
-| Asistentes de IA mediante WebMCP (opcional, desactivado por defecto) | El contenido del documento abierto que el asistente lea o modifique | El proveedor del asistente que elijas, según sus condiciones. Ver la [Nota sobre inteligencia artificial](ai.md) | Según el proveedor |
+| Webhosting: {{hosting.provider}} | Technische Abrufdaten (IP, Datum, Adresse, Browser) | Auftragsverarbeiter des Inhabers oder eigenständig Verantwortlicher, gemäß seinen Bedingungen: {{hosting.privacyUrl}} | {{hosting.country}} |
+| Öffentliche Nostr-Relays (Signalisierung) | IP-Adresse, Verbindungszeitpunkt, verschlüsselte Signalisierungsnachrichten, eine aus dem Dokument abgeleitete Raumkennung und kurzlebige öffentliche Schlüssel. Sie können die Dokumente nicht lesen | Unabhängige Dritte ohne Vertragsbeziehung zum Inhaber | Verschiedene Länder innerhalb und außerhalb des Europäischen Wirtschaftsraums |
+| STUN-Server (standardmäßig Google LLC und Cloudflare, Inc.) | IP-Adresse und Port, um die öffentliche Adresse Ihrer Verbindung zu ermitteln | Unabhängige Dritte | USA und andere Länder |
+| Browser Ihrer Mitwirkenden | Wie in Abschnitt 5 beschrieben, einschließlich Ihrer IP-Adresse | Nutzerinnen und Nutzer | Wo auch immer sie sich befinden |
+| Relay und TURN-Server der Schule (optional) | IP-Adresse, Verbindungszeitpunkt, verschlüsselter Datenverkehr | Die betreibende Schule oder Behörde als Verantwortliche | Je nach Installation |
+| Nextcloud (optional) | Die Dateien, die Sie öffnen oder speichern, und Ihre Zugangsdaten | Die Einrichtung, die diesen Server betreibt | Je nach Server |
+| LanguageTool-Server (optional, standardmäßig aus) | Der Text der geprüften Absätze | Die Einrichtung, die den von Ihnen angegebenen Server betreibt | Je nach Server |
+| Diktieren und Vorlesen des Browsers | Je nach Browser können das Diktat-Audio oder der vorgelesene Text an den Browserhersteller gesendet werden | Der Browserhersteller gemäß seinen Bedingungen | Je nach Hersteller |
+| KI-Assistenten über WebMCP (optional, standardmäßig aus) | Der Inhalt des geöffneten Dokuments, den der Assistent liest oder ändert | Der Anbieter des von Ihnen gewählten Assistenten gemäß seinen Bedingungen. Siehe den [Hinweis zu künstlicher Intelligenz](ai.md) | Je nach Anbieter |
 
-Los relays públicos y los servidores STUN se usan porque {{siteName}} no tiene servidor propio. Se pueden sustituir por servidores propios añadiendo `?relays=wss://…` a la dirección, o usando el relay del centro.
+Öffentliche Relays und STUN-Server werden verwendet, weil {{siteName}} keinen eigenen Server hat. Sie können durch eigene Server ersetzt werden, indem Sie `?relays=wss://…` an die Adresse anhängen oder das Relay der Schule nutzen.
 
-## 7. Finalidades y bases jurídicas
+## 7. Zwecke und Rechtsgrundlagen
 
-| Tratamiento | Finalidad | Base jurídica |
+| Verarbeitung | Zweck | Rechtsgrundlage |
 | --- | --- | --- |
-| Registros técnicos del alojamiento | Entregar la aplicación y proteger el sitio frente a ataques y abusos | Interés legítimo del titular (art. 6.1.f RGPD; considerando 49) o, si es una Administración pública, misión de interés público (art. 6.1.e) |
-| Almacenamiento en tu dispositivo | Que la aplicación funcione y guarde tus documentos y preferencias | Lo realizas tú; en el ámbito escolar, lo determina el centro (apartado 12) |
-| Colaboración con otras personas | Editar documentos en común | Tu decisión de compartir el enlace y, en el ámbito escolar, la función educativa (apartado 12) |
-| Servicios opcionales (Nextcloud, LanguageTool, asistentes de IA) | Los que tú actives | Tu decisión de activarlos; el tratamiento lo realiza el proveedor del servicio bajo su responsabilidad |
+| Technische Protokolle des Hostings | Auslieferung der Anwendung und Schutz der Website vor Angriffen und Missbrauch | Berechtigtes Interesse des Inhabers (Art. 6 Abs. 1 lit. f DSGVO; Erwägungsgrund 49) oder, bei einer Behörde, Aufgabe im öffentlichen Interesse (Art. 6 Abs. 1 lit. e) |
+| Speicherung auf Ihrem Gerät | Betrieb der Anwendung und Speicherung Ihrer Dokumente und Einstellungen | Durch Sie selbst; im schulischen Umfeld von der Schule festgelegt (Abschnitt 12) |
+| Zusammenarbeit mit anderen | Gemeinsame Bearbeitung von Dokumenten | Ihre Entscheidung, den Link zu teilen, und im schulischen Umfeld der Bildungsauftrag (Abschnitt 12) |
+| Optionale Dienste (Nextcloud, LanguageTool, KI-Assistenten) | Die von Ihnen aktivierten | Ihre Entscheidung, sie zu aktivieren; die Verarbeitung erfolgt durch den Diensteanbieter in eigener Verantwortung |
 
-## 8. Conservación
+## 8. Speicherdauer
 
-- Registros técnicos del alojamiento: durante el plazo que fije el proveedor para fines de seguridad, conforme a su política de privacidad.
-- Datos en tu dispositivo: hasta que los borres (desde la pantalla de inicio o borrando los datos del sitio en el navegador). El historial de versiones y la autoría forman parte de cada documento y se conservan mientras se conserve el documento en algún navegador.
-- Relays y servidores STUN/TURN: según la configuración de cada operador. Los mensajes de señalización son de uso momentáneo.
+- Technische Protokolle des Hostings: für die vom Anbieter zu Sicherheitszwecken festgelegte Dauer gemäß seiner Datenschutzerklärung.
+- Daten auf Ihrem Gerät: bis Sie sie löschen (auf dem Startbildschirm oder durch Löschen der Websitedaten im Browser). Versionsverlauf und Urheberschaft sind Teil jedes Dokuments und bleiben erhalten, solange das Dokument in irgendeinem Browser gespeichert ist.
+- Relays und STUN/TURN-Server: gemäß der Konfiguration des jeweiligen Betreibers. Signalisierungsnachrichten werden nur kurzzeitig verwendet.
 
-## 9. Destinatarios y transferencias internacionales
+## 9. Empfänger und internationale Übermittlungen
 
-El titular no cede ni vende datos. El proveedor de alojamiento puede tratar los datos técnicos en {{hosting.country}}; la transferencia se ampara en {{hosting.transfers}} o en las garantías que establezcan sus condiciones.
+Der Inhaber gibt keine Daten weiter und verkauft keine Daten. Der Hosting-Anbieter kann die technischen Daten in den {{hosting.country}} verarbeiten; die Übermittlung stützt sich auf {{hosting.transfers}} oder auf die in seinen Bedingungen vorgesehenen Garantien.
 
-Los relays públicos y los servidores STUN pueden estar fuera del Espacio Económico Europeo. Tu navegador se conecta a ellos directamente para encontrar a tus colaboradores; el titular no tiene relación contractual con sus operadores. Para evitar estas conexiones, utiliza un relay y un servidor TURN propios, ubicados en la Unión Europea (recomendado para centros educativos).
+Öffentliche Relays und STUN-Server können sich außerhalb des Europäischen Wirtschaftsraums befinden. Ihr Browser verbindet sich direkt mit ihnen, um Ihre Mitwirkenden zu finden; der Inhaber steht in keiner Vertragsbeziehung zu deren Betreibern. Um diese Verbindungen zu vermeiden, nutzen Sie ein eigenes Relay und einen eigenen TURN-Server in der Europäischen Union (für Schulen empfohlen).
 
-## 10. Tus derechos
+## 10. Ihre Rechte
 
-Puedes ejercer los derechos de acceso, rectificación, supresión, oposición, limitación del tratamiento y portabilidad (arts. 15 a 22 RGPD) escribiendo a {{privacyEmail}}, indicando qué derecho ejerces y acreditando tu identidad. Responderemos en el plazo de un mes (art. 12.3 RGPD).
+Sie können Ihre Rechte auf Auskunft, Berichtigung, Löschung, Widerspruch, Einschränkung der Verarbeitung und Datenübertragbarkeit (Art. 15 bis 22 DSGVO) per E-Mail an {{privacyEmail}} ausüben; geben Sie dabei an, welches Recht Sie ausüben, und weisen Sie Ihre Identität nach. Wir antworten innerhalb eines Monats (Art. 12 Abs. 3 DSGVO).
 
-Ten en cuenta que el titular no dispone de tus documentos ni de los datos guardados en tu navegador: puedes consultarlos, descargarlos, corregirlos o borrarlos directamente en la aplicación. Para los datos de otros servicios (alojamiento, relays, Nextcloud, LanguageTool, asistentes de IA) puedes dirigirte también a sus responsables.
+Bitte beachten Sie, dass der Inhaber weder Ihre Dokumente noch die in Ihrem Browser gespeicherten Daten besitzt: Sie können sie direkt in der Anwendung einsehen, herunterladen, berichtigen oder löschen. Für die Daten anderer Dienste (Hosting, Relays, Nextcloud, LanguageTool, KI-Assistenten) können Sie sich auch an deren Verantwortliche wenden.
 
-Si consideras que no se han atendido tus derechos, puedes presentar una reclamación ante la Agencia Española de Protección de Datos (C/ Jorge Juan, 6, 28001 Madrid, https://www.aepd.es). {{#if dpo.email}}Antes, si lo deseas, puedes dirigirte al Delegado de Protección de Datos ({{dpo.email}}).{{/if}}
+Wenn Sie der Ansicht sind, dass Ihre Rechte nicht gewahrt wurden, können Sie Beschwerde bei der spanischen Datenschutzbehörde einlegen (Agencia Española de Protección de Datos, C/ Jorge Juan, 6, 28001 Madrid, https://www.aepd.es). {{#if dpo.email}}Zuvor können Sie sich, wenn Sie möchten, an den Datenschutzbeauftragten wenden ({{dpo.email}}).{{/if}}
 
-## 11. Menores de edad
+## 11. Minderjährige
 
-{{siteName}} se utiliza sobre todo en centros educativos y por menores de edad. Por eso:
+{{siteName}} wird überwiegend an Schulen und von Minderjährigen genutzt. Deshalb gilt:
 
-- La aplicación no pide registro ni datos personales y el titular no recopila datos de las personas usuarias más allá de los registros técnicos del alojamiento.
-- Los derechos de los menores de 14 años pueden ejercerlos sus madres, padres o tutores legales (art. 12.6 LOPDGDD). Cuando un servicio opcional de terceros requiera consentimiento, los menores de 14 años necesitan el de sus madres, padres o tutores (art. 7 LOPDGDD y art. 8 RGPD).
-- Recomendamos que los menores usen solo los servicios opcionales (LanguageTool, asistentes de IA, dictado) bajo la supervisión del profesorado o de su familia y conforme a lo que decida su centro.
-- No deben publicarse en documentos compartidos imágenes ni datos personales de otras personas sin su autorización o la de sus representantes (art. 92 LOPDGDD).
+- Die Anwendung verlangt keine Registrierung und keine personenbezogenen Daten, und der Inhaber erhebt über die technischen Protokolle des Hostings hinaus keine Daten über Nutzerinnen und Nutzer.
+- Die Rechte von Kindern unter 14 Jahren können ihre Eltern oder gesetzlichen Vertreter ausüben (Art. 12 Abs. 6 LOPDGDD). Erfordert ein optionaler Dienst Dritter eine Einwilligung, benötigen Kinder unter 14 Jahren die ihrer Eltern oder gesetzlichen Vertreter (Art. 7 LOPDGDD und Art. 8 DSGVO).
+- Wir empfehlen, dass Minderjährige optionale Dienste (LanguageTool, KI-Assistenten, Diktieren) nur unter Aufsicht von Lehrkräften oder ihrer Familie und gemäß den Vorgaben ihrer Schule nutzen.
+- Bilder oder personenbezogene Daten anderer Personen dürfen ohne deren Zustimmung oder die ihrer Vertreter nicht in geteilten Dokumenten veröffentlicht werden (Art. 92 LOPDGDD).
 
-## 12. Uso en centros educativos
+## 12. Nutzung an Schulen
 
-Cuando el profesorado o un centro utiliza {{siteName}} en su actividad docente, el responsable de los datos del alumnado tratados en esa actividad es el centro o la Administración educativa de la que depende, en el ejercicio de la función educativa (disposición adicional vigesimotercera de la Ley Orgánica 2/2006, de Educación, y art. 6.1.e RGPD). El titular de este sitio no accede a esos datos y, por tanto, no actúa como encargado del tratamiento respecto del contenido de los documentos.
+Wenn Lehrkräfte oder eine Schule {{siteName}} im Unterricht einsetzen, ist Verantwortlicher für die dabei verarbeiteten Daten der Schülerinnen und Schüler die Schule oder die zuständige Bildungsbehörde in Wahrnehmung des Bildungsauftrags (dreiundzwanzigste Zusatzbestimmung des spanischen Organgesetzes 2/2006 über das Bildungswesen und Art. 6 Abs. 1 lit. e DSGVO). Der Inhaber dieser Website hat keinen Zugriff auf diese Daten und ist daher hinsichtlich der Dokumentinhalte nicht Auftragsverarbeiter.
 
-Recomendamos a los centros incluir esta actividad en su registro de actividades de tratamiento (art. 30 RGPD y art. 31 LOPDGDD), informar a las familias y aplicar la configuración recomendada. Los centros que publiquen su propia instalación son responsables de ella. La [Información para centros educativos](schools.md) incluye un modelo de registro y un texto para las familias.
+Wir empfehlen Schulen, diese Tätigkeit in ihr Verzeichnis von Verarbeitungstätigkeiten aufzunehmen (Art. 30 DSGVO und Art. 31 LOPDGDD), die Familien zu informieren und die empfohlene Konfiguration anzuwenden. Schulen, die eine eigene Installation veröffentlichen, sind für diese verantwortlich. Die [Informationen für Schulen](schools.md) enthalten ein Muster für das Verzeichnis und einen Text für Familien.
 
-## 13. Seguridad
+## 13. Sicherheit
 
-- **Cifrado de extremo a extremo** de la colaboración: los mensajes de conexión se cifran con la clave del documento, que solo está en el enlace, y los datos viajan por canales WebRTC cifrados (DTLS).
-- **Firmas digitales (Ed25519)**: los cambios del documento y de los comentarios se firman y los demás navegadores rechazan los que no llevan una firma válida, de modo que un enlace de lectura o de comentario no permite editar.
-- **Sin copia central**: no hay un servidor con los documentos de todas las personas usuarias que pueda sufrir una brecha.
-- La aplicación se sirve por HTTPS y sus actualizaciones llegan del mismo sitio por HTTPS.
-- La seguridad de tu dispositivo depende de ti: bloquea el equipo, no compartas el perfil del navegador y, en ordenadores compartidos, borra tus documentos y cierra la sesión de Nextcloud al terminar.
-- Para comunicar una vulnerabilidad, consulta el archivo `/.well-known/security.txt` de este sitio.
+- **Ende-zu-Ende-Verschlüsselung** der Zusammenarbeit: Verbindungsnachrichten werden mit dem Dokumentschlüssel verschlüsselt, der sich nur im Link befindet, und die Daten werden über verschlüsselte WebRTC-Kanäle (DTLS) übertragen.
+- **Digitale Signaturen (Ed25519)**: Änderungen am Dokument und an Kommentaren werden signiert, und andere Browser verwerfen Änderungen ohne gültige Signatur; ein Ansichts- oder Kommentarlink erlaubt daher kein Bearbeiten.
+- **Keine zentrale Kopie**: Es gibt keinen Server mit den Dokumenten aller Nutzerinnen und Nutzer, der von einer Datenpanne betroffen sein könnte.
+- Die Anwendung wird über HTTPS ausgeliefert, und ihre Aktualisierungen kommen über HTTPS von derselben Website.
+- Für die Sicherheit Ihres Geräts sind Sie selbst verantwortlich: Sperren Sie Ihr Gerät, teilen Sie Ihr Browserprofil nicht und entfernen Sie auf gemeinsam genutzten Computern nach der Arbeit Ihre Dokumente und melden Sie sich von Nextcloud ab.
+- Um eine Sicherheitslücke zu melden, lesen Sie die Datei `/.well-known/security.txt` dieser Website.
 
-## 14. Cambios en esta política
+## 14. Änderungen dieser Erklärung
 
-Podemos actualizar esta política para reflejar cambios en la aplicación o en la normativa. La versión vigente es la publicada en esta página, con su fecha de actualización. Si un cambio afecta de forma relevante al tratamiento de datos, lo indicaremos en la aplicación.
+Wir können diese Erklärung aktualisieren, um Änderungen der Anwendung oder der Rechtslage Rechnung zu tragen. Maßgeblich ist die auf dieser Seite veröffentlichte Fassung mit ihrem Aktualisierungsdatum. Wenn eine Änderung die Datenverarbeitung wesentlich betrifft, weisen wir in der Anwendung darauf hin.

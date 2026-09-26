@@ -33,14 +33,6 @@ const word = (re: RegExp, fix: string, unless?: Pattern['unless']): Pattern => (
   unless: (m, text) => mention(m, text) || named(m, text) || !!unless?.(m, text),
 })
 
-// Only the last word of a matched phrase is replaced ("con el." → "con él.").
-const last = (re: RegExp, fix: string, unless?: Pattern['unless']): Pattern => ({
-  re,
-  fix: (m) => [m[0].replace(/[\p{L}]+$/u, fix)],
-  vars: (m) => ({ word: /[\p{L}]+$/u.exec(m[0])![0], fix }),
-  unless: (m, text) => mention(m, text) || !!unless?.(m, text),
-})
-
 const EL_VERBS =
   'es|era|fue|será|sería|está|estaba|estuvo|estará|tiene|tenía|tuvo|tendrá|dijo|dice|decía|hizo|hace|hacía|puede|podía|pudo|podrá|' +
   'quiere|quería|quiso|sabe|sabía|supo|vive|vivía|viene|venía|va|iba|ha|había|habrá|habría|cree|creía|piensa|pensaba|llegó|llega|' +
@@ -59,44 +51,42 @@ export const esDiacritic: Rule = {
     // él: an article is never followed by a verb, a pronoun or punctuation.
     word(w(`el${PUNCT}`, 'gu'), 'él'),
     word(w(`[Ee]l(?= (?:${EL_VERBS})(?![\\p{L}'’-]))`, 'gu'), 'él'),
-    last(w('(?:con|para|por|sin|contra|según|entre|hacia|sobre|ante|tras|desde|hasta) el(?= (?:y|o|ni|pero|porque|mientras|también|tampoco)(?![\\p{L}]))', 'giu'), 'él'),
+    word(w('(?<=(?:^|[^\\p{L}])(?:con|para|por|sin|contra|según|entre|hacia|sobre|ante|tras|desde|hasta) )el(?= (?:y|o|ni|pero|porque|mientras|también|tampoco)(?![\\p{L}]))', 'giu'), 'él'),
     // tú
     word(w(`tu${PUNCT}`, 'giu'), 'tú'),
     word(w(`tu(?= (?:${TU_VERBS})(?![\\p{L}'’-]))`, 'giu'), 'tú'),
     word(w('tu(?= (?:mismo|misma)(?:\\s*[.,;:!?]| (?:lo|la|los|las|le|les|te|me|has|puedes|sabes|dices|eres|debes|tienes)(?![\\p{L}])))', 'giu'), 'tú'),
-    last(w('entre tu(?= y (?:yo|él|ella)(?![\\p{L}]))', 'giu'), 'tú'),
+    word(w('(?<=(?:^|[^\\p{L}])entre )tu(?= y (?:yo|él|ella)(?![\\p{L}]))', 'giu'), 'tú'),
     // mí
     word(w(`mi${PUNCT}`, 'giu'), 'mí', (m, text) => /(?:^|[^\p{L}])(?:do|re|fa|sol|la|si)\s*,?\s*$/iu.test(before(m, text)) || /^\s*,?\s*(?:fa|sol|re|do)(?![\p{L}])/iu.test(after(m, text)) || /(?:^|[^\p{L}])nota\s*$/iu.test(before(m, text))),
-    last(w('(?:a|para|de|por|sin|contra|ante|hacia|según|sobre|entre|tras) mi(?= (?:me|también|tampoco|no me|no nos|no)(?![\\p{L}]))', 'giu'), 'mí'),
-    last(w('(?:a|para|de|por|sin|contra|ante|hacia|según|sobre|entre|tras) mi(?= (?:mismo|misma)(?:\\s*[.,;:!?]| me(?![\\p{L}])))', 'giu'), 'mí'),
+    word(w('(?<=(?:^|[^\\p{L}])(?:a|para|de|por|sin|contra|ante|hacia|según|sobre|entre|tras) )mi(?= (?:me|también|tampoco|no me|no nos|no)(?![\\p{L}]))', 'giu'), 'mí'),
+    word(w('(?<=(?:^|[^\\p{L}])(?:a|para|de|por|sin|contra|ante|hacia|según|sobre|entre|tras) )mi(?= (?:mismo|misma)(?:\\s*[.,;:!?]| me(?![\\p{L}])))', 'giu'), 'mí'),
     // sé (from saber)
-    last(w(`(?:no|yo|lo|ya|bien|tampoco) se${PUNCT}`, 'giu'), 'sé'),
-    last(w('(?:no|yo|ya|lo) se(?= (?:que|si|qué|cómo|dónde|cuándo|quién|quiénes|cuál|cuáles|cuánto|cuánta|cuántos|cuántas|por qué|mucho)(?![\\p{L}]))', 'giu'), 'sé'),
-    last(
-      w('(?:no|yo) se(?= \\p{Ll}+(?:ar|er|ir)(?![\\p{L}]))', 'giu'),
+    word(w(`(?<=(?:^|[^\\p{L}])(?:no|yo|lo|ya|bien|tampoco) )se${PUNCT}`, 'giu'), 'sé'),
+    word(w('(?<=(?:^|[^\\p{L}])(?:no|yo|ya|lo) )se(?= (?:que|si|qué|cómo|dónde|cuándo|quién|quiénes|cuál|cuáles|cuánto|cuánta|cuántos|cuántas|por qué|mucho)(?![\\p{L}]))', 'giu'), 'sé'),
+    word(w('(?<=(?:^|[^\\p{L}])(?:no|yo) )se(?= \\p{Ll}+(?:ar|er|ir)(?![\\p{L}]))', 'giu'),
       'sé',
       (m, text) => /^ (?:mujer|lugar|mar|placer|hogar|ayer|azar|bar|par|militar|popular|particular|familiar|ser)(?![\p{L}])/iu.test(after(m, text)),
     ),
     // té (the drink)
-    last(w('(?:taza|tazas|bolsita|bolsitas|hoja|hojas|tetera|teteras) de te', 'giu'), 'té'),
+    word(w('(?<=(?:^|[^\\p{L}])(?:taza|tazas|bolsita|bolsitas|hoja|hojas|tetera|teteras) de )te', 'giu'), 'té'),
     word(w('te(?= (?:verde|negro|rojo|blanco|helado|chai|matcha|con leche|con limón|de menta|de manzanilla)(?![\\p{L}]))', 'giu'), 'té'),
-    last(w(`(?:un|del) te(?=\\s*[.,;!?]| (?:verde|negro|rojo|blanco|caliente|frío|helado|con limón|con leche)(?![\\p{L}]))`, 'giu'), 'té'),
+    word(w(`(?<=(?:^|[^\\p{L}])(?:un|del) )te(?=\\s*[.,;!?]| (?:verde|negro|rojo|blanco|caliente|frío|helado|con limón|con leche)(?![\\p{L}]))`, 'giu'), 'té'),
     // más
-    last(
-      w('(?:lo|los|las|la|el|sin|de|cada vez|mucho|mucha|muchos|muchas|poco|algo|nada|aún|todavía|es|son|cuanto|qué|uno|una|nadie|alguien|ya no|no|un poco|bastante|cada día) mas', 'giu'),
+    word(w('(?<=(?:^|[^\\p{L}])(?:lo|los|las|la|el|sin|de|cada vez|mucho|mucha|muchos|muchas|poco|algo|nada|aún|todavía|es|son|cuanto|qué|uno|una|nadie|alguien|ya no|no|un poco|bastante|cada día) )mas', 'giu'),
       'más',
       (m) => !m[0].endsWith('mas'),
     ),
     word(w('mas(?= (?:o menos|que nunca|tarde|temprano|pronto|bien|allá|adelante|arriba|abajo|lejos|cerca|grande|pequeño|pequeña|importante|de lo que|de la cuenta|veces|que nada|información|datos)(?![\\p{L}]))', 'giu'), 'más'),
     // sí
-    last(w('(?:eso|esto|claro que|ya lo creo que|a que) si(?=\\s*[.,;!?…])', 'giu'), 'sí'),
-    last(w('(?:creo que|dijo que|dice que|decir que|contestó que|respondió que|parece que|pienso que|digo que) si(?=\\s*[.!?…])', 'giu'), 'sí'),
+    word(w('(?<=(?:^|[^\\p{L}])(?:eso|esto|claro que|ya lo creo que|a que) )si(?=\\s*[.,;!?…])', 'giu'), 'sí'),
+    word(w('(?<=(?:^|[^\\p{L}])(?:creo que|dijo que|dice que|decir que|contestó que|respondió que|parece que|pienso que|digo que) )si(?=\\s*[.!?…])', 'giu'), 'sí'),
     {
       re: w('(de|en|por|para|entre|sobre|a|consigo) si (mismo|misma|mismos|mismas)', 'giu'),
       fix: (m) => (m[1].toLowerCase() === 'a' ? [`${m[1]} sí ${m[2]}`, 'asimismo'] : [`${m[1]} sí ${m[2]}`]),
       vars: () => ({ word: 'si', fix: 'sí' }),
     },
-    last(w(`(?:volver|volvió|volvía|volvieron|vuelve|vuelven) en si${PUNCT}`, 'giu'), 'sí'),
+    word(w(`(?<=(?:^|[^\\p{L}])(?:volver|volvió|volvía|volvieron|vuelve|vuelven) en )si${PUNCT}`, 'giu'), 'sí'),
     // aun (= incluso) / aún (= todavía)
     { re: w('aún así(?=\\s*,)', 'giu'), fix: () => ['aun así'], vars: () => ({ word: 'aún', fix: 'aun' }) },
     { re: w('aún cuando', 'giu'), fix: () => ['aun cuando'], vars: () => ({ word: 'aún', fix: 'aun' }) },

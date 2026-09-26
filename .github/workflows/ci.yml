@@ -44,3 +44,19 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 7
+
+  relay:
+    name: Relay (Go)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: relay
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: relay/go.mod
+          cache-dependency-path: relay/go.sum
+      - run: go vet ./...
+      - run: go test ./...

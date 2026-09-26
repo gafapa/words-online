@@ -27,7 +27,7 @@ var statusPage = mustTemplate("status", `<!doctype html>
 
 <section class="card">
   <h2>Relay address</h2>
-  <p>Paste it in Ofimeo: <b>Help → Connection test… → Use a school relay</b>.</p>
+  <p>Paste it in Ofimeo: <b>Help → Connection test… → School relay</b>.</p>
   <div class="addr"><code id="addr">{{.RelayAddress}}</code><button type="button" data-copy="addr">Copy</button></div>
 </section>
 
@@ -48,7 +48,7 @@ var statusPage = mustTemplate("status", `<!doctype html>
   <div class="grid">
     <div class="stat"><b id="clients">{{.Nostr.Clients}}</b><span class="muted">connected browsers</span></div>
     <div class="stat"><b id="subs">{{.Nostr.Subscriptions}}</b><span class="muted">subscriptions</span></div>
-    <div class="stat"><b id="alloc">{{.Allocations}}</b><span class="muted">TURN relayed connections</span></div>
+    <div class="stat"><b id="alloc">{{.Allocations}}</b><span class="muted">relayed connections (TURN)</span></div>
     <div class="stat"><b id="events">{{.Nostr.Received}}</b><span class="muted">signaling messages</span></div>
   </div>
 </section>

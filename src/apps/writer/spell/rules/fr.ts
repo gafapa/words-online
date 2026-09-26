@@ -68,6 +68,15 @@ export const frConfusions: Rule = {
     { re: w('si (il|ils)'), fix: (m) => [`s'${m[1]}`] },
     { re: w('c[\'’]et'), fix: (m) => [`c${m[0][1]}est`] },
     { re: w('(ils|elles) on'), fix: (m) => [`${m[1]} ont`] },
+    { re: w('quant (il|ils|elle|elles|on|je|tu|nous|vous|j[\'’])'), fix: (m) => [`quand ${m[1]}`] },
+    {
+      re: w('tout (les|ces|mes|tes|ses|nos|vos|leurs) (jours|ans|mois|soirs|matins|deux|trois|quatre|élèves|enfants|gens|autres|week-ends|samedis|dimanches|lundis)'),
+      fix: (m) => [`tous ${m[1]} ${m[2]}`],
+    },
+    {
+      re: w('toute (les|ces|mes|tes|ses|nos|vos|leurs) (fois|semaines|deux|trois|filles|personnes|autres|années|heures|minutes|classes)'),
+      fix: (m) => [`toutes ${m[1]} ${m[2]}`],
+    },
   ]),
 }
 
@@ -80,6 +89,13 @@ export const frStyle: Rule = {
     { re: w('au jour d[\'’]aujourd[\'’]hui'), fix: () => ["aujourd'hui"] },
     { re: w('monter en haut'), fix: () => ['monter'] },
     { re: w('descendre en bas'), fix: () => ['descendre'] },
+    { re: w('(prévoir|prévu|prévue|prévus|prévues|prévoit|prévoient) à l[\'’]avance'), fix: (m) => [m[1]] },
+    { re: w('voire même'), fix: () => ['voire'] },
+    { re: w('comme par exemple'), fix: () => ['par exemple', 'comme'] },
+    { re: w('(reculer|recule|reculent|recula) en arrière'), fix: (m) => [m[1]] },
+    { re: w('puis ensuite'), fix: () => ['puis', 'ensuite'] },
+    { re: w('(se réunir|se réunissent|nous réunir|se sont réunis) ensemble'), fix: (m) => [m[1]] },
+    { re: w('(collaborer|collaborent|collaborons) ensemble'), fix: (m) => [m[1]] },
   ]),
 }
 

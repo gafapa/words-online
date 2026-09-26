@@ -3,9 +3,9 @@
 // the documented slots instead of writing these menus by hand.
 //
 // File (fileMenu):
-//   New ▸ (one item per app) · Open… Ctrl+O · Open from Nextcloud… · All documents
+//   New ▸ (one item per app) · Open… Ctrl+O · Open from Nextcloud… · All documents · Storage and backup…
 //   [slots.open]
-//   ─ Make a copy · Save to Nextcloud Ctrl+S (when linked) / Save to Nextcloud… · Save to Nextcloud as… (when linked)
+//   ─ Make a copy · Save as template… · Save to Nextcloud Ctrl+S (when linked) / Save to Nextcloud… · Save to Nextcloud as… (when linked)
 //     · Nextcloud account… · Download as ▸ (session.hooks.exportFormats, then `download` extras)
 //   [slots.save]
 //   ─ [slots.print: e.g. Page setup…] · Print… Ctrl+P
@@ -84,9 +84,11 @@ export function fileMenu(session: Session, options: FileMenuOptions): Menu {
       { label: t('Open…'), shortcut: mod('O'), run: options.openFile },
       { label: t('Open from Nextcloud…'), enabled: online, run: () => void openFromNextcloud() },
       { label: t('All documents'), run: () => (location.href = homePath()) },
+      { label: t('Storage and backup…'), run: () => void import('../home/storage').then((m) => m.openStorageDialog()) },
       ...(slots.open ?? []),
       '-',
       { label: t('Make a copy'), run: () => void makeCopy(session) },
+      { label: t('Save as template…'), run: () => void import('../home/save-template').then((m) => m.saveAsTemplate(session)) },
       { label: t('Save to Nextcloud'), shortcut: mod('S'), visible: linked, enabled: online, run: () => void saveToNextcloud(session) },
       { label: t('Save to Nextcloud…'), visible: () => !linked(), enabled: online, run: () => void saveToNextcloudAs(session) },
       { label: t('Save to Nextcloud as…'), visible: linked, enabled: online, run: () => void saveToNextcloudAs(session) },

@@ -28,6 +28,8 @@ export const repeatedWord: Rule = {
       const a = list[i - 1]
       const b = list[i]
       if (a.word.toLowerCase() !== b.word.toLowerCase()) continue
+      // "a A Coruña", "de De la Fuente": the second word starts a name.
+      if (a.word !== b.word && /^\p{Lu}/u.test(b.word) && /^\p{Ll}/u.test(a.word)) continue
       const between = text.slice(a.end, b.start)
       if (!/^[ \t ]+$/.test(between)) continue
       if (REPEAT_OK[p.lang].has(a.word.toLowerCase()) || a.word.length < 2 && !/^[aeoy]$/i.test(a.word)) continue
