@@ -14,7 +14,7 @@ Este aviso legal regula el acceso y el uso del sitio web y de la aplicación {{s
 {{/if}}{{#if owner.registry}}| Datos registrales | {{owner.registry}} |
 {{/if}}| Sitio web | {{siteUrl}} |
 
-{{#if dpo.email}}Delegado de Protección de Datos: {{dpo.name}} ({{dpo.email}}).{{/if}}
+{{#if dpo.email}}Delegado de Protección de Datos: {{dpo.name}} ({{dpo.email}}).{{else}}El titular no ha designado un Delegado de Protección de Datos, por no estar obligado a ello (art. 37 RGPD y art. 34 LOPDGDD). Para cualquier cuestión sobre protección de datos puedes escribir a {{privacyEmail}}.{{/if}}
 
 ## 2. Objeto
 
@@ -50,4 +50,4 @@ El titular puede modificar este aviso legal, así como la configuración, la pre
 
 ## 8. Legislación aplicable y jurisdicción
 
-Este aviso se rige por la legislación española. Para cualquier controversia, las partes se someten a {{jurisdiction}}, salvo que la normativa aplicable disponga otro fuero; en particular, cuando la persona usuaria tenga la condición de consumidora, será competente el juzgado de su domicilio. Si el titular es una Administración pública, se estará a lo dispuesto en la normativa administrativa aplicable.
+Este aviso se rige por la legislación española. Para cualquier controversia serán competentes {{#if jurisdiction}}{{jurisdiction}}, salvo que la normativa aplicable disponga otro fuero{{else}}los juzgados y tribunales que correspondan conforme a la legislación aplicable{{/if}}; en particular, cuando la persona usuaria tenga la condición de consumidora, será competente el juzgado de su domicilio. Si el titular es una Administración pública, se estará a lo dispuesto en la normativa administrativa aplicable.

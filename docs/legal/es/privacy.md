@@ -20,8 +20,8 @@
 - NIF/CIF: {{owner.nif}}
 - Domicilio: {{owner.address}}
 - Correo electrónico para cuestiones de privacidad: {{privacyEmail}}
-{{#if dpo.email}}- Delegado de Protección de Datos: {{dpo.name}}, {{dpo.email}}
-{{/if}}
+- Delegado de Protección de Datos: {{#if dpo.email}}{{dpo.name}}, {{dpo.email}}{{else}}no se ha designado, por no ser obligatorio para el titular (art. 37 RGPD y art. 34 LOPDGDD); las consultas sobre protección de datos se atienden en {{privacyEmail}}{{/if}}
+
 Cuando un centro educativo, una Administración educativa u otra entidad publica su propia instalación de {{siteName}}, esa entidad es la responsable del tratamiento en su instalación y debe adaptar esta política con sus datos.
 
 ## 3. Cómo funciona {{siteName}} y qué datos recibe el titular

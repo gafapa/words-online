@@ -145,7 +145,7 @@ function verdictTitle(v: Verdict): string {
 }
 
 const STATE_LABEL: Record<CheckState, () => string> = {
-  ok: () => t('OK'),
+  ok: () => t('Passed'),
   warn: () => t('Warning'),
   fail: () => t('Problem'),
   skip: () => t('Not tested'),

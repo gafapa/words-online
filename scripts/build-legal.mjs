@@ -54,10 +54,14 @@ const LABELS = {
 
 // Values that fall back to another one when empty.
 const FALLBACK = { privacyEmail: 'owner.email', 'accessibility.contactEmail': 'owner.email' }
-const get = (key) => {
-  const v = key.split('.').reduce((o, k) => (o == null ? undefined : o[k]), config)
+const LOCALES = { es: 'es-ES', gl: 'gl-ES', en: 'en-GB', fr: 'fr-FR', de: 'de-DE' }
+// A value may be one per language ({ "es": …, "en": … }); ISO dates are written out in the page's language.
+const get = (key, lang = 'es') => {
+  let v = key.split('.').reduce((o, k) => (o == null ? undefined : o[k]), config)
+  if (v && typeof v === 'object') v = v[lang] ?? v.es ?? v.en
   const s = v == null ? '' : String(v).trim()
-  return s || (FALLBACK[key] ? get(FALLBACK[key]) : '')
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(`${s}T12:00:00Z`).toLocaleDateString(LOCALES[lang], { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+  return s || (FALLBACK[key] ? get(FALLBACK[key], lang) : '')
 }
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -196,7 +200,7 @@ const missing = new Map() // key -> pages
 function context(lang, page) {
   return {
     value(key) {
-      const v = get(key)
+      const v = get(key, lang)
       if (v) return esc(v)
       if (!missing.has(key)) missing.set(key, new Set())
       missing.get(key).add(`${lang}/${page}`)
@@ -226,16 +230,15 @@ for (const lang of LANGS) {
     const file = join(src, lang, `${page}.md`)
     if (!existsSync(file)) throw new Error(`build-legal: missing ${file}`)
     const ctx = context(lang, page)
-    const before = new Set(missing.keys())
     const text = conditionals(readFileSync(file, 'utf8'))
     const { html, headings } = markdown(text, ctx)
     const title = (/<h1[^>]*>(.*?)<\/h1>/.exec(html) ?? [, page])[1]
     const lead = (/<p>(.*?)<\/p>/.exec(html) ?? [, ''])[1]
-    const draft = [...missing].some(([, pages]) => pages.has(`${lang}/${page}`)) || before.size !== missing.size
+    const draft = [...missing.values()].some((pages) => pages.has(`${lang}/${page}`))
     return { page, title, lead, html, headings, draft }
   })
   const nav = docs.map(({ page, title }) => ({ page, title }))
-  const updated = get('lastUpdated') ? esc(get('lastUpdated')) : context(lang, 'index').value('lastUpdated')
+  const updated = context(lang, 'index').value('lastUpdated')
   for (const d of docs) {
     // A table of contents for the long documents.
     const toc = d.headings.length >= 4 ? `<details class="toc" open><summary>${UI[lang].toc}</summary><ol>${d.headings.map((h) => `<li><a href="#${h.id}">${h.content}</a></li>`).join('')}</ol></details>` : ''
@@ -271,7 +274,7 @@ const notices = join(root, 'THIRD_PARTY_NOTICES.md')
 if (existsSync(notices)) {
   const { html } = markdown(readFileSync(notices, 'utf8'), { value: (k) => `{{${k}}}`, link: (h) => h })
   const body = `${html}`
-  writeFileSync(join(out, 'licenses.html'), frame({ lang: 'en', page: 'licenses', title: 'Third-party notices', body, nav: null, css: '' }).replace(/href="\.\.\/icons/, 'href="../icons'))
+  writeFileSync(join(out, 'licenses.html'), frame({ lang: 'en', page: 'licenses', title: 'Third-party notices', body, nav: null, css: '' }))
 } else console.warn('build-legal: THIRD_PARTY_NOTICES.md not found; run scripts/third-party-notices.mjs first')
 
 // /.well-known/security.txt (RFC 9116).
