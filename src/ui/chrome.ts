@@ -8,6 +8,7 @@ import { t } from '../core/i18n'
 import { updateAuthor, type Access, type Session } from '../core/session'
 import * as store from '../core/store'
 import { setupAutoVersions } from '../core/versions'
+import { handInToShare, setupNextcloud } from './nextcloud'
 import { el, promptText, showDialog, toast } from './widgets'
 import './edu.css'
 
@@ -101,6 +102,7 @@ export function setupChrome(session: Session, untitled: string): void {
   document.getElementById('btn-handin')?.addEventListener('click', () => void handIn(session, untitled))
 
   setupAutoVersions(session)
+  setupNextcloud(session)
 }
 
 type LinkChoice = Access | 'copy'
@@ -173,9 +175,10 @@ export async function handIn(session: Session, untitled: string): Promise<void> 
   }
   const title = String(session.doc.getMap('meta').get('title') || untitled)
   let fileName = ''
+  let zip: Awaited<ReturnType<typeof buildHandIn>>
   try {
     toast(t('Preparing your files…'))
-    const zip = await buildHandIn(session, title, user.name)
+    zip = await buildHandIn(session, title, user.name)
     downloadBlob(zip.blob, zip.name)
     fileName = zip.name
   } catch (err) {
@@ -187,12 +190,15 @@ export async function handIn(session: Session, untitled: string): Promise<void> 
     {},
     el('p', { textContent: t('Your work was downloaded as “{name}”.', { name: fileName }) }),
     el('p', { class: 'hint', textContent: t('Upload or send this file to your teacher. If a PDF is also needed, use “Print / Save as PDF” and choose “Save as PDF” as the printer.') }),
+    el('p', { class: 'hint', textContent: t('If your teacher gave you a Nextcloud upload link, you can also send the file there directly.') }),
   )
   const choice = await showDialog(t('Hand in'), body, [
+    { label: t('Upload to a Nextcloud share link…'), value: 'nextcloud' },
     { label: t('Print / Save as PDF'), value: 'print' },
     { label: t('Done'), value: 'ok', primary: true },
   ])
   if (choice === 'print') setTimeout(() => printDocument(session), 100)
+  if (choice === 'nextcloud') await handInToShare(session, zip)
 }
 
 // Automatic names ("Guest 123", in any language) are replaced by a real one when handing in.

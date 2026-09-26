@@ -65,3 +65,10 @@ body:has(.home) { overflow: auto; }
 .offline-pending { color: var(--muted); font-size: 13px; white-space: nowrap; }
 
 .access-tag { font-size: 11px; color: #7a4f01; background: #fef7e0; border: 1px solid #f4d58d; border-radius: 10px; padding: 1px 7px; margin-left: 8px; font-weight: 400; }
+
+.home-open-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.home-open:disabled { opacity: 0.55; cursor: not-allowed; }
+.home-cloud { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 18px; padding: 5px 12px; }
+.home-cloud:hover { background: var(--hover); }
+.cloud-tag { font-size: 11px; color: #0b5394; background: #e8f0fe; border: 1px solid #aecbfa; border-radius: 10px; padding: 1px 7px; margin-left: 8px; font-weight: 400; }
+@media (max-width: 640px) { .home-cloud .btn-label { display: none; } }

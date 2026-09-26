@@ -7,7 +7,9 @@ import { isOfflineCapable, whenOfflineReady } from '../core/offline'
 import { languageSelect, locale, t } from '../core/i18n'
 import * as store from '../core/store'
 import { accessibilityButton } from '../ui/accessibility'
-import { el, showContextMenu, toast } from '../ui/widgets'
+import { openAccountDialog, openFromNextcloud } from '../ui/nextcloud'
+import { el, icon, showContextMenu, toast } from '../ui/widgets'
+import { Cloud } from 'lucide'
 import './home.css'
 
 type Filter = store.DocType | 'all'
@@ -44,6 +46,20 @@ export function mountHome(root: HTMLElement): void {
   const openButton = el('button', { type: 'button', class: 'home-open', textContent: t('Open file…') })
   fileInput.accept = ALL_ACCEPT
   openButton.addEventListener('click', () => fileInput.click())
+
+  // Nextcloud: open files from it, account settings (needs a connection).
+  const cloudOpen = el('button', { type: 'button', class: 'home-open', textContent: t('Open from Nextcloud…') })
+  cloudOpen.addEventListener('click', () => void openFromNextcloud())
+  const cloudButton = el('button', { type: 'button', class: 'home-cloud', title: t('Nextcloud account') }, icon(Cloud, 18), el('span', { class: 'btn-label', textContent: 'Nextcloud' }))
+  cloudButton.setAttribute('aria-label', t('Nextcloud account'))
+  cloudButton.addEventListener('click', () => void openAccountDialog())
+  const renderOnline = () => {
+    cloudOpen.disabled = !navigator.onLine
+    cloudOpen.title = navigator.onLine ? t('Open a file from your Nextcloud') : t('You are offline. Nextcloud can be used again when you are connected.')
+  }
+  window.addEventListener('online', renderOnline)
+  window.addEventListener('offline', renderOnline)
+  renderOnline()
 
   const newCards = el(
     'div',
@@ -116,6 +132,7 @@ export function mountHome(root: HTMLElement): void {
             d.access === 'view' || d.access === 'comment'
               ? el('span', { class: 'access-tag', textContent: d.access === 'view' ? t('View only') : t('Can comment') })
               : null,
+            d.remote ? el('span', { class: 'cloud-tag', textContent: 'Nextcloud', title: d.remote.path }) : null,
           ),
           el('span', { class: 'doc-type', textContent: app.name }),
           el('span', { class: 'doc-date', textContent: formatDate(d.updated), title: new Date(d.updated).toLocaleString(locale) }),
@@ -160,6 +177,7 @@ export function mountHome(root: HTMLElement): void {
         el('h1', { textContent: 'Words Online' }),
         el('span', { class: 'spacer' }),
         offlineControl(),
+        cloudButton,
         languageSelect('home-language'),
         accessibilityButton(true),
         nameInput,
@@ -167,7 +185,7 @@ export function mountHome(root: HTMLElement): void {
       el(
         'section',
         { class: 'home-new' },
-        el('div', { class: 'home-inner' }, el('div', { class: 'home-section-title' }, el('h2', { textContent: t('Start something new') }), openButton, fileInput), newCards),
+        el('div', { class: 'home-inner' }, el('div', { class: 'home-section-title' }, el('h2', { textContent: t('Start something new') }), el('span', { class: 'home-open-buttons' }, openButton, cloudOpen), fileInput), newCards),
       ),
       templatesSection(),
       el(

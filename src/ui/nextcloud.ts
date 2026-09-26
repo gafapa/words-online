@@ -85,6 +85,12 @@ function formatDate(time: number): string {
   return date.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+// Replaces a result area's content and scrolls it into view (dialogs can be tall).
+function show(area: HTMLElement, ...nodes: Node[]): void {
+  area.replaceChildren(...nodes)
+  requestAnimationFrame(() => area.scrollIntoView({ block: 'nearest', behavior: 'smooth' }))
+}
+
 const closeDialogOf = (node: Element, value: string) => (node.closest('dialog') as HTMLDialogElement | null)?.close(value)
 
 // Enter in a text field would submit the dialog with its first button.
@@ -251,14 +257,14 @@ const privacyNote = () =>
 // Settings dialog: connect (Login Flow v2 or app password), test, autosave, sign out.
 export async function openAccountDialog(): Promise<NcAccount | undefined> {
   const body = el('div', { class: 'nc-account' })
-  let polling: AbortController | null = null
+  let polling = null as AbortController | null
 
   const connectedView = (account: NcAccount): HTMLElement => {
     const result = el('div')
     const test = button(t('Test connection'), async () => {
-      result.replaceChildren(el('p', { class: 'hint', textContent: t('Testing…') }))
+      show(result, el('p', { class: 'hint', textContent: t('Testing…') }))
       const d = await nc.diagnose(account.server, account.loginName, account.appPassword)
-      result.replaceChildren(diagnosisView(d))
+      show(result, diagnosisView(d))
     }, 'nc-btn', RefreshCw)
     const signOut = button(t('Sign out'), async () => {
       if (!confirm(t('Sign out of Nextcloud in this browser? Documents stay in this browser; they are no longer saved to Nextcloud until you sign in again.'))) return
@@ -305,7 +311,7 @@ export async function openAccountDialog(): Promise<NcAccount | undefined> {
   }
 
   const signInView = (): HTMLElement => {
-    const server = el('input', { class: 'field', type: 'url', placeholder: 'https://cloud.school.org', value: readLocal(SERVER_KEY), autocomplete: 'url' })
+    const server = el('input', { class: 'field', type: 'url', placeholder: 'https://cloud.school.org', value: readLocal(SERVER_KEY) })
     server.setAttribute('aria-label', t('Nextcloud address'))
     const user = el('input', { class: 'field', autocomplete: 'username' })
     const password = el('input', { class: 'field', type: 'password', autocomplete: 'off' })
@@ -326,13 +332,13 @@ export async function openAccountDialog(): Promise<NcAccount | undefined> {
       try {
         serverUrl = nc.normalizeServer(server.value)
       } catch (err) {
-        result.replaceChildren(errorView(err))
+        show(result, errorView(err))
         return
       }
       // Opened now, while the click still allows pop-ups; the address comes later.
       const win = window.open('', '_blank')
       busy(true)
-      result.replaceChildren(el('p', { class: 'hint', textContent: t('Connecting…') }))
+      show(result, el('p', { class: 'hint', textContent: t('Connecting…') }))
       try {
         const flow = await nc.startLoginFlow(serverUrl)
         if (win) {
@@ -342,7 +348,8 @@ export async function openAccountDialog(): Promise<NcAccount | undefined> {
         polling = new AbortController()
         const cancel = button(t('Cancel'), () => polling?.abort())
         const link = el('a', { href: flow.login, target: '_blank', rel: 'noopener', textContent: t('Open the Nextcloud login page') })
-        result.replaceChildren(
+        show(
+          result,
           el('div', { class: 'nc-result' }, el('p', { textContent: t('Log in to Nextcloud in the other tab and grant access. This window continues by itself.') }), el('p', {}, link), cancel),
         )
         cancel.disabled = false
@@ -351,17 +358,18 @@ export async function openAccountDialog(): Promise<NcAccount | undefined> {
       } catch (err) {
         win?.close()
         if ((err as Error).name === 'AbortError') {
-          result.replaceChildren()
+          show(result)
         } else if (err instanceof nc.NcError && err.kind === 'cors') {
           // Tell apart: no Nextcloud, WebDAV blocked, or only the login flow blocked.
           const d = await nc.diagnose(serverUrl)
-          result.replaceChildren(
+          show(
+          result,
             d.ok
               ? diagnosisView({ ok: false, kind: undefined, message: t('This Nextcloud allows file access from this site but not the login page. Use an app password below.') })
               : diagnosisView(d),
           )
         } else {
-          result.replaceChildren(errorView(err))
+          show(result, errorView(err))
         }
       } finally {
         polling = null
@@ -371,13 +379,13 @@ export async function openAccountDialog(): Promise<NcAccount | undefined> {
 
     const connect = async () => {
       busy(true)
-      result.replaceChildren(el('p', { class: 'hint', textContent: t('Testing…') }))
+      show(result, el('p', { class: 'hint', textContent: t('Testing…') }))
       try {
         const d = await nc.diagnose(server.value, user.value.trim(), password.value.trim())
         if (d.ok && d.server && d.user) await finish(d.server, user.value.trim(), password.value.trim(), false, { user: d.user, displayName: d.displayName })
-        else result.replaceChildren(diagnosisView(d))
+        else show(result, diagnosisView(d))
       } catch (err) {
-        result.replaceChildren(errorView(err))
+        show(result, errorView(err))
       } finally {
         busy(false)
       }
@@ -455,7 +463,7 @@ async function browseDialog(
   let sortKey: SortKey = 'name'
   let ascending = true
   let query = ''
-  let loading: AbortController | null = null
+  let loading = null as AbortController | null
 
   const crumbs = el('nav', { class: 'nc-crumbs' })
   crumbs.setAttribute('aria-label', t('Folder'))
@@ -1021,16 +1029,16 @@ export async function handInToShare(session: Session, file: { name: string; blob
   const run = async () => {
     if (done) return closeDialogOf(result, 'ok')
     upload.disabled = true
-    result.replaceChildren(el('p', { class: 'hint', textContent: t('Uploading…') }))
+    show(result, el('p', { class: 'hint', textContent: t('Uploading…') }))
     try {
       const name = await nc.uploadToShare(url.value, password.value, file.name, file.blob)
       writeLocal(shareKey, url.value.trim())
       writeLocal(SHARE_KEY, url.value.trim())
       done = true
       upload.replaceChildren(el('span', { textContent: t('Done') }))
-      result.replaceChildren(diagnosisView({ ok: true, message: t('“{name}” was uploaded to the shared folder.', { name }) }))
+      show(result, diagnosisView({ ok: true, message: t('“{name}” was uploaded to the shared folder.', { name }) }))
     } catch (err) {
-      result.replaceChildren(errorView(err))
+      show(result, errorView(err))
       if (err instanceof nc.NcError && err.kind === 'share-password') password.focus()
     } finally {
       upload.disabled = false

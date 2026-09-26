@@ -1,5 +1,5 @@
-// Shared document actions for every app's File menu: "Make a copy",
-// "Save version…" and "Version history…".
+// Shared document actions for every app's File menu: Nextcloud (open, save,
+// account), "Make a copy", "Save version…" and "Version history…".
 //
 //   createMenuBar(…, [{ label: 'File', items: [..., '-', ...documentMenuItems(session)] }])
 
@@ -7,11 +7,14 @@ import { copyDocument, copyTitle, createCopyFromState } from '../core/copy'
 import { locale, t } from '../core/i18n'
 import type { Session } from '../core/session'
 import { listVersions, restoreVersion, saveVersion, versionsArray, type Version } from '../core/versions'
+import { nextcloudMenuItems } from './nextcloud'
 import { el, promptText, showDialog, toast, type MenuEntry } from './widgets'
 import './edu.css'
 
 export function documentMenuItems(session: Session): MenuEntry[] {
   return [
+    ...nextcloudMenuItems(session),
+    '-',
     { label: t('Make a copy'), run: () => void makeCopy(session) },
     { label: t('Save version…'), enabled: () => session.canEdit, run: () => void saveNamedVersion(session) },
     { label: t('Version history…'), run: () => void openVersionHistory(session) },

@@ -13,6 +13,7 @@ import { homePath, newDocPath } from '../../core/router'
 import type { Session } from '../../core/session'
 import { setupChrome } from '../../ui/chrome'
 import { renderShell } from '../../ui/shell'
+import { nextcloudActions } from '../../ui/nextcloud'
 import { makeCopy, openVersionHistory, saveNamedVersion } from '../../ui/versions'
 import { el, toast } from '../../ui/widgets'
 import { DrawSync } from './sync'
@@ -83,6 +84,7 @@ export function mountDraw(session: Session, root: HTMLElement): void {
     }
 
     const item = (label: string, onSelect: () => void) => h(MainMenu.Item, { onSelect, children: label })
+    const cloud = nextcloudActions(session)
     return h(
       Excalidraw,
       {
@@ -113,6 +115,11 @@ export function mountDraw(session: Session, root: HTMLElement): void {
         item(t('Open file (.excalidraw)…'), () => fileInput.click()),
         item(t('All documents'), () => (location.href = homePath())),
         item(t('Share…'), () => document.getElementById('btn-share')!.click()),
+        h(MainMenu.Separator),
+        item(t('Open from Nextcloud…'), cloud.open),
+        item(t('Save to Nextcloud'), cloud.save),
+        item(t('Save to Nextcloud as…'), cloud.saveAs),
+        item(t('Nextcloud account…'), cloud.account),
         h(MainMenu.Separator),
         item(t('Make a copy'), () => void makeCopy(session)),
         session.canEdit ? item(t('Save version…'), () => void saveNamedVersion(session)) : null,
