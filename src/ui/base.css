@@ -75,6 +75,7 @@ input, select, textarea { font: inherit; color: inherit; }
   background: var(--surface); border-radius: 6px; box-shadow: var(--shadow); padding: 6px 0;
 }
 .popover { padding: 8px; }
+.menu-panel { max-width: calc(100vw - 8px); }
 .menu-list { display: flex; flex-direction: column; min-width: 240px; }
 .popover .menu-list { min-width: 120px; }
 .menu-row {
@@ -216,6 +217,9 @@ dialog.dlg { background: var(--surface); color: var(--text); }
   .menubar { order: 3; flex-basis: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
   .menubar::-webkit-scrollbar { display: none; }
   .menubar-item { flex: none; padding: 2px 6px; }
+  /* Long labels (German, French) wrap instead of leaving the screen. */
+  .menu-list { min-width: 200px; }
+  .menu-row { white-space: normal; }
 }
 
 /* ---------- Print ---------- */

@@ -1,12 +1,14 @@
 // Template gallery on the home screen: filter by app, pick the content
-// language (Spanish / Galician), click a card to create and open the document.
+// language (Spanish, Galician, French, German), click a card to create and open
+// the document. Templates tied to Spanish regulations exist in Spanish and
+// Galician only and are hidden for the other content languages.
 
 import { appInfo } from '../apps/registry'
 import { language, t } from '../core/i18n'
 import type { DocType } from '../core/store'
 import { el, toast } from '../ui/widgets'
 import { TEMPLATES } from './catalog'
-import type { Lang, Template } from './types'
+import { LANG_NAMES, type Lang, type Template } from './types'
 import './gallery.css'
 
 const LANG_KEY = 'wo-template-lang'
@@ -15,13 +17,15 @@ const COLLAPSED_COUNT = 8
 function initialLang(): Lang {
   try {
     const saved = localStorage.getItem(LANG_KEY)
-    if (saved === 'es' || saved === 'gl') return saved
+    if (saved && saved in LANG_NAMES) return saved as Lang
   } catch {
     // Storage may be unavailable (private mode); fall back to the default.
   }
-  // The interface language, or Galician when the browser prefers it.
-  if (language === 'gl' || language === 'es') return language
-  return (navigator.languages ?? [navigator.language]).some((l) => l.toLowerCase().startsWith('gl')) ? 'gl' : 'es'
+  // The interface language; with the English interface, the first content
+  // language the browser prefers, else Spanish.
+  if (language !== 'en') return language
+  const code = (navigator.languages ?? [navigator.language]).map((l) => l.toLowerCase().slice(0, 2)).find((l) => l in LANG_NAMES)
+  return (code as Lang | undefined) ?? 'es'
 }
 
 export function mountTemplates(container: HTMLElement): void {
@@ -34,12 +38,7 @@ export function mountTemplates(container: HTMLElement): void {
   langSwitch.setAttribute('aria-label', t('Template language'))
   const renderLang = () =>
     langSwitch.replaceChildren(
-      ...(
-        [
-          ['es', 'Español'],
-          ['gl', 'Galego'],
-        ] as [Lang, string][]
-      ).map(([value, label]) => {
+      ...(Object.entries(LANG_NAMES) as [Lang, string][]).map(([value, label]) => {
         const b = el('button', { type: 'button', class: lang === value ? 'active' : '', textContent: label })
         b.setAttribute('role', 'radio')
         b.setAttribute('aria-checked', String(lang === value))
@@ -85,7 +84,7 @@ export function mountTemplates(container: HTMLElement): void {
   })
 
   const renderCards = () => {
-    const list = TEMPLATES.filter((tpl) => filter === 'all' || tpl.app === filter)
+    const list = TEMPLATES.filter((tpl) => tpl.langs.includes(lang) && (filter === 'all' || tpl.app === filter))
     const collapsible = filter === 'all' && list.length > COLLAPSED_COUNT
     const shown = collapsible && !expanded ? list.slice(0, COLLAPSED_COUNT) : list
     grid.replaceChildren(...shown.map((tpl) => card(tpl)))
@@ -114,7 +113,7 @@ export function mountTemplates(container: HTMLElement): void {
       busy = true
       button.classList.add('busy')
       button.setAttribute('aria-busy', 'true')
-      toast(t('Creating “{name}”…', { name: tpl.name[lang] }))
+      toast(t('Creating “{name}”…', { name: tpl.name[lang] ?? '' }))
       try {
         location.href = await tpl.create(lang)
       } catch (err) {

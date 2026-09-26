@@ -105,8 +105,8 @@ function arrow(elements: Element[], id: string, from: Element, to: Element): voi
 function brainstorm(lang: Lang): Element[] {
   const L = pick(lang)
   const els: Element[] = []
-  els.push(text('title', L('Lluvia de ideas', 'Chuvia de ideas'), 300, 100, 400, 45, 36))
-  labelled(els, 'topic', 'ellipse', L('Tema central', 'Tema central'), 380, 380, 240, 130, '#a5d8ff', 28)
+  els.push(text('title', L('Lluvia de ideas', 'Chuvia de ideas', 'Remue-méninges', 'Brainstorming'), 300, 100, 400, 45, 36))
+  labelled(els, 'topic', 'ellipse', L('Tema central', 'Tema central', 'Thème central', 'Zentrales Thema'), 380, 380, 240, 130, '#a5d8ff', 28)
   const topic = els.find((e) => e.id === 'topic')!
   const colors = ['#ffec99', '#b2f2bb', '#ffc9c9', '#d0bfff', '#ffd8a8', '#99e9f2']
   const spots = [
@@ -118,13 +118,13 @@ function brainstorm(lang: Lang): Element[] {
     [700, 600],
   ]
   spots.forEach(([x, y], i) => {
-    labelled(els, `idea${i}`, 'rectangle', `${L('Idea', 'Idea')} ${i + 1}`, x, y, 220, 110, colors[i])
+    labelled(els, `idea${i}`, 'rectangle', `${L('Idea', 'Idea', 'Idée', 'Idee')} ${i + 1}`, x, y, 220, 110, colors[i])
     arrow(els, `a${i}`, topic, els.find((e) => e.id === `idea${i}`)!)
   })
   els.push(
     text(
       'help',
-      L('Duplica las notas (Ctrl+D) para añadir más ideas y agrúpalas por colores.', 'Duplica as notas (Ctrl+D) para engadir máis ideas e agrúpaas por cores.'),
+      L('Duplica las notas (Ctrl+D) para añadir más ideas y agrúpalas por colores.', 'Duplica as notas (Ctrl+D) para engadir máis ideas e agrúpaas por cores.', 'Duplique les notes (Ctrl+D) pour ajouter d’autres idées et regroupe-les par couleur.', 'Dupliziere die Notizen (Strg+D), um weitere Ideen hinzuzufügen, und gruppiere sie nach Farben.'),
       150,
       760,
       700,

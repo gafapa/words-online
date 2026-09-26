@@ -3,7 +3,7 @@
 
 import PptxGenJS from 'pptxgenjs'
 import { appInfo } from '../apps/registry'
-import { pick, type Lang } from './types'
+import { pick, pickEs, type Lang, type SpainLang } from './types'
 
 type Pptx = InstanceType<typeof PptxGenJS>
 type Slide = ReturnType<Pptx['addSlide']>
@@ -41,35 +41,35 @@ function cover(pptx: Pptx, title: string, subtitle: string, p: Palette): void {
 }
 
 function learningSituation(pptx: Pptx, lang: Lang): void {
-  const L = pick(lang)
+  const E = pickEs(lang as SpainLang)
   const p = { accent: '1A73E8', dark: '174EA6', light: 'E8F0FE' }
-  cover(pptx, L('[Título de la situación de aprendizaje]', '[Título da situación de aprendizaxe]'), L('Materia · Curso · Trimestre', 'Materia · Curso · Trimestre'), p)
+  cover(pptx, E('[Título de la situación de aprendizaje]', '[Título da situación de aprendizaxe]'), E('Materia · Curso · Trimestre', 'Materia · Curso · Trimestre'), p)
 
   let s = pptx.addSlide()
-  titleBar(s, L('¿Qué reto vamos a resolver?', 'Que reto imos resolver?'), p)
+  titleBar(s, E('¿Qué reto vamos a resolver?', 'Que reto imos resolver?'), p)
   s.addShape('roundRect', { x: 0.6, y: 1.4, w: 8.8, h: 1.6, fill: { color: p.light }, line: { color: p.accent }, rectRadius: 0.15 })
-  s.addText(L('[Pregunta o problema motivador conectado con la vida real]', '[Pregunta ou problema motivador conectado coa vida real]'), {
+  s.addText(E('[Pregunta o problema motivador conectado con la vida real]', '[Pregunta ou problema motivador conectado coa vida real]'), {
     x: 0.8, y: 1.5, w: 8.4, h: 1.4, fontFace: FONT, fontSize: 24, italic: true, color: INK, align: 'center', valign: 'middle',
   })
-  s.addText(L('Contexto: ', 'Contexto: ') + L('¿por qué es importante para nosotros?', 'por que é importante para nós?'), { x: 0.6, y: 3.4, w: 8.8, h: 0.8, fontFace: FONT, fontSize: 18, color: MUTED })
+  s.addText(E('Contexto: ', 'Contexto: ') + E('¿por qué es importante para nosotros?', 'por que é importante para nós?'), { x: 0.6, y: 3.4, w: 8.8, h: 0.8, fontFace: FONT, fontSize: 18, color: MUTED })
 
   s = pptx.addSlide()
-  titleBar(s, L('¿Qué vamos a aprender?', 'Que imos aprender?'), p)
+  titleBar(s, E('¿Qué vamos a aprender?', 'Que imos aprender?'), p)
   bullets(s, [
-    L('Objetivo 1: …', 'Obxectivo 1: …'),
-    L('Objetivo 2: …', 'Obxectivo 2: …'),
-    L('Objetivo 3: …', 'Obxectivo 3: …'),
-    L('Competencias clave: CCL, STEM, CD, CPSAA…', 'Competencias clave: CCL, STEM, CD, CPSAA…'),
+    E('Objetivo 1: …', 'Obxectivo 1: …'),
+    E('Objetivo 2: …', 'Obxectivo 2: …'),
+    E('Objetivo 3: …', 'Obxectivo 3: …'),
+    E('Competencias clave: CCL, STEM, CD, CPSAA…', 'Competencias clave: CCL, STEM, CD, CPSAA…'),
   ])
 
   s = pptx.addSlide()
-  titleBar(s, L('¿Cómo lo vamos a hacer?', 'Como o imos facer?'), p)
+  titleBar(s, E('¿Cómo lo vamos a hacer?', 'Como o imos facer?'), p)
   const phases = [
-    [L('Activación', 'Activación'), L('Ideas previas', 'Ideas previas')],
-    [L('Exploración', 'Exploración'), L('Investigamos', 'Investigamos')],
-    [L('Estructuración', 'Estruturación'), L('Organizamos', 'Organizamos')],
-    [L('Aplicación', 'Aplicación'), L('Producto final', 'Produto final')],
-    [L('Conclusión', 'Conclusión'), L('Presentamos y reflexionamos', 'Presentamos e reflexionamos')],
+    [E('Activación', 'Activación'), E('Ideas previas', 'Ideas previas')],
+    [E('Exploración', 'Exploración'), E('Investigamos', 'Investigamos')],
+    [E('Estructuración', 'Estruturación'), E('Organizamos', 'Organizamos')],
+    [E('Aplicación', 'Aplicación'), E('Producto final', 'Produto final')],
+    [E('Conclusión', 'Conclusión'), E('Presentamos y reflexionamos', 'Presentamos e reflexionamos')],
   ]
   phases.forEach(([name, desc], i) => {
     const x = 0.5 + i * 1.83
@@ -77,26 +77,26 @@ function learningSituation(pptx: Pptx, lang: Lang): void {
     s.addText(name, { x: x + 0.25, y: 1.8, w: 1.4, h: 0.9, fontFace: FONT, fontSize: 13, bold: true, color: 'FFFFFF', align: 'center', valign: 'middle' })
     s.addText(desc, { x, y: 2.9, w: 1.8, h: 0.9, fontFace: FONT, fontSize: 14, color: INK, align: 'center', valign: 'top' })
   })
-  s.addText(L('Sesiones: [n.º] · Agrupamientos: individual, parejas y equipos', 'Sesións: [n.º] · Agrupamentos: individual, parellas e equipos'), {
+  s.addText(E('Sesiones: [n.º] · Agrupamientos: individual, parejas y equipos', 'Sesións: [n.º] · Agrupamentos: individual, parellas e equipos'), {
     x: 0.6, y: 4.4, w: 8.8, h: 0.5, fontFace: FONT, fontSize: 16, color: MUTED,
   })
 
   s = pptx.addSlide()
-  titleBar(s, L('Producto final', 'Produto final'), p)
+  titleBar(s, E('Producto final', 'Produto final'), p)
   bullets(s, [
-    L('¿Qué vamos a crear? …', 'Que imos crear? …'),
-    L('¿Para quién? …', 'Para quen? …'),
-    L('Formato a elegir: póster, vídeo, presentación, maqueta…', 'Formato a escoller: póster, vídeo, presentación, maqueta…'),
-    L('Fecha de entrega: …', 'Data de entrega: …'),
+    E('¿Qué vamos a crear? …', 'Que imos crear? …'),
+    E('¿Para quién? …', 'Para quen? …'),
+    E('Formato a elegir: póster, vídeo, presentación, maqueta…', 'Formato a escoller: póster, vídeo, presentación, maqueta…'),
+    E('Fecha de entrega: …', 'Data de entrega: …'),
   ])
 
   s = pptx.addSlide()
-  titleBar(s, L('¿Cómo se evaluará?', 'Como se avaliará?'), p)
+  titleBar(s, E('¿Cómo se evaluará?', 'Como se avaliará?'), p)
   const items = [
-    [L('Rúbrica del producto', 'Rúbrica do produto'), '40%'],
-    [L('Observación en clase', 'Observación na clase'), '20%'],
-    [L('Cuaderno / portfolio', 'Caderno / portfolio'), '20%'],
-    [L('Autoevaluación y coevaluación', 'Autoavaliación e coavaliación'), '20%'],
+    [E('Rúbrica del producto', 'Rúbrica do produto'), '40%'],
+    [E('Observación en clase', 'Observación na clase'), '20%'],
+    [E('Cuaderno / portfolio', 'Caderno / portfolio'), '20%'],
+    [E('Autoevaluación y coevaluación', 'Autoavaliación e coavaliación'), '20%'],
   ]
   items.forEach(([name, pct], i) => {
     const x = 0.6 + (i % 2) * 4.5
@@ -107,22 +107,22 @@ function learningSituation(pptx: Pptx, lang: Lang): void {
   })
 
   s = pptx.addSlide()
-  titleBar(s, L('¿Qué he aprendido?', 'Que aprendín?'), p)
+  titleBar(s, E('¿Qué he aprendido?', 'Que aprendín?'), p)
   bullets(s, [
-    L('Lo que más me ha gustado…', 'O que máis me gustou…'),
-    L('Lo que me ha resultado difícil…', 'O que me resultou difícil…'),
-    L('Lo que puedo mejorar…', 'O que podo mellorar…'),
+    E('Lo que más me ha gustado…', 'O que máis me gustou…'),
+    E('Lo que me ha resultado difícil…', 'O que me resultou difícil…'),
+    E('Lo que puedo mejorar…', 'O que podo mellorar…'),
   ])
 }
 
 function oralPresentation(pptx: Pptx, lang: Lang): void {
   const L = pick(lang)
   const p = { accent: '188038', dark: '0D652D', light: 'E6F4EA' }
-  cover(pptx, L('[Título de la exposición]', '[Título da exposición]'), L('Nombre y apellidos · Curso · Fecha', 'Nome e apelidos · Curso · Data'), p)
+  cover(pptx, L('[Título de la exposición]', '[Título da exposición]', '[Titre de l’exposé]', '[Titel des Referats]'), L('Nombre y apellidos · Curso · Fecha', 'Nome e apelidos · Curso · Data', 'Nom et prénom · Classe · Date', 'Vor- und Nachname · Klasse · Datum'), p)
 
   let s = pptx.addSlide()
-  titleBar(s, L('Índice', 'Índice'), p)
-  ;[L('Introducción', 'Introdución'), L('Desarrollo', 'Desenvolvemento'), L('Conclusiones', 'Conclusións'), L('Fuentes', 'Fontes')].forEach((item, i) => {
+  titleBar(s, L('Índice', 'Índice', 'Sommaire', 'Inhaltsverzeichnis'), p)
+  ;[L('Introducción', 'Introdución', 'Introduction', 'Einleitung'), L('Desarrollo', 'Desenvolvemento', 'Développement', 'Hauptteil'), L('Conclusiones', 'Conclusións', 'Conclusions', 'Fazit'), L('Fuentes', 'Fontes', 'Sources', 'Quellen')].forEach((item, i) => {
     const y = 1.35 + i * 0.95
     s.addShape('ellipse', { x: 0.7, y, w: 0.7, h: 0.7, fill: { color: p.accent }, line: { color: p.accent } })
     s.addText(String(i + 1), { x: 0.7, y, w: 0.7, h: 0.7, fontFace: FONT, fontSize: 20, bold: true, color: 'FFFFFF', align: 'center', valign: 'middle' })
@@ -130,26 +130,26 @@ function oralPresentation(pptx: Pptx, lang: Lang): void {
   })
 
   s = pptx.addSlide()
-  titleBar(s, L('Introducción', 'Introdución'), p)
-  bullets(s, [L('¿De qué trata el tema?', 'De que trata o tema?'), L('¿Por qué lo he elegido?', 'Por que o escollín?'), L('¿Qué vais a aprender?', 'Que ides aprender?')])
+  titleBar(s, L('Introducción', 'Introdución', 'Introduction', 'Einleitung'), p)
+  bullets(s, [L('¿De qué trata el tema?', 'De que trata o tema?', 'De quoi parle le thème ?', 'Worum geht es?'), L('¿Por qué lo he elegido?', 'Por que o escollín?', 'Pourquoi l’ai-je choisi ?', 'Warum habe ich das Thema gewählt?'), L('¿Qué vais a aprender?', 'Que ides aprender?', 'Qu’allez-vous apprendre ?', 'Was werdet ihr lernen?')])
 
   s = pptx.addSlide()
-  titleBar(s, L('Desarrollo', 'Desenvolvemento'), p)
-  bullets(s, [L('Idea principal 1', 'Idea principal 1'), L('Dato o ejemplo', 'Dato ou exemplo')], 0.6, 1.3, 4.3, 3.8)
+  titleBar(s, L('Desarrollo', 'Desenvolvemento', 'Développement', 'Hauptteil'), p)
+  bullets(s, [L('Idea principal 1', 'Idea principal 1', 'Idée principale 1', 'Hauptgedanke 1'), L('Dato o ejemplo', 'Dato ou exemplo', 'Donnée ou exemple', 'Fakt oder Beispiel')], 0.6, 1.3, 4.3, 3.8)
   s.addShape('rect', { x: 5.2, y: 1.4, w: 4.2, h: 3.4, fill: { color: p.light }, line: { color: p.accent, dashType: 'dash' } })
-  s.addText(L('[Imagen, gráfico o mapa]', '[Imaxe, gráfico ou mapa]'), { x: 5.2, y: 1.4, w: 4.2, h: 3.4, fontFace: FONT, fontSize: 16, italic: true, color: MUTED, align: 'center', valign: 'middle' })
+  s.addText(L('[Imagen, gráfico o mapa]', '[Imaxe, gráfico ou mapa]', '[Image, graphique ou carte]', '[Bild, Grafik oder Karte]'), { x: 5.2, y: 1.4, w: 4.2, h: 3.4, fontFace: FONT, fontSize: 16, italic: true, color: MUTED, align: 'center', valign: 'middle' })
 
   s = pptx.addSlide()
-  titleBar(s, L('Conclusiones', 'Conclusións'), p)
-  bullets(s, [L('Lo más importante es…', 'O máis importante é…'), L('He aprendido que…', 'Aprendín que…'), L('Me pregunto…', 'Pregúntome…')])
+  titleBar(s, L('Conclusiones', 'Conclusións', 'Conclusions', 'Fazit'), p)
+  bullets(s, [L('Lo más importante es…', 'O máis importante é…', 'Le plus important, c’est…', 'Das Wichtigste ist…'), L('He aprendido que…', 'Aprendín que…', 'J’ai appris que…', 'Ich habe gelernt, dass…'), L('Me pregunto…', 'Pregúntome…', 'Je me demande…', 'Ich frage mich…')])
 
   s = pptx.addSlide()
-  titleBar(s, L('Fuentes', 'Fontes'), p)
+  titleBar(s, L('Fuentes', 'Fontes', 'Sources', 'Quellen'), p)
   bullets(
     s,
     [
-      L('Apellido, N. (Año). Título del libro. Editorial.', 'Apelido, N. (Ano). Título do libro. Editorial.'),
-      L('Apellido, N. (Año). Título de la página. Sitio web. https://…', 'Apelido, N. (Ano). Título da páxina. Sitio web. https://…'),
+      L('Apellido, N. (Año). Título del libro. Editorial.', 'Apelido, N. (Ano). Título do libro. Editorial.', 'Nom, P. (Année). Titre du livre. Éditeur.', 'Nachname, V. (Jahr). Titel des Buches. Verlag.'),
+      L('Apellido, N. (Año). Título de la página. Sitio web. https://…', 'Apelido, N. (Ano). Título da páxina. Sitio web. https://…', 'Nom, P. (Année). Titre de la page. Site web. https://…', 'Nachname, V. (Jahr). Titel der Seite. Website. https://…'),
     ],
     0.6,
     1.3,
@@ -160,8 +160,8 @@ function oralPresentation(pptx: Pptx, lang: Lang): void {
 
   s = pptx.addSlide()
   s.background = { color: p.accent }
-  s.addText(L('¡Gracias!', 'Grazas!'), { x: 0.5, y: 1.5, w: 9, h: 1.4, fontFace: FONT, fontSize: 54, bold: true, color: 'FFFFFF', align: 'center', valign: 'middle' })
-  s.addText(L('¿Preguntas?', 'Preguntas?'), { x: 0.5, y: 2.9, w: 9, h: 0.8, fontFace: FONT, fontSize: 26, color: 'FFFFFF', align: 'center', valign: 'middle' })
+  s.addText(L('¡Gracias!', 'Grazas!', 'Merci !', 'Danke!'), { x: 0.5, y: 1.5, w: 9, h: 1.4, fontFace: FONT, fontSize: 54, bold: true, color: 'FFFFFF', align: 'center', valign: 'middle' })
+  s.addText(L('¿Preguntas?', 'Preguntas?', 'Des questions ?', 'Fragen?'), { x: 0.5, y: 2.9, w: 9, h: 0.8, fontFace: FONT, fontSize: 26, color: 'FFFFFF', align: 'center', valign: 'middle' })
 }
 
 const BUILDERS: Record<string, (pptx: Pptx, lang: Lang) => void> = {

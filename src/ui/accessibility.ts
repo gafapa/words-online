@@ -246,7 +246,7 @@ function dictationBubble(): HTMLElement {
 function dictationLang(): string {
   if (prefs.dictLang !== 'auto') return prefs.dictLang
   const lang = (lastEditable?.closest('[lang]')?.getAttribute('lang') || navigator.language).slice(0, 2)
-  return ({ es: 'es-ES', gl: 'gl-ES', en: 'en-US' } as Record<string, string>)[lang] ?? navigator.language
+  return (speech.SPEECH_TAGS as Record<string, string>)[lang] ?? navigator.language
 }
 
 // Inserts text at the caret of the last focused text field, as if typed.
@@ -464,7 +464,7 @@ function buildPanel(): HTMLElement {
       field(
         t('Language'),
         bind(
-          select<speech.ReadLang>([['auto', t('Automatic')], ['es', 'Español'], ['gl', 'Galego'], ['en', 'English']], () => prefs.readLang, (readLang) => update({ readLang })),
+          select<speech.ReadLang>([['auto', t('Automatic')], ['es', 'Español'], ['gl', 'Galego'], ['en', 'English'], ['fr', 'Français'], ['de', 'Deutsch']], () => prefs.readLang, (readLang) => update({ readLang })),
           (n) => (n.value = prefs.readLang),
         ),
       ),
@@ -493,7 +493,7 @@ function buildPanel(): HTMLElement {
     field(
       t('Language'),
       bind(
-        select<string>([['auto', t('Automatic')], ['es-ES', 'Español'], ['gl-ES', 'Galego'], ['en-US', 'English']], () => prefs.dictLang, (dictLang) => update({ dictLang })),
+        select<string>([['auto', t('Automatic')], ['es-ES', 'Español'], ['gl-ES', 'Galego'], ['en-US', 'English'], ['fr-FR', 'Français'], ['de-DE', 'Deutsch']], () => prefs.dictLang, (dictLang) => update({ dictLang })),
         (n) => (n.value = prefs.dictLang),
       ),
     ),

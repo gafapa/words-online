@@ -2,7 +2,7 @@
 // HTML import (same schema: paragraph styles, tables, cell colors, lists).
 
 import { appInfo } from '../apps/registry'
-import { pick, type Lang } from './types'
+import { pick, pickEs, type Lang, type SpainLang } from './types'
 
 type Builder = (lang: Lang) => string
 
@@ -55,37 +55,37 @@ function table(rows: string[][], { head = true, side = false, widths }: TableOpt
 // ---------- Templates ----------
 
 const learningSituation: Builder = (lang) => {
-  const L = pick(lang)
+  const E = pickEs(lang as SpainLang)
   return [
-    title(L('Situación de aprendizaje: ', 'Situación de aprendizaxe: ') + hint(L('título', 'título'))),
-    subtitle(L('Programación de aula conforme a la LOMLOE', 'Programación de aula conforme á LOMLOE')),
-    h1(L('1. Identificación', '1. Identificación')),
+    title(E('Situación de aprendizaje: ', 'Situación de aprendizaxe: ') + hint(E('título', 'título'))),
+    subtitle(E('Programación de aula conforme a la LOMLOE', 'Programación de aula conforme á LOMLOE')),
+    h1(E('1. Identificación', '1. Identificación')),
     table(
       [
-        [L('Centro educativo', 'Centro educativo'), hint(L('nombre del centro', 'nome do centro'))],
-        [L('Etapa y curso', 'Etapa e curso'), hint(L('p. ej., 2.º ESO', 'p. ex., 2.º ESO'))],
-        [L('Materia / Área / Ámbito', 'Materia / Área / Ámbito'), ''],
-        [L('Temporalización', 'Temporalización'), hint(L('n.º de sesiones, trimestre y fechas', 'n.º de sesións, trimestre e datas'))],
-        [L('Docente(s)', 'Docente(s)'), ''],
-        [L('Vinculación con los ODS y retos del siglo XXI', 'Vinculación cos ODS e retos do século XXI'), ''],
-        [L('Producto final', 'Produto final'), hint(L('qué elaborará el alumnado', 'que elaborará o alumnado'))],
+        [E('Centro educativo', 'Centro educativo'), hint(E('nombre del centro', 'nome do centro'))],
+        [E('Etapa y curso', 'Etapa e curso'), hint(E('p. ej., 2.º ESO', 'p. ex., 2.º ESO'))],
+        [E('Materia / Área / Ámbito', 'Materia / Área / Ámbito'), ''],
+        [E('Temporalización', 'Temporalización'), hint(E('n.º de sesiones, trimestre y fechas', 'n.º de sesións, trimestre e datas'))],
+        [E('Docente(s)', 'Docente(s)'), ''],
+        [E('Vinculación con los ODS y retos del siglo XXI', 'Vinculación cos ODS e retos do século XXI'), ''],
+        [E('Producto final', 'Produto final'), hint(E('qué elaborará el alumnado', 'que elaborará o alumnado'))],
       ],
       { head: false, side: true, widths: [200, 400] },
     ),
-    h1(L('2. Justificación y descripción', '2. Xustificación e descrición')),
+    h1(E('2. Justificación y descripción', '2. Xustificación e descrición')),
     p(
       hint(
-        L(
+        E(
           'Contexto real o significativo en el que se sitúa el reto, problema o pregunta que da sentido a la situación de aprendizaje, finalidad y relación con los intereses del alumnado.',
           'Contexto real ou significativo no que se sitúa o reto, problema ou pregunta que dá sentido á situación de aprendizaxe, finalidade e relación cos intereses do alumnado.',
         ),
       ),
     ),
     p(''),
-    h1(L('3. Competencias específicas', '3. Competencias específicas')),
+    h1(E('3. Competencias específicas', '3. Competencias específicas')),
     table(
       [
-        [L('Competencia específica', 'Competencia específica'), L('Descripción', 'Descrición'), L('Descriptores del perfil de salida', 'Descritores do perfil de saída')],
+        [E('Competencia específica', 'Competencia específica'), E('Descripción', 'Descrición'), E('Descriptores del perfil de salida', 'Descritores do perfil de saída')],
         ['CE1', '', hint('CCL1, STEM2, CD1…')],
         ['CE2', '', ''],
         ['CE3', '', ''],
@@ -93,125 +93,125 @@ const learningSituation: Builder = (lang) => {
       { widths: [120, 300, 180] },
     ),
     p(
-      L(
+      E(
         'Competencias clave: comunicación lingüística (CCL), plurilingüe (CP), matemática y en ciencia, tecnología e ingeniería (STEM), digital (CD), personal, social y de aprender a aprender (CPSAA), ciudadana (CC), emprendedora (CE) y en conciencia y expresión culturales (CCEC).',
         'Competencias clave: comunicación lingüística (CCL), plurilingüe (CP), matemática e en ciencia, tecnoloxía e enxeñaría (STEM), dixital (CD), persoal, social e de aprender a aprender (CPSAA), cidadá (CC), emprendedora (CE) e en conciencia e expresión culturais (CCEC).',
       ),
     ),
-    h1(L('4. Criterios de evaluación', '4. Criterios de avaliación')),
+    h1(E('4. Criterios de evaluación', '4. Criterios de avaliación')),
     table(
       [
-        [L('Criterio de evaluación', 'Criterio de avaliación'), L('Competencia específica', 'Competencia específica'), L('Instrumento de evaluación', 'Instrumento de avaliación')],
-        ['1.1', 'CE1', hint(L('rúbrica, lista de cotejo, prueba…', 'rúbrica, lista de cotexo, proba…'))],
+        [E('Criterio de evaluación', 'Criterio de avaliación'), E('Competencia específica', 'Competencia específica'), E('Instrumento de evaluación', 'Instrumento de avaliación')],
+        ['1.1', 'CE1', hint(E('rúbrica, lista de cotejo, prueba…', 'rúbrica, lista de cotexo, proba…'))],
         ['1.2', 'CE1', ''],
         ['2.1', 'CE2', ''],
         ['3.1', 'CE3', ''],
       ],
       { widths: [280, 140, 180] },
     ),
-    h1(L('5. Saberes básicos', '5. Saberes básicos')),
+    h1(E('5. Saberes básicos', '5. Saberes básicos')),
     ul([
-      b(L('Bloque A. ', 'Bloque A. ')) + hint(L('saber básico', 'saber básico')),
-      b(L('Bloque B. ', 'Bloque B. ')) + hint(L('saber básico', 'saber básico')),
-      b(L('Bloque C. ', 'Bloque C. ')) + hint(L('saber básico', 'saber básico')),
+      b(E('Bloque A. ', 'Bloque A. ')) + hint(E('saber básico', 'saber básico')),
+      b(E('Bloque B. ', 'Bloque B. ')) + hint(E('saber básico', 'saber básico')),
+      b(E('Bloque C. ', 'Bloque C. ')) + hint(E('saber básico', 'saber básico')),
     ]),
-    h1(L('6. Secuencia de actividades', '6. Secuencia de actividades')),
+    h1(E('6. Secuencia de actividades', '6. Secuencia de actividades')),
     table(
       [
-        [L('Fase', 'Fase'), L('Sesión', 'Sesión'), L('Actividades y tareas', 'Actividades e tarefas'), L('Agrupamiento', 'Agrupamento'), L('Recursos', 'Recursos')],
-        [L('Activación', 'Activación'), '1', hint(L('conocimientos previos, pregunta motivadora', 'coñecementos previos, pregunta motivadora')), L('Gran grupo', 'Grupo clase'), ''],
-        [L('Exploración', 'Exploración'), '2–3', '', L('Parejas', 'Parellas'), ''],
-        [L('Estructuración', 'Estruturación'), '4–5', '', L('Individual', 'Individual'), ''],
-        [L('Aplicación', 'Aplicación'), '6–7', hint(L('elaboración del producto final', 'elaboración do produto final')), L('Equipos cooperativos', 'Equipos cooperativos'), ''],
-        [L('Conclusión', 'Conclusión'), '8', hint(L('presentación, metacognición', 'presentación, metacognición')), L('Gran grupo', 'Grupo clase'), ''],
+        [E('Fase', 'Fase'), E('Sesión', 'Sesión'), E('Actividades y tareas', 'Actividades e tarefas'), E('Agrupamiento', 'Agrupamento'), E('Recursos', 'Recursos')],
+        [E('Activación', 'Activación'), '1', hint(E('conocimientos previos, pregunta motivadora', 'coñecementos previos, pregunta motivadora')), E('Gran grupo', 'Grupo clase'), ''],
+        [E('Exploración', 'Exploración'), '2–3', '', E('Parejas', 'Parellas'), ''],
+        [E('Estructuración', 'Estruturación'), '4–5', '', E('Individual', 'Individual'), ''],
+        [E('Aplicación', 'Aplicación'), '6–7', hint(E('elaboración del producto final', 'elaboración do produto final')), E('Equipos cooperativos', 'Equipos cooperativos'), ''],
+        [E('Conclusión', 'Conclusión'), '8', hint(E('presentación, metacognición', 'presentación, metacognición')), E('Gran grupo', 'Grupo clase'), ''],
       ],
       { side: true, widths: [110, 60, 230, 110, 90] },
     ),
-    h1(L('7. Atención a la diversidad (DUA)', '7. Atención á diversidade (DUA)')),
+    h1(E('7. Atención a la diversidad (DUA)', '7. Atención á diversidade (DUA)')),
     table(
       [
-        [L('Principio del DUA', 'Principio do DUA'), L('Medidas previstas', 'Medidas previstas')],
-        [L('Múltiples formas de implicación (el porqué)', 'Múltiples formas de implicación (o porqué)'), hint(L('elección, relevancia, trabajo cooperativo, autorregulación', 'elección, relevancia, traballo cooperativo, autorregulación'))],
-        [L('Múltiples formas de representación (el qué)', 'Múltiples formas de representación (o que)'), hint(L('textos, vídeos, esquemas, subtítulos, glosario', 'textos, vídeos, esquemas, subtítulos, glosario'))],
-        [L('Múltiples formas de acción y expresión (el cómo)', 'Múltiples formas de acción e expresión (o como)'), hint(L('producto oral, escrito, digital o gráfico a elegir', 'produto oral, escrito, dixital ou gráfico a escoller'))],
-        [L('Medidas específicas', 'Medidas específicas'), hint(L('alumnado NEAE, adaptaciones, refuerzo y ampliación', 'alumnado NEAE, adaptacións, reforzo e ampliación'))],
+        [E('Principio del DUA', 'Principio do DUA'), E('Medidas previstas', 'Medidas previstas')],
+        [E('Múltiples formas de implicación (el porqué)', 'Múltiples formas de implicación (o porqué)'), hint(E('elección, relevancia, trabajo cooperativo, autorregulación', 'elección, relevancia, traballo cooperativo, autorregulación'))],
+        [E('Múltiples formas de representación (el qué)', 'Múltiples formas de representación (o que)'), hint(E('textos, vídeos, esquemas, subtítulos, glosario', 'textos, vídeos, esquemas, subtítulos, glosario'))],
+        [E('Múltiples formas de acción y expresión (el cómo)', 'Múltiples formas de acción e expresión (o como)'), hint(E('producto oral, escrito, digital o gráfico a elegir', 'produto oral, escrito, dixital ou gráfico a escoller'))],
+        [E('Medidas específicas', 'Medidas específicas'), hint(E('alumnado NEAE, adaptaciones, refuerzo y ampliación', 'alumnado NEAE, adaptacións, reforzo e ampliación'))],
       ],
       { side: true, widths: [230, 370] },
     ),
-    h1(L('8. Evaluación', '8. Avaliación')),
+    h1(E('8. Evaluación', '8. Avaliación')),
     table(
       [
-        [L('Instrumento', 'Instrumento'), L('Criterios evaluados', 'Criterios avaliados'), L('Peso (%)', 'Peso (%)')],
-        [L('Rúbrica del producto final', 'Rúbrica do produto final'), '1.1, 2.1', '40'],
-        [L('Observación sistemática', 'Observación sistemática'), '1.2', '20'],
-        [L('Cuaderno / portfolio', 'Caderno / portfolio'), '3.1', '20'],
-        [L('Autoevaluación y coevaluación', 'Autoavaliación e coavaliación'), '1.2, 3.1', '20'],
+        [E('Instrumento', 'Instrumento'), E('Criterios evaluados', 'Criterios avaliados'), E('Peso (%)', 'Peso (%)')],
+        [E('Rúbrica del producto final', 'Rúbrica do produto final'), '1.1, 2.1', '40'],
+        [E('Observación sistemática', 'Observación sistemática'), '1.2', '20'],
+        [E('Cuaderno / portfolio', 'Caderno / portfolio'), '3.1', '20'],
+        [E('Autoevaluación y coevaluación', 'Autoavaliación e coavaliación'), '1.2, 3.1', '20'],
       ],
       { widths: [260, 220, 120] },
     ),
-    h2(L('Evaluación de la práctica docente', 'Avaliación da práctica docente')),
+    h2(E('Evaluación de la práctica docente', 'Avaliación da práctica docente')),
     tasks([
-      L('Los objetivos y criterios se comunicaron al alumnado.', 'Os obxectivos e criterios comunicáronse ao alumnado.'),
-      L('La temporalización fue adecuada.', 'A temporalización foi axeitada.'),
-      L('Las medidas DUA facilitaron la participación de todo el alumnado.', 'As medidas DUA facilitaron a participación de todo o alumnado.'),
-      L('Propuestas de mejora: ', 'Propostas de mellora: ') + hint('…'),
+      E('Los objetivos y criterios se comunicaron al alumnado.', 'Os obxectivos e criterios comunicáronse ao alumnado.'),
+      E('La temporalización fue adecuada.', 'A temporalización foi axeitada.'),
+      E('Las medidas DUA facilitaron la participación de todo el alumnado.', 'As medidas DUA facilitaron a participación de todo o alumnado.'),
+      E('Propuestas de mejora: ', 'Propostas de mellora: ') + hint('…'),
     ]),
   ].join('')
 }
 
 const rubric: Builder = (lang) => {
   const L = pick(lang)
-  const levels = [L('Excelente (4)', 'Excelente (4)'), L('Bien (3)', 'Ben (3)'), L('Suficiente (2)', 'Suficiente (2)'), L('Insuficiente (1)', 'Insuficiente (1)')]
+  const levels = [L('Excelente (4)', 'Excelente (4)', 'Excellent (4)', 'Sehr gut (4)'), L('Bien (3)', 'Ben (3)', 'Bien (3)', 'Gut (3)'), L('Suficiente (2)', 'Suficiente (2)', 'Suffisant (2)', 'Ausreichend (2)'), L('Insuficiente (1)', 'Insuficiente (1)', 'Insuffisant (1)', 'Nicht ausreichend (1)')]
   const row = (criterion: string, weight: string, d: string[]) => [criterion, weight, ...d]
   return [
-    title(L('Rúbrica de evaluación', 'Rúbrica de avaliación')),
+    title(L('Rúbrica de evaluación', 'Rúbrica de avaliación', 'Grille d’évaluation', 'Bewertungsraster')),
     table(
       [
-        [L('Materia', 'Materia'), '', L('Curso', 'Curso'), ''],
-        [L('Tarea / producto', 'Tarefa / produto'), '', L('Alumno/a', 'Alumno/a'), ''],
+        [L('Materia', 'Materia', 'Matière', 'Fach'), '', L('Curso', 'Curso', 'Classe', 'Klasse'), ''],
+        [L('Tarea / producto', 'Tarefa / produto', 'Tâche / production', 'Aufgabe / Produkt'), '', L('Alumno/a', 'Alumno/a', 'Élève', 'Schüler/in'), ''],
       ],
       { head: false, side: true, widths: [130, 190, 90, 190] },
     ),
     p(''),
     table(
       [
-        [L('Criterio', 'Criterio'), L('Peso', 'Peso'), ...levels],
-        row(L('Contenido', 'Contido'), '30%', [
-          L('Información completa, rigurosa y bien relacionada.', 'Información completa, rigorosa e ben relacionada.'),
-          L('Información correcta con pequeñas omisiones.', 'Información correcta con pequenas omisións.'),
-          L('Información básica, con algunos errores.', 'Información básica, con algúns erros.'),
-          L('Información escasa o incorrecta.', 'Información escasa ou incorrecta.'),
+        [L('Criterio', 'Criterio', 'Critère', 'Kriterium'), L('Peso', 'Peso', 'Poids', 'Gewichtung'), ...levels],
+        row(L('Contenido', 'Contido', 'Contenu', 'Inhalt'), '30%', [
+          L('Información completa, rigurosa y bien relacionada.', 'Información completa, rigorosa e ben relacionada.', 'Informations complètes, rigoureuses et bien reliées.', 'Vollständige, genaue und gut verknüpfte Informationen.'),
+          L('Información correcta con pequeñas omisiones.', 'Información correcta con pequenas omisións.', 'Informations correctes avec de petits oublis.', 'Korrekte Informationen mit kleinen Lücken.'),
+          L('Información básica, con algunos errores.', 'Información básica, con algúns erros.', 'Informations de base, avec quelques erreurs.', 'Grundlegende Informationen mit einigen Fehlern.'),
+          L('Información escasa o incorrecta.', 'Información escasa ou incorrecta.', 'Informations insuffisantes ou incorrectes.', 'Wenige oder falsche Informationen.'),
         ]),
-        row(L('Organización', 'Organización'), '20%', [
-          L('Estructura clara y lógica en todas las partes.', 'Estrutura clara e lóxica en todas as partes.'),
-          L('Estructura clara con algún salto.', 'Estrutura clara con algún salto.'),
-          L('Estructura poco clara.', 'Estrutura pouco clara.'),
-          L('Sin estructura reconocible.', 'Sen estrutura recoñecible.'),
+        row(L('Organización', 'Organización', 'Organisation', 'Aufbau'), '20%', [
+          L('Estructura clara y lógica en todas las partes.', 'Estrutura clara e lóxica en todas as partes.', 'Structure claire et logique dans toutes les parties.', 'Klare und logische Struktur in allen Teilen.'),
+          L('Estructura clara con algún salto.', 'Estrutura clara con algún salto.', 'Structure claire avec quelques ruptures.', 'Klare Struktur mit einzelnen Sprüngen.'),
+          L('Estructura poco clara.', 'Estrutura pouco clara.', 'Structure peu claire.', 'Wenig klare Struktur.'),
+          L('Sin estructura reconocible.', 'Sen estrutura recoñecible.', 'Aucune structure reconnaissable.', 'Keine erkennbare Struktur.'),
         ]),
-        row(L('Expresión y vocabulario', 'Expresión e vocabulario'), '20%', [
-          L('Vocabulario preciso y sin errores.', 'Vocabulario preciso e sen erros.'),
-          L('Vocabulario adecuado, errores leves.', 'Vocabulario axeitado, erros leves.'),
-          L('Vocabulario limitado, varios errores.', 'Vocabulario limitado, varios erros.'),
-          L('Errores frecuentes que dificultan la comprensión.', 'Erros frecuentes que dificultan a comprensión.'),
+        row(L('Expresión y vocabulario', 'Expresión e vocabulario', 'Expression et vocabulaire', 'Ausdruck und Wortschatz'), '20%', [
+          L('Vocabulario preciso y sin errores.', 'Vocabulario preciso e sen erros.', 'Vocabulaire précis et sans erreurs.', 'Präziser Wortschatz ohne Fehler.'),
+          L('Vocabulario adecuado, errores leves.', 'Vocabulario axeitado, erros leves.', 'Vocabulaire adapté, erreurs légères.', 'Angemessener Wortschatz, leichte Fehler.'),
+          L('Vocabulario limitado, varios errores.', 'Vocabulario limitado, varios erros.', 'Vocabulaire limité, plusieurs erreurs.', 'Begrenzter Wortschatz, mehrere Fehler.'),
+          L('Errores frecuentes que dificultan la comprensión.', 'Erros frecuentes que dificultan a comprensión.', 'Erreurs fréquentes qui gênent la compréhension.', 'Häufige Fehler, die das Verständnis erschweren.'),
         ]),
-        row(L('Presentación', 'Presentación'), '15%', [
-          L('Cuidada, original y atractiva.', 'Coidada, orixinal e atractiva.'),
-          L('Cuidada y ordenada.', 'Coidada e ordenada.'),
-          L('Aceptable.', 'Aceptable.'),
-          L('Descuidada.', 'Descoidada.'),
+        row(L('Presentación', 'Presentación', 'Présentation', 'Gestaltung'), '15%', [
+          L('Cuidada, original y atractiva.', 'Coidada, orixinal e atractiva.', 'Soignée, originale et attrayante.', 'Sorgfältig, originell und ansprechend.'),
+          L('Cuidada y ordenada.', 'Coidada e ordenada.', 'Soignée et ordonnée.', 'Sorgfältig und ordentlich.'),
+          L('Aceptable.', 'Aceptable.', 'Acceptable.', 'Akzeptabel.'),
+          L('Descuidada.', 'Descoidada.', 'Négligée.', 'Nachlässig.'),
         ]),
-        row(L('Fuentes y citas', 'Fontes e citas'), '15%', [
-          L('Varias fuentes fiables, bien citadas.', 'Varias fontes fiables, ben citadas.'),
-          L('Fuentes fiables, citas incompletas.', 'Fontes fiables, citas incompletas.'),
-          L('Una sola fuente o sin citar.', 'Unha soa fonte ou sen citar.'),
-          L('Sin fuentes.', 'Sen fontes.'),
+        row(L('Fuentes y citas', 'Fontes e citas', 'Sources et citations', 'Quellen und Zitate'), '15%', [
+          L('Varias fuentes fiables, bien citadas.', 'Varias fontes fiables, ben citadas.', 'Plusieurs sources fiables, bien citées.', 'Mehrere verlässliche Quellen, korrekt zitiert.'),
+          L('Fuentes fiables, citas incompletas.', 'Fontes fiables, citas incompletas.', 'Sources fiables, citations incomplètes.', 'Verlässliche Quellen, unvollständige Zitate.'),
+          L('Una sola fuente o sin citar.', 'Unha soa fonte ou sen citar.', 'Une seule source ou aucune citation.', 'Nur eine Quelle oder nicht zitiert.'),
+          L('Sin fuentes.', 'Sen fontes.', 'Aucune source.', 'Keine Quellen.'),
         ]),
       ],
       { side: true, widths: [110, 50, 110, 110, 110, 110] },
     ),
     p(''),
-    p(b(L('Calificación: ', 'Cualificación: ')) + L('suma de (nivel × peso) ÷ 4 × 10 = ', 'suma de (nivel × peso) ÷ 4 × 10 = ') + blank(8) + ' / 10'),
-    p(b(L('Observaciones: ', 'Observacións: '))),
+    p(b(L('Calificación: ', 'Cualificación: ', 'Note : ', 'Note: ')) + L('suma de (nivel × peso) ÷ 4 × 10 = ', 'suma de (nivel × peso) ÷ 4 × 10 = ', 'somme de (niveau × poids) ÷ 4 × 10 = ', 'Summe aus (Stufe × Gewichtung) ÷ 4 × 10 = ') + blank(8) + ' / 10'),
+    p(b(L('Observaciones: ', 'Observacións: ', 'Observations : ', 'Bemerkungen: '))),
     p(blank(80)),
     p(blank(80)),
   ].join('')
@@ -222,98 +222,99 @@ const worksheet: Builder = (lang) => {
   return [
     table(
       [
-        [L('Nombre y apellidos', 'Nome e apelidos'), '', L('N.º', 'N.º'), ''],
-        [L('Curso y grupo', 'Curso e grupo'), '', L('Fecha', 'Data'), ''],
+        [L('Nombre y apellidos', 'Nome e apelidos', 'Nom et prénom', 'Vor- und Nachname'), '', L('N.º', 'N.º', 'N°', 'Nr.'), ''],
+        [L('Curso y grupo', 'Curso e grupo', 'Classe et groupe', 'Klasse und Gruppe'), '', L('Fecha', 'Data', 'Date', 'Datum'), ''],
       ],
       { head: false, side: true, widths: [150, 270, 70, 110] },
     ),
-    title(L('Ficha de trabajo: ', 'Ficha de traballo: ') + hint(L('tema', 'tema'))),
-    p(b(L('Objetivo: ', 'Obxectivo: ')) + hint(L('qué vas a aprender con esta ficha', 'que vas aprender con esta ficha'))),
-    p(b(L('Instrucciones: ', 'Instrucións: ')) + L('lee con atención cada enunciado antes de responder.', 'le con atención cada enunciado antes de responder.')),
-    h2(L('1. Completa los huecos', '1. Completa os ocos')),
-    p(L('El agua de los ríos y mares se ', 'A auga dos ríos e mares ') + blank(12) + L(' con el calor del sol y forma las ', ' coa calor do sol e forma as ') + blank(12) + '.'),
-    p(L('Cuando el vapor se enfría, se ', 'Cando o vapor arrefría, ') + blank(12) + L(' y cae en forma de ', ' e cae en forma de ') + blank(12) + '.'),
-    h2(L('2. Relaciona cada concepto con su definición', '2. Relaciona cada concepto coa súa definición')),
+    title(L('Ficha de trabajo: ', 'Ficha de traballo: ', 'Fiche d’exercices : ', 'Arbeitsblatt: ') + hint(L('tema', 'tema', 'thème', 'Thema'))),
+    p(b(L('Objetivo: ', 'Obxectivo: ', 'Objectif : ', 'Ziel: ')) + hint(L('qué vas a aprender con esta ficha', 'que vas aprender con esta ficha', 'ce que tu vas apprendre avec cette fiche', 'was du mit diesem Arbeitsblatt lernst'))),
+    p(b(L('Instrucciones: ', 'Instrucións: ', 'Consignes : ', 'Arbeitsanweisung: ')) + L('lee con atención cada enunciado antes de responder.', 'le con atención cada enunciado antes de responder.', 'lis attentivement chaque énoncé avant de répondre.', 'Lies jede Aufgabe aufmerksam durch, bevor du antwortest.')),
+    h2(L('1. Completa los huecos', '1. Completa os ocos', '1. Complète les trous', '1. Fülle die Lücken aus')),
+    p(L('El agua de los ríos y mares se ', 'A auga dos ríos e mares ', 'L’eau des rivières et des mers s’', 'Das Wasser von Flüssen und Meeren ') + blank(12) + L(' con el calor del sol y forma las ', ' coa calor do sol e forma as ', ' sous l’effet de la chaleur du soleil et forme les ', ' durch die Wärme der Sonne und bildet die ') + blank(12) + '.'),
+    p(L('Cuando el vapor se enfría, se ', 'Cando o vapor arrefría, ', 'Quand la vapeur se refroidit, elle se ', 'Wenn der Dampf abkühlt, ') + blank(12) + L(' y cae en forma de ', ' e cae en forma de ', ' et tombe sous forme de ', ' er und fällt als ') + blank(12) + '.'),
+    h2(L('2. Relaciona cada concepto con su definición', '2. Relaciona cada concepto coa súa definición', '2. Relie chaque notion à sa définition', '2. Ordne jedem Begriff seine Definition zu')),
     table(
       [
-        [L('Concepto', 'Concepto'), L('Letra', 'Letra'), L('Definición', 'Definición')],
-        [L('1. Evaporación', '1. Evaporación'), '', L('a) Paso de vapor a líquido', 'a) Paso de vapor a líquido')],
-        [L('2. Condensación', '2. Condensación'), '', L('b) Caída de agua desde las nubes', 'b) Caída de auga desde as nubes')],
-        [L('3. Precipitación', '3. Precipitación'), '', L('c) Paso de líquido a vapor', 'c) Paso de líquido a vapor')],
+        [L('Concepto', 'Concepto', 'Notion', 'Begriff'), L('Letra', 'Letra', 'Lettre', 'Buchstabe'), L('Definición', 'Definición', 'Définition', 'Definition')],
+        [L('1. Evaporación', '1. Evaporación', '1. Évaporation', '1. Verdunstung'), '', L('a) Paso de vapor a líquido', 'a) Paso de vapor a líquido', 'a) Passage de la vapeur au liquide', 'a) Übergang von Dampf zu Flüssigkeit')],
+        [L('2. Condensación', '2. Condensación', '2. Condensation', '2. Kondensation'), '', L('b) Caída de agua desde las nubes', 'b) Caída de auga desde as nubes', 'b) Chute d’eau depuis les nuages', 'b) Wasser fällt aus den Wolken')],
+        [L('3. Precipitación', '3. Precipitación', '3. Précipitations', '3. Niederschlag'), '', L('c) Paso de líquido a vapor', 'c) Paso de líquido a vapor', 'c) Passage du liquide à la vapeur', 'c) Übergang von Flüssigkeit zu Dampf')],
       ],
       { widths: [200, 70, 330] },
     ),
-    h2(L('3. Verdadero o falso', '3. Verdadeiro ou falso')),
+    h2(L('3. Verdadero o falso', '3. Verdadeiro ou falso', '3. Vrai ou faux', '3. Richtig oder falsch')),
     table(
       [
-        [L('Afirmación', 'Afirmación'), 'V', 'F'],
-        [L('El agua solo existe en estado líquido.', 'A auga só existe en estado líquido.'), '', ''],
-        [L('Las nubes están formadas por gotas de agua.', 'As nubes están formadas por pingas de auga.'), '', ''],
-        [L('El ciclo del agua no tiene principio ni fin.', 'O ciclo da auga non ten principio nin fin.'), '', ''],
+        [L('Afirmación', 'Afirmación', 'Affirmation', 'Aussage'), 'V', 'F'],
+        [L('El agua solo existe en estado líquido.', 'A auga só existe en estado líquido.', 'L’eau n’existe qu’à l’état liquide.', 'Wasser gibt es nur in flüssigem Zustand.'), '', ''],
+        [L('Las nubes están formadas por gotas de agua.', 'As nubes están formadas por pingas de auga.', 'Les nuages sont formés de gouttes d’eau.', 'Wolken bestehen aus Wassertropfen.'), '', ''],
+        [L('El ciclo del agua no tiene principio ni fin.', 'O ciclo da auga non ten principio nin fin.', 'Le cycle de l’eau n’a ni début ni fin.', 'Der Wasserkreislauf hat weder Anfang noch Ende.'), '', ''],
       ],
       { widths: [500, 50, 50] },
     ),
-    h2(L('4. Responde con tus palabras', '4. Responde coas túas palabras')),
-    p(L('¿Por qué es importante cuidar el agua? Pon dos ejemplos.', 'Por que é importante coidar a auga? Pon dous exemplos.')),
+    h2(L('4. Responde con tus palabras', '4. Responde coas túas palabras', '4. Réponds avec tes propres mots', '4. Antworte mit eigenen Worten')),
+    p(L('¿Por qué es importante cuidar el agua? Pon dos ejemplos.', 'Por que é importante coidar a auga? Pon dous exemplos.', 'Pourquoi est-il important de préserver l’eau ? Donne deux exemples.', 'Warum ist es wichtig, Wasser zu schützen? Nenne zwei Beispiele.')),
     p(blank(80)),
     p(blank(80)),
     p(blank(80)),
-    h2(L('5. Autoevaluación', '5. Autoavaliación')),
+    h2(L('5. Autoevaluación', '5. Autoavaliación', '5. Autoévaluation', '5. Selbsteinschätzung')),
     tasks([
-      L('He entendido los conceptos principales.', 'Entendín os conceptos principais.'),
-      L('Puedo explicarlo a un compañero o compañera.', 'Podo explicalo a un compañeiro ou compañeira.'),
-      L('Necesito repasar: ', 'Necesito repasar: ') + blank(30),
+      L('He entendido los conceptos principales.', 'Entendín os conceptos principais.', 'J’ai compris les notions principales.', 'Ich habe die wichtigsten Begriffe verstanden.'),
+      L('Puedo explicarlo a un compañero o compañera.', 'Podo explicalo a un compañeiro ou compañeira.', 'Je peux l’expliquer à un ou une camarade.', 'Ich kann es einer Mitschülerin oder einem Mitschüler erklären.'),
+      L('Necesito repasar: ', 'Necesito repasar: ', 'Je dois revoir : ', 'Ich muss wiederholen: ') + blank(30),
     ]),
   ].join('')
 }
 
 const report: Builder = (lang) => {
   const L = pick(lang)
-  const cover = (label: string) => p(b(label + ': ') + blank(30), 'center')
+  // French puts a no-break space before the colon.
+  const cover = (label: string) => p(b(label + (lang === 'fr' ? '\u00a0: ' : ': ')) + blank(30), 'center')
   return [
     p(''),
     p(''),
     p(''),
-    title(L('Título del trabajo', 'Título do traballo'), 'center'),
-    subtitle(L('Subtítulo o tema', 'Subtítulo ou tema'), 'center'),
+    title(L('Título del trabajo', 'Título do traballo', 'Titre du travail', 'Titel der Arbeit'), 'center'),
+    subtitle(L('Subtítulo o tema', 'Subtítulo ou tema', 'Sous-titre ou thème', 'Untertitel oder Thema'), 'center'),
     p(''),
     p(''),
     p(''),
-    cover(L('Autor/a', 'Autor/a')),
-    cover(L('Curso y grupo', 'Curso e grupo')),
-    cover(L('Materia', 'Materia')),
-    cover(L('Docente', 'Docente')),
-    cover(L('Centro', 'Centro')),
-    cover(L('Fecha de entrega', 'Data de entrega')),
+    cover(L('Autor/a', 'Autor/a', 'Auteur/autrice', 'Verfasser/in')),
+    cover(L('Curso y grupo', 'Curso e grupo', 'Classe et groupe', 'Klasse und Gruppe')),
+    cover(L('Materia', 'Materia', 'Matière', 'Fach')),
+    cover(L('Docente', 'Docente', 'Enseignant(e)', 'Lehrkraft')),
+    cover(L('Centro', 'Centro', 'Établissement', 'Schule')),
+    cover(L('Fecha de entrega', 'Data de entrega', 'Date de remise', 'Abgabedatum')),
     pageBreak,
-    h1(L('Índice', 'Índice')),
+    h1(L('Índice', 'Índice', 'Sommaire', 'Inhaltsverzeichnis')),
     ol([
-      L('Introducción', 'Introdución'),
-      L('Objetivos', 'Obxectivos'),
-      L('Desarrollo', 'Desenvolvemento'),
-      L('Conclusiones', 'Conclusións'),
-      L('Bibliografía', 'Bibliografía'),
-      L('Anexos', 'Anexos'),
+      L('Introducción', 'Introdución', 'Introduction', 'Einleitung'),
+      L('Objetivos', 'Obxectivos', 'Objectifs', 'Ziele'),
+      L('Desarrollo', 'Desenvolvemento', 'Développement', 'Hauptteil'),
+      L('Conclusiones', 'Conclusións', 'Conclusions', 'Fazit'),
+      L('Bibliografía', 'Bibliografía', 'Bibliographie', 'Literaturverzeichnis'),
+      L('Anexos', 'Anexos', 'Annexes', 'Anhang'),
     ]),
     pageBreak,
-    h1(L('1. Introducción', '1. Introdución')),
-    p(hint(L('Presenta el tema, por qué lo has elegido y cómo está organizado el trabajo.', 'Presenta o tema, por que o escolliches e como está organizado o traballo.'))),
-    h1(L('2. Objetivos', '2. Obxectivos')),
-    ul([hint(L('objetivo 1', 'obxectivo 1')), hint(L('objetivo 2', 'obxectivo 2'))]),
-    h1(L('3. Desarrollo', '3. Desenvolvemento')),
-    h2(L('3.1. Primer apartado', '3.1. Primeira epígrafe')),
-    p(hint(L('Desarrolla la información con tus propias palabras y cita las fuentes.', 'Desenvolve a información coas túas propias palabras e cita as fontes.'))),
-    h2(L('3.2. Segundo apartado', '3.2. Segunda epígrafe')),
+    h1(L('1. Introducción', '1. Introdución', '1. Introduction', '1. Einleitung')),
+    p(hint(L('Presenta el tema, por qué lo has elegido y cómo está organizado el trabajo.', 'Presenta o tema, por que o escolliches e como está organizado o traballo.', 'Présente le thème, pourquoi tu l’as choisi et comment le travail est organisé.', 'Stelle das Thema vor, erkläre, warum du es gewählt hast und wie die Arbeit aufgebaut ist.'))),
+    h1(L('2. Objetivos', '2. Obxectivos', '2. Objectifs', '2. Ziele')),
+    ul([hint(L('objetivo 1', 'obxectivo 1', 'objectif 1', 'Ziel 1')), hint(L('objetivo 2', 'obxectivo 2', 'objectif 2', 'Ziel 2'))]),
+    h1(L('3. Desarrollo', '3. Desenvolvemento', '3. Développement', '3. Hauptteil')),
+    h2(L('3.1. Primer apartado', '3.1. Primeira epígrafe', '3.1. Première partie', '3.1. Erster Abschnitt')),
+    p(hint(L('Desarrolla la información con tus propias palabras y cita las fuentes.', 'Desenvolve a información coas túas propias palabras e cita as fontes.', 'Développe les informations avec tes propres mots et cite tes sources.', 'Gib die Informationen mit eigenen Worten wieder und nenne die Quellen.'))),
+    h2(L('3.2. Segundo apartado', '3.2. Segunda epígrafe', '3.2. Deuxième partie', '3.2. Zweiter Abschnitt')),
     p(''),
-    h1(L('4. Conclusiones', '4. Conclusións')),
-    p(hint(L('¿Qué has aprendido? ¿Se han cumplido los objetivos?', 'Que aprendiches? Cumpríronse os obxectivos?'))),
-    h1(L('5. Bibliografía', '5. Bibliografía')),
-    p(L('Cita las fuentes en formato APA (7.ª edición). Ejemplos:', 'Cita as fontes en formato APA (7.ª edición). Exemplos:')),
+    h1(L('4. Conclusiones', '4. Conclusións', '4. Conclusions', '4. Fazit')),
+    p(hint(L('¿Qué has aprendido? ¿Se han cumplido los objetivos?', 'Que aprendiches? Cumpríronse os obxectivos?', 'Qu’as-tu appris ? Les objectifs ont-ils été atteints ?', 'Was hast du gelernt? Wurden die Ziele erreicht?'))),
+    h1(L('5. Bibliografía', '5. Bibliografía', '5. Bibliographie', '5. Literaturverzeichnis')),
+    p(L('Cita las fuentes en formato APA (7.ª edición). Ejemplos:', 'Cita as fontes en formato APA (7.ª edición). Exemplos:', 'Cite les sources au format APA (7e édition). Exemples :', 'Gib die Quellen im APA-Format an (7. Auflage). Beispiele:')),
     ul([
-      L('Apellido, N. (Año). ', 'Apelido, N. (Ano). ') + `<em>${L('Título del libro', 'Título do libro')}</em>` + L('. Editorial.', '. Editorial.'),
-      L('Apellido, N. (Año, día de mes). Título de la página. ', 'Apelido, N. (Ano, día de mes). Título da páxina. ') + `<em>${L('Nombre del sitio', 'Nome do sitio')}</em>. https://…`,
+      L('Apellido, N. (Año). ', 'Apelido, N. (Ano). ', 'Nom, P. (Année). ', 'Nachname, V. (Jahr). ') + `<em>${L('Título del libro', 'Título do libro', 'Titre du livre', 'Titel des Buches')}</em>` + L('. Editorial.', '. Editorial.', '. Éditeur.', '. Verlag.'),
+      L('Apellido, N. (Año, día de mes). Título de la página. ', 'Apelido, N. (Ano, día de mes). Título da páxina. ', 'Nom, P. (Année, jour mois). Titre de la page. ', 'Nachname, V. (Jahr, Tag. Monat). Titel der Seite. ') + `<em>${L('Nombre del sitio', 'Nome do sitio', 'Nom du site', 'Name der Website')}</em>. https://…`,
     ]),
-    h1(L('6. Anexos', '6. Anexos')),
+    h1(L('6. Anexos', '6. Anexos', '6. Annexes', '6. Anhang')),
     p(''),
   ].join('')
 }
@@ -321,56 +322,58 @@ const report: Builder = (lang) => {
 const minutes: Builder = (lang) => {
   const L = pick(lang)
   return [
-    title(L('Acta de reunión', 'Acta de reunión')),
+    title(L('Acta de reunión', 'Acta de reunión', 'Compte rendu de réunion', 'Sitzungsprotokoll')),
     table(
       [
-        [L('Órgano', 'Órgano'), hint(L('Claustro / Departamento / Equipo docente / CCP', 'Claustro / Departamento / Equipo docente / CCP'))],
-        [L('Acta n.º', 'Acta n.º'), ''],
-        [L('Fecha', 'Data'), ''],
-        [L('Hora de inicio y fin', 'Hora de inicio e fin'), ''],
-        [L('Lugar / modalidad', 'Lugar / modalidade'), hint(L('presencial o telemática', 'presencial ou telemática'))],
-        [L('Preside', 'Preside'), ''],
-        [L('Secretario/a', 'Secretario/a'), ''],
+        [L('Órgano', 'Órgano', 'Instance', 'Gremium'), hint(L('Claustro / Departamento / Equipo docente / CCP', 'Claustro / Departamento / Equipo docente / CCP', 'Conseil pédagogique / Équipe disciplinaire / Équipe pédagogique / Conseil de classe', 'Lehrerkonferenz / Fachkonferenz / Klassenkonferenz / Steuergruppe'))],
+        [L('Acta n.º', 'Acta n.º', 'Compte rendu n°', 'Protokoll Nr.'), ''],
+        [L('Fecha', 'Data', 'Date', 'Datum'), ''],
+        [L('Hora de inicio y fin', 'Hora de inicio e fin', 'Heure de début et de fin', 'Beginn und Ende'), ''],
+        [L('Lugar / modalidad', 'Lugar / modalidade', 'Lieu / modalité', 'Ort / Format'), hint(L('presencial o telemática', 'presencial ou telemática', 'en présentiel ou à distance', 'in Präsenz oder online'))],
+        [L('Preside', 'Preside', 'Présidence', 'Vorsitz'), ''],
+        [L('Secretario/a', 'Secretario/a', 'Secrétaire de séance', 'Protokoll'), ''],
       ],
       { head: false, side: true, widths: [180, 420] },
     ),
-    h2(L('Asistentes', 'Asistentes')),
+    h2(L('Asistentes', 'Asistentes', 'Présents', 'Anwesend')),
     ul(['', '']),
-    h2(L('Ausencias justificadas', 'Ausencias xustificadas')),
+    h2(L('Ausencias justificadas', 'Ausencias xustificadas', 'Absences excusées', 'Entschuldigt abwesend')),
     ul(['']),
-    h2(L('Orden del día', 'Orde do día')),
+    h2(L('Orden del día', 'Orde do día', 'Ordre du jour', 'Tagesordnung')),
     ol([
-      L('Lectura y aprobación, si procede, del acta de la sesión anterior.', 'Lectura e aprobación, se procede, da acta da sesión anterior.'),
-      hint(L('punto', 'punto')),
-      hint(L('punto', 'punto')),
-      L('Ruegos y preguntas.', 'Rogos e preguntas.'),
+      L('Lectura y aprobación, si procede, del acta de la sesión anterior.', 'Lectura e aprobación, se procede, da acta da sesión anterior.', 'Lecture et approbation, le cas échéant, du compte rendu de la séance précédente.', 'Genehmigung des Protokolls der letzten Sitzung.'),
+      hint(L('punto', 'punto', 'point', 'Punkt')),
+      hint(L('punto', 'punto', 'point', 'Punkt')),
+      L('Ruegos y preguntas.', 'Rogos e preguntas.', 'Questions diverses.', 'Verschiedenes.'),
     ]),
-    h2(L('Desarrollo de la sesión', 'Desenvolvemento da sesión')),
-    p(b(L('Punto 1. ', 'Punto 1. ')) + L('Se aprueba el acta de la sesión anterior ', 'Apróbase a acta da sesión anterior ') + hint(L('por unanimidad / con las siguientes modificaciones', 'por unanimidade / coas seguintes modificacións')) + '.'),
-    p(b(L('Punto 2. ', 'Punto 2. ')) + hint(L('resumen de las intervenciones', 'resumo das intervencións'))),
-    p(b(L('Punto 3. ', 'Punto 3. ')) + hint(L('resumen de las intervenciones', 'resumo das intervencións'))),
-    h2(L('Acuerdos adoptados', 'Acordos adoptados')),
+    h2(L('Desarrollo de la sesión', 'Desenvolvemento da sesión', 'Déroulement de la séance', 'Verlauf der Sitzung')),
+    p(b(L('Punto 1. ', 'Punto 1. ', 'Point 1. ', 'TOP 1. ')) + L('Se aprueba el acta de la sesión anterior ', 'Apróbase a acta da sesión anterior ', 'Le compte rendu de la séance précédente est approuvé ', 'Das Protokoll der letzten Sitzung wird ') + hint(L('por unanimidad / con las siguientes modificaciones', 'por unanimidade / coas seguintes modificacións', 'à l’unanimité / avec les modifications suivantes', 'einstimmig / mit folgenden Änderungen genehmigt')) + '.'),
+    p(b(L('Punto 2. ', 'Punto 2. ', 'Point 2. ', 'TOP 2. ')) + hint(L('resumen de las intervenciones', 'resumo das intervencións', 'résumé des interventions', 'Zusammenfassung der Beiträge'))),
+    p(b(L('Punto 3. ', 'Punto 3. ', 'Point 3. ', 'TOP 3. ')) + hint(L('resumen de las intervenciones', 'resumo das intervencións', 'résumé des interventions', 'Zusammenfassung der Beiträge'))),
+    h2(L('Acuerdos adoptados', 'Acordos adoptados', 'Décisions prises', 'Beschlüsse')),
     table(
       [
-        [L('Acuerdo', 'Acordo'), L('Responsable', 'Responsable'), L('Plazo', 'Prazo')],
+        [L('Acuerdo', 'Acordo', 'Décision', 'Beschluss'), L('Responsable', 'Responsable', 'Responsable', 'Verantwortlich'), L('Plazo', 'Prazo', 'Échéance', 'Frist')],
         ['', '', ''],
         ['', '', ''],
       ],
       { widths: [360, 140, 100] },
     ),
-    h2(L('Ruegos y preguntas', 'Rogos e preguntas')),
+    h2(L('Ruegos y preguntas', 'Rogos e preguntas', 'Questions diverses', 'Verschiedenes')),
     p(''),
     p(
       L(
         'Sin más asuntos que tratar, se levanta la sesión a las ____ horas, de lo que, como secretario/a, doy fe.',
         'Sen máis asuntos que tratar, levántase a sesión ás ____ horas, do que, como secretario/a, dou fe.',
+        'L’ordre du jour étant épuisé, la séance est levée à ____ heures.',
+        'Da keine weiteren Punkte vorliegen, wird die Sitzung um ____ Uhr geschlossen.',
       ),
     ),
     p(''),
     table(
       [
-        [L('V.º B.º El/La presidente/a', 'V.º e pr. O/A presidente/a'), L('El/La secretario/a', 'O/A secretario/a')],
-        [`<br>${L('Fdo.: ', 'Asdo.: ')}${blank(20)}`, `<br>${L('Fdo.: ', 'Asdo.: ')}${blank(20)}`],
+        [L('V.º B.º El/La presidente/a', 'V.º e pr. O/A presidente/a', 'Le/La président(e)', 'Vorsitz'), L('El/La secretario/a', 'O/A secretario/a', 'Le/La secrétaire de séance', 'Protokollführung')],
+        [`<br>${L('Fdo.: ', 'Asdo.: ', 'Signature : ', 'Unterschrift: ')}${blank(20)}`, `<br>${L('Fdo.: ', 'Asdo.: ', 'Signature : ', 'Unterschrift: ')}${blank(20)}`],
       ],
       { widths: [300, 300] },
     ),
@@ -380,66 +383,72 @@ const minutes: Builder = (lang) => {
 const familyLetter: Builder = (lang) => {
   const L = pick(lang)
   return [
-    p(b(hint(L('Nombre del centro', 'Nome do centro'))) + '<br>' + hint(L('Dirección · Teléfono · Correo electrónico', 'Enderezo · Teléfono · Correo electrónico'))),
+    p(b(hint(L('Nombre del centro', 'Nome do centro', 'Nom de l’établissement', 'Name der Schule'))) + '<br>' + hint(L('Dirección · Teléfono · Correo electrónico', 'Enderezo · Teléfono · Correo electrónico', 'Adresse · Téléphone · Courriel', 'Anschrift · Telefon · E-Mail'))),
     p(''),
-    p(hint(L('Localidad', 'Localidade')) + L(', a ', ', ') + hint(L('día', 'día')) + L(' de ', ' de ') + hint(L('mes', 'mes')) + L(' de ', ' de ') + hint(L('año', 'ano')), 'right'),
+    p(hint(L('Localidad', 'Localidade', 'Ville', 'Ort')) + L(', a ', ', ', ', le ', ', den ') + hint(L('día', 'día', 'jour', 'Tag')) + L(' de ', ' de ', ' ', ' ') + hint(L('mes', 'mes', 'mois', 'Monat')) + L(' de ', ' de ', ' ', ' ') + hint(L('año', 'ano', 'année', 'Jahr')), 'right'),
     p(''),
-    p(b(L('Asunto: ', 'Asunto: ')) + L('Salida didáctica a ', 'Saída didáctica a ') + hint(L('lugar', 'lugar'))),
+    p(b(L('Asunto: ', 'Asunto: ', 'Objet : ', 'Betreff: ')) + L('Salida didáctica a ', 'Saída didáctica a ', 'Sortie scolaire à ', 'Unterrichtsgang nach ') + hint(L('lugar', 'lugar', 'lieu', 'Ort'))),
     p(''),
-    p(L('Estimadas familias:', 'Estimadas familias:')),
+    p(L('Estimadas familias:', 'Estimadas familias:', 'Madame, Monsieur,', 'Liebe Eltern,')),
     p(
       L(
         'Nos ponemos en contacto con ustedes para informarles de que el alumnado de ',
         'Poñémonos en contacto con vós para informarvos de que o alumnado de ',
+        'Nous vous informons que les élèves de ',
+        'wir möchten Sie darüber informieren, dass die Klasse ',
       ) +
-        hint(L('curso y grupo', 'curso e grupo')) +
+        hint(L('curso y grupo', 'curso e grupo', 'classe et groupe', 'Klasse und Gruppe')) +
         L(
           ' realizará una salida didáctica como parte de la situación de aprendizaje que estamos trabajando en el aula. Los datos de la actividad son los siguientes:',
           ' realizará unha saída didáctica como parte da situación de aprendizaxe que estamos a traballar na aula. Os datos da actividade son os seguintes:',
+          ' participeront à une sortie scolaire dans le cadre du projet que nous menons en classe. Voici les informations sur l’activité :',
+          ' im Rahmen des aktuellen Unterrichtsprojekts einen Unterrichtsgang unternimmt. Die Angaben zur Veranstaltung:',
         ),
       'justify',
     ),
     ul([
-      b(L('Fecha: ', 'Data: ')) + blank(20),
-      b(L('Horario: ', 'Horario: ')) + L('salida a las ', 'saída ás ') + blank(6) + L(' y regreso a las ', ' e regreso ás ') + blank(6),
-      b(L('Lugar: ', 'Lugar: ')) + blank(30),
-      b(L('Coste: ', 'Custo: ')) + blank(10),
-      b(L('Material necesario: ', 'Material necesario: ')) + blank(30),
+      b(L('Fecha: ', 'Data: ', 'Date : ', 'Datum: ')) + blank(20),
+      b(L('Horario: ', 'Horario: ', 'Horaires : ', 'Uhrzeit: ')) + L('salida a las ', 'saída ás ', 'départ à ', 'Abfahrt um ') + blank(6) + L(' y regreso a las ', ' e regreso ás ', ' et retour à ', ' und Rückkehr um ') + blank(6),
+      b(L('Lugar: ', 'Lugar: ', 'Lieu : ', 'Ort: ')) + blank(30),
+      b(L('Coste: ', 'Custo: ', 'Coût : ', 'Kosten: ')) + blank(10),
+      b(L('Material necesario: ', 'Material necesario: ', 'Matériel nécessaire : ', 'Benötigtes Material: ')) + blank(30),
     ]),
     p(
       L(
         'Les rogamos que devuelvan la autorización firmada al tutor o tutora antes del ',
         'Pregámosvos que devolvades a autorización asinada ao titor ou titora antes do ',
+        'Merci de retourner l’autorisation signée au professeur principal ou à la professeure principale avant le ',
+        'Bitte geben Sie die unterschriebene Einverständniserklärung bis zum ',
       ) +
         blank(12) +
-        L('. Para cualquier duda pueden contactar con el centro por los medios habituales.', '. Para calquera dúbida podedes contactar co centro polos medios habituais.'),
+        L('. Para cualquier duda pueden contactar con el centro por los medios habituales.', '. Para calquera dúbida podedes contactar co centro polos medios habituais.', '. Pour toute question, vous pouvez contacter l’établissement par les moyens habituels.', ' bei der Klassenleitung ab. Bei Fragen erreichen Sie die Schule auf den üblichen Wegen.'),
       'justify',
     ),
-    p(L('Reciban un cordial saludo.', 'Recibide un cordial saúdo.')),
+    p(L('Reciban un cordial saludo.', 'Recibide un cordial saúdo.', 'Veuillez agréer, Madame, Monsieur, nos salutations distinguées.', 'Mit freundlichen Grüßen')),
     p(''),
-    p(L('El tutor / La tutora', 'O titor / A titora')),
+    p(L('El tutor / La tutora', 'O titor / A titora', 'Le professeur principal / La professeure principale', 'Die Klassenleitung')),
     p(''),
-    p(L('Fdo.: ', 'Asdo.: ') + blank(30)),
+    p(L('Fdo.: ', 'Asdo.: ', 'Signature : ', 'Unterschrift: ') + blank(30)),
     p(''),
     p('✂ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -', 'center'),
-    h2(L('Autorización', 'Autorización')),
+    h2(L('Autorización', 'Autorización', 'Autorisation', 'Einverständniserklärung')),
     p(
-      L('D./D.ª ', 'D./D.ª ') +
+      L('D./D.ª ', 'D./D.ª ', 'Je soussigné(e) ', 'Ich, ') +
         blank(36) +
-        L(', con DNI ', ', con DNI ') +
+        L(', con DNI ', ', con DNI ', ', joignable au ', ', telefonisch erreichbar unter ') +
         blank(12) +
-        L(', como padre, madre o tutor/a legal del alumno/a ', ', como pai, nai ou titor/a legal do alumno/a ') +
+        L(', como padre, madre o tutor/a legal del alumno/a ', ', como pai, nai ou titor/a legal do alumno/a ', ', parent ou responsable légal de l’élève ', ', Erziehungsberechtigte/r von ') +
         blank(36) +
-        L(' del curso ', ' do curso ') +
+        L(' del curso ', ' do curso ', ' de la classe ', ' aus der Klasse ') +
         blank(8) +
         ':',
       'justify',
     ),
     tasks([
-      L('Autorizo su participación en la actividad.', 'Autorizo a súa participación na actividade.'),
-      L('No autorizo su participación en la actividad.', 'Non autorizo a súa participación na actividade.'),
+      L('Autorizo su participación en la actividad.', 'Autorizo a súa participación na actividade.', 'J’autorise sa participation à l’activité.', 'Ich erlaube die Teilnahme an der Veranstaltung.'),
+      L('No autorizo su participación en la actividad.', 'Non autorizo a súa participación na actividade.', 'Je n’autorise pas sa participation à l’activité.', 'Ich erlaube die Teilnahme an der Veranstaltung nicht.'),
     ]),
-    p(L('Firma: ', 'Sinatura: ') + blank(30) + L('   Fecha: ', '   Data: ') + blank(14)),
+    p(L('Firma: ', 'Sinatura: ', 'Signature : ', 'Unterschrift: ') + blank(30) + L('   Fecha: ', '   Data: ', '   Date : ', '   Datum: ') + blank(14)),
   ].join('')
 }
 

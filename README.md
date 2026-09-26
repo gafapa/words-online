@@ -182,10 +182,15 @@ presented or exported.
 
 ## Templates
 
-The home screen has a **Templates** gallery for schools (Spain / Galicia,
-LOMLOE). Each template's content is written in Spanish and Galician; the gallery
-picks the language from the browser (Galician for `gl`, otherwise Spanish) and a
-switch changes it. Filter by app, click a card and a new local document is
+The home screen has a **Templates** gallery for schools. Template content is
+written in Spanish, Galician, French and German; the two tied to Spanish
+regulations (LOMLOE learning situation, as a document and as a presentation)
+exist in Spanish and Galician only and are hidden for French and German content.
+The content language follows the interface language (with the English interface,
+the browser's languages, else Spanish) and a switch changes it. French and German
+versions keep the 0–10 grade scale with the pass mark at 5, labelled with the
+usual mentions (Insuffisant … Très bien) or school grades (Mangelhaft … Sehr gut),
+and use their own attendance codes (A/J/R, F/E/V). Filter by app, click a card and a new local document is
 created and opened.
 
 | App | Templates |
@@ -224,7 +229,7 @@ whole suite; nothing changes in the documents themselves.
   editors, the text cursor.
 - **Read aloud** (`Alt+Shift+R`): reads the selection, or the paragraph with the
   cursor, or the whole document, with the browser's voices. The language
-  (Spanish, Galician, English) is detected from the text; when no Galician voice
+  (Spanish, Galician, English, French, German) is detected from the text; when no Galician voice
   is installed it reads with a Spanish one and says so. The word being read is
   highlighted without touching the document.
 - **Dictation** (`Alt+Shift+D`): writes what you say at the text cursor of the
@@ -239,26 +244,32 @@ whole suite; nothing changes in the documents themselves.
 ## Languages
 
 The whole suite is available in **Spanish** (Spain), **Galician** (following
-the RAG norms) and **English**.
+the RAG norms), **English**, **French** and **German** (terminology of
+LibreOffice / Microsoft Office in each language; French typography with no-break
+spaces before `: ; ! ?` and « », German „…“ quotes and formal *Sie*).
 
 - The language is the one chosen in the language selector (home screen bar, or
   *Accessibility → Interface language*), saved in this browser; otherwise the
   browser's languages decide: Galician for `gl`, Spanish for any Spanish locale
-  and for the other languages of Spain (Catalan, Basque…), English otherwise.
+  and for the other languages of Spain (Catalan, Basque…), French and German for
+  any of their regional variants (`fr-CA`, `de-AT`, `de-CH`…), English otherwise.
   Changing it reloads the page. `<html lang>` follows it.
 - UI strings are written in English in the code and wrapped with `t('…')`
   (`src/core/i18n.ts`; `{name}` placeholders, `tn()` for singular / plural).
-  The catalogs (`src/core/locales/es.ts`, `gl.ts`) are keyed by the English
+  The catalogs (`src/core/locales/es.ts`, `gl.ts`, `fr.ts`, `de.ts`) are keyed by the English
   text and loaded on demand with a top-level `await`, so `t()` is ready before
-  any module runs; missing entries fall back to English.
-- Third-party editors get the same language: Excalidraw (`es-ES`, `gl-ES`),
-  MathLive (Spanish built in, Galician strings added by us) and Univer (Spanish;
-  Univer has no Galician, so Galician users get its Spanish interface). Dates and
+  any module runs; missing entries fall back to English. Key names in shortcuts
+  follow the keyboard (`Mayús`/`Maiús`, `Maj`/`Entrée`/`Suppr`,
+  `Strg`/`Umschalt`/`Eingabe`/`Entf`).
+- Third-party editors get the same language: Excalidraw (`es-ES`, `gl-ES`,
+  `fr-FR`, `de-DE`), MathLive (Spanish, French, German built in, Galician strings
+  added by us) and Univer (`es-ES`, `fr-FR`, `de-DE`, loaded on demand; Univer
+  has no Galician, so Galician users get its Spanish interface). Dates and
   numbers are formatted with `Intl` in the chosen language.
 - Shape names of the built-in diagram libraries are translated; the draw.io
   libraries of *More shapes* keep their original (mostly product) names, only
-  their groups are translated. Template content has its own Spanish / Galician
-  switch, which follows the interface language by default.
+  their groups are translated. Template content has its own language switch,
+  which follows the interface language by default.
 - Existing document content is never translated. The first page, slide and
   sheet of a new document keep fixed names ("Page-1", "Slide 1", "Sheet1") so
   that collaborators who create it at the same time agree on them.
@@ -379,7 +390,7 @@ src/
     handin.ts        Hand in (ZIP), printing
     idb.ts           Small IndexedDB key-value store (signed logs)
     formats.ts       Format helpers: XML, colors, units, images
-    i18n.ts          UI language, t() translations; locales/ holds the Spanish and Galician catalogs
+    i18n.ts          UI language, t() translations; locales/ holds the es, gl, fr and de catalogs
   ui/                Shared UI so every app looks the same
     shell.ts         App frame: app bar, menu bar, toolbar row, status bar
     chrome.ts        Title, presence, connection status, share dialog + QR, hand in

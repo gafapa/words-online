@@ -4,26 +4,29 @@
 
 import { t } from '../core/i18n'
 
-export type ReadLang = 'auto' | 'es' | 'gl' | 'en'
+export type SpeechLang = 'es' | 'gl' | 'en' | 'fr' | 'de'
+export type ReadLang = 'auto' | SpeechLang
 
 // ---------- Language detection ----------
 
-// Frequent words that tell the three languages apart (shared ones left out).
-const MARKERS: Record<'es' | 'gl' | 'en', Set<string>> = {
+// Frequent words that tell the languages apart (shared ones left out).
+const MARKERS: Record<SpeechLang, Set<string>> = {
   es: new Set('el la los las y del al una es por muy también ya hay fue lo pero sus han ha este esta'.split(' ')),
   gl: new Set('o os as e do da dos das ao aos unha é non moi tamén xa hai foi polo pola nun nunha na nas cando isto iso'.split(' ')),
   en: new Set('the and of to is in that it for with on was are this be not by at from have you'.split(' ')),
+  fr: new Set('le les et des du est pas pour qui dans avec sur ce cette sont au aux ne nous vous il elle être'.split(' ')),
+  de: new Set('der die das und ist nicht mit ein eine zu den dem von sich auf für auch ich wir sie'.split(' ')),
 }
 
-export function detectLang(text: string): 'es' | 'gl' | 'en' {
-  const score = { es: 0, gl: 0, en: 0 }
+export function detectLang(text: string): SpeechLang {
+  const score = { es: 0, gl: 0, en: 0, fr: 0, de: 0 }
   for (const word of text.toLowerCase().split(/[^\p{L}]+/u).slice(0, 400)) {
-    for (const lang of ['es', 'gl', 'en'] as const) if (MARKERS[lang].has(word)) score[lang]++
+    for (const lang of ['es', 'gl', 'en', 'fr', 'de'] as const) if (MARKERS[lang].has(word)) score[lang]++
   }
   const best = (Object.keys(score) as (keyof typeof score)[]).sort((a, b) => score[b] - score[a])[0]
   if (score[best] > 0) return best
   const page = (document.documentElement.lang || navigator.language).slice(0, 2)
-  return page === 'es' || page === 'gl' ? page : 'en'
+  return page in MARKERS ? (page as SpeechLang) : 'en'
 }
 
 // ---------- Voices ----------
@@ -44,14 +47,17 @@ interface VoiceChoice {
   notice?: string
 }
 
-function chooseVoice(lang: 'es' | 'gl' | 'en', voiceURI: string): VoiceChoice {
+// Regional default of each language, as a BCP 47 tag.
+export const SPEECH_TAGS: Record<SpeechLang, string> = { es: 'es-ES', gl: 'gl-ES', en: 'en-US', fr: 'fr-FR', de: 'de-DE' }
+
+function chooseVoice(lang: SpeechLang, voiceURI: string): VoiceChoice {
   const voices = listVoices()
   const chosen = voiceURI && voices.find((v) => v.voiceURI === voiceURI)
   if (chosen) return { voice: chosen, lang: chosen.lang }
-  const find = (code: string) => {
+  const find = (code: SpeechLang) => {
     const matching = voices.filter((v) => v.lang.toLowerCase().replace('_', '-').startsWith(code))
-    // Prefer the regional default (es-ES, gl-ES) and voices that work offline.
-    const rank = (v: SpeechSynthesisVoice) => (v.lang.toLowerCase().includes('-es') ? 2 : 0) + (v.localService ? 1 : 0) + (v.default ? 0.5 : 0)
+    // Prefer the regional default (es-ES, gl-ES, fr-FR…) and voices that work offline.
+    const rank = (v: SpeechSynthesisVoice) => (v.lang.toLowerCase().replace('_', '-') === SPEECH_TAGS[code].toLowerCase() ? 2 : 0) + (v.localService ? 1 : 0) + (v.default ? 0.5 : 0)
     return matching.sort((a, b) => rank(b) - rank(a))[0]
   }
   const voice = find(lang)
@@ -60,7 +66,7 @@ function chooseVoice(lang: 'es' | 'gl' | 'en', voiceURI: string): VoiceChoice {
     const spanish = find('es')
     return { voice: spanish, lang: spanish?.lang ?? 'es-ES', notice: t('No Galician voice is installed: reading with a Spanish voice.') }
   }
-  return { lang: { es: 'es-ES', gl: 'gl-ES', en: 'en-US' }[lang] }
+  return { lang: SPEECH_TAGS[lang] }
 }
 
 // ---------- Text sources ----------

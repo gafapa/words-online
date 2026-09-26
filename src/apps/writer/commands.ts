@@ -34,7 +34,7 @@ import {
 } from 'lucide'
 import { DEFAULT_FONT, DEFAULT_FONT_SIZE_PT } from './formats/types'
 import type { ParagraphStyle } from './editor/nodes'
-import { closePopover, colorPalette, createMenuBar, el, icon, openPopover, showContextMenu, tableGrid, type MenuEntry } from '../../ui/widgets'
+import { closePopover, colorPalette, createMenuBar, el, icon, openPopover, shortcutLabel, showContextMenu, tableGrid, type MenuEntry } from '../../ui/widgets'
 import type { WriterContext } from './app'
 import { homePath } from '../../core/router'
 import { t } from '../../core/i18n'
@@ -70,7 +70,7 @@ const STYLES: [ParagraphStyle, string][] = [
 const ZOOMS = [0.5, 0.75, 0.9, 1, 1.25, 1.5, 2]
 
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform)
-const mod = (k: string) => (isMac ? `⌘${k}` : `Ctrl+${k}`)
+const mod = (k: string) => (isMac ? `⌘${k}` : shortcutLabel(`Ctrl+${k}`))
 
 const dialogs = () => import('./dialogs')
 
