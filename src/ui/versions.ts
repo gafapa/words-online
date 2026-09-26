@@ -8,7 +8,7 @@ import { locale, t } from '../core/i18n'
 import type { Session } from '../core/session'
 import { listVersions, restoreVersion, saveVersion, versionsArray, type Version } from '../core/versions'
 import { nextcloudMenuItems } from './nextcloud'
-import { el, promptText, showDialog, toast, type MenuEntry } from './widgets'
+import { confirmDialog, el, promptText, showDialog, toast, type MenuEntry } from './widgets'
 import './edu.css'
 
 export function documentMenuItems(session: Session): MenuEntry[] {
@@ -68,7 +68,7 @@ export async function openVersionHistory(session: Session): Promise<void> {
     if (session.canEdit) {
       const restore = el('button', { type: 'button', textContent: t('Restore') })
       restore.addEventListener('click', async () => {
-        if (!confirm(t('Restore this version for everyone? The current state is saved as a version first.'))) return
+        if (!(await confirmDialog(t('Restore'), t('Restore this version for everyone? The current state is saved as a version first.'), { confirmLabel: t('Restore') }))) return
         try {
           await restoreVersion(session, v)
           ;(body.closest('dialog') as HTMLDialogElement | null)?.close()

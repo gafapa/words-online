@@ -121,7 +121,6 @@ export function setupSaveState(session: Session): void {
     label.textContent = text
     indicator.classList.toggle('saving', saving)
     indicator.title = text
-    indicator.setAttribute('role', 'status')
     indicator.querySelector('svg')?.replaceWith(icon(saving ? CloudUpload : CloudCheck, 16))
   }
   session.doc.on('update', () => {

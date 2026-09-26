@@ -13,7 +13,7 @@ import type { ExportOption, Session } from '../core/session'
 import { safeFileName } from '../core/handin'
 import * as store from '../core/store'
 import type { DocType, RemoteLink } from '../core/store'
-import { el, icon, shortcutLabel, showContextMenu, showDialog, toast, type MenuEntry } from './widgets'
+import { confirmDialog, el, icon, shortcutLabel, showContextMenu, showDialog, toast, type MenuEntry } from './widgets'
 import './nextcloud.css'
 
 const SERVER_KEY = 'words-online:nextcloud-server'
@@ -267,7 +267,7 @@ export async function openAccountDialog(): Promise<NcAccount | undefined> {
       show(result, diagnosisView(d))
     }, 'nc-btn', RefreshCw)
     const signOut = button(t('Sign out'), async () => {
-      if (!confirm(t('Sign out of Nextcloud in this browser? Documents stay in this browser; they are no longer saved to Nextcloud until you sign in again.'))) return
+      if (!(await confirmDialog(t('Sign out'), t('Sign out of Nextcloud in this browser? Documents stay in this browser; they are no longer saved to Nextcloud until you sign in again.'), { confirmLabel: t('Sign out') }))) return
       let revoked = false
       if (account.viaLoginFlow && online()) revoked = await nc.revokeAppPassword(account)
       nc.removeAccount(account.id)
@@ -726,7 +726,7 @@ async function uploadChecked(session: Session, account: NcAccount, path: string,
     if (!(err instanceof nc.NcError) || (err.kind !== 'conflict' && err.kind !== 'exists')) throw err
     if (auto) throw err
     if (err.kind === 'exists') {
-      if (!confirm(t('“{name}” already exists in this folder. Replace it?', { name: nc.baseName(path) }))) return null
+      if (!(await confirmDialog(t('Replace'), t('“{name}” already exists in this folder. Replace it?', { name: nc.baseName(path) }), { confirmLabel: t('Replace'), danger: true }))) return null
       return nc.upload(account, path, blob)
     }
     const current = await nc.stat(account, path).catch(() => null)
@@ -837,7 +837,7 @@ export async function saveToNextcloudAs(session: Session, asCopy = false): Promi
   if (!choice) return false
   writeLocal(`${FORMAT_KEY}:${session.type}`, choice.format.ext)
   const path = nc.joinPath(choice.folder, choice.name)
-  if (choice.existing && !(sameAccount && link?.path === path) && !confirm(t('“{name}” already exists in this folder. Replace it?', { name: choice.name }))) return false
+  if (choice.existing && !(sameAccount && link?.path === path) && !(await confirmDialog(t('Replace'), t('“{name}” already exists in this folder. Replace it?', { name: choice.name }), { confirmLabel: t('Replace'), danger: true }))) return false
   c.saving = true
   c.state = 'saving'
   c.render()
@@ -868,8 +868,8 @@ export async function saveToNextcloudAs(session: Session, asCopy = false): Promi
   }
 }
 
-function unlink(session: Session): void {
-  if (!confirm(t('Stop saving this document to its Nextcloud file? The file in Nextcloud is not changed.'))) return
+async function unlink(session: Session): Promise<void> {
+  if (!(await confirmDialog(t('Stop saving to this file'), t('Stop saving this document to its Nextcloud file? The file in Nextcloud is not changed.')))) return
   store.setRemoteLink(session.docId, undefined)
   controllerFor(session).render()
 }
@@ -899,7 +899,8 @@ export const nextcloudActions = (session: Session) => ({
 export function setupNextcloud(session: Session): void {
   const c = controllerFor(session)
   const status = el('button', { type: 'button', class: 'nc-state', hidden: true })
-  document.getElementById('save-state')?.after(status)
+  // In the title row, next to the save state (which the shared status bar may move).
+  ;(document.querySelector('.save-indicator') ?? document.getElementById('save-state'))?.after(status)
 
   let dirty = isDirty(session, c.link())
   const link = c.link()
@@ -978,7 +979,7 @@ export function setupNextcloud(session: Session): void {
       { label: t('Save to Nextcloud as…'), enabled: online, run: () => void saveToNextcloudAs(session) },
       { label: t('Show in Nextcloud'), enabled: () => !!account && online(), run: () => account && current && window.open(nc.webUrl(account, current.path, current.fileId), '_blank', 'noopener') },
       '-',
-      { label: t('Stop saving to this file'), run: () => unlink(session) },
+      { label: t('Stop saving to this file'), run: () => void unlink(session) },
     ])
   })
 
