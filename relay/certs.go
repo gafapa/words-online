@@ -181,7 +181,7 @@ func createCA(host, extra string) (*x509.Certificate, crypto.Signer, error) {
 		domains = append(domains, extra)
 	}
 	var ranges []*net.IPNet
-	for _, p := range localPrefixes {
+	for _, p := range append(localPrefixes, extraLocal...) {
 		_, n, _ := net.ParseCIDR(p.String())
 		ranges = append(ranges, n)
 	}
@@ -226,7 +226,7 @@ func (m *CertManager) wantedNames() ([]string, []net.IP) {
 	}
 	var okIPs []net.IP
 	for _, ip := range ips {
-		if isLocalIP(ip) && !slices.ContainsFunc(okIPs, ip.Equal) {
+		if m.caPermitsIP(ip) && !slices.ContainsFunc(okIPs, ip.Equal) {
 			okIPs = append(okIPs, ip)
 		}
 	}
@@ -241,6 +241,18 @@ func (m *CertManager) caPermitsName(name string) bool {
 	}
 	for _, d := range m.caCert.PermittedDNSDomains {
 		if name == d || strings.HasSuffix(name, "."+d) {
+			return true
+		}
+	}
+	return false
+}
+
+func (m *CertManager) caPermitsIP(ip net.IP) bool {
+	if len(m.caCert.PermittedIPRanges) == 0 {
+		return isLocalIP(ip)
+	}
+	for _, n := range m.caCert.PermittedIPRanges {
+		if n.Contains(ip) {
 			return true
 		}
 	}

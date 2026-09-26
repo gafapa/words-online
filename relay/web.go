@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"log/slog"
 	"net"
@@ -346,4 +345,3 @@ func mustTemplate(name, text string) *template.Template {
 	}).Parse(text))
 }
 
-var _ = fmt.Sprintf

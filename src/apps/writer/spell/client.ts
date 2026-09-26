@@ -17,7 +17,7 @@ export class SpellClient {
       this.worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module', name: 'spelling' })
       this.worker.onmessage = (e: MessageEvent<WorkerEvent>) => this.receive(e.data)
       const base = document.baseURI
-      const urls = Object.fromEntries(Object.entries(dictionaries).map(([lang, path]) => [lang, new URL(path, base).href])) as Record<Lang, string>
+      const urls = Object.fromEntries(Object.entries(dictionaries).map(([dict, path]) => [dict, new URL(path, base).href]))
       this.send({ type: 'config', dictionaries: urls })
     }
     return this.worker
@@ -43,11 +43,12 @@ export class SpellClient {
     })
   }
 
-  suggest(word: string, lang: Lang): Promise<string[]> {
+  // Suggestions from a dictionary (by id, see dictOf).
+  suggest(word: string, dict: string): Promise<string[]> {
     const id = this.nextId++
     return new Promise((resolve) => {
       this.waiting.set(id, resolve as (value: never) => void)
-      this.send({ type: 'suggest', id, word, lang })
+      this.send({ type: 'suggest', id, word, dict })
     })
   }
 

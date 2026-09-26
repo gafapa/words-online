@@ -127,6 +127,9 @@ func (t *TURNServer) count(src net.Addr, delta int) {
 }
 
 func (t *TURNServer) Allocations() int {
+	if t == nil {
+		return 0
+	}
 	return t.server.AllocationCount()
 }
 

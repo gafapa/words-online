@@ -45,6 +45,8 @@ type Config struct {
 	AppURL string `json:"app_url"`
 	// Public accepts clients from any address (default: local network only).
 	Public bool `json:"public"`
+	// AllowNetworks: extra address ranges (CIDR) treated as the local network.
+	AllowNetworks []string `json:"allow_networks"`
 	// CredentialTTL is how long TURN credentials handed out by /ofimeo/config last.
 	CredentialTTL Duration `json:"credential_ttl"`
 	// Limits.
@@ -161,6 +163,9 @@ func (c *Config) validate() error {
 	}
 	if (c.CertFile == "") != (c.KeyFile == "") {
 		return errors.New("cert_file and key_file must be given together")
+	}
+	if err := setExtraLocal(c.AllowNetworks); err != nil {
+		return err
 	}
 	if time.Duration(c.CredentialTTL) < 10*time.Minute {
 		return errors.New("credential_ttl must be at least 10m")

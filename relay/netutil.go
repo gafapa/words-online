@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"net/netip"
 	"os"
@@ -22,14 +23,39 @@ var localPrefixes = func() []netip.Prefix {
 	return out
 }()
 
-// isLocalIP reports whether ip belongs to a private, loopback or link-local range.
+// extraLocal: networks the school declares local too (allow_networks), e.g.
+// public address ranges used inside the school network.
+var extraLocal []netip.Prefix
+
+func setExtraLocal(cidrs []string) error {
+	extraLocal = nil
+	for _, c := range cidrs {
+		c = strings.TrimSpace(c)
+		if c == "" {
+			continue
+		}
+		p, err := netip.ParsePrefix(c)
+		if err != nil {
+			if a, err2 := netip.ParseAddr(c); err2 == nil {
+				p = netip.PrefixFrom(a, a.BitLen())
+			} else {
+				return fmt.Errorf("allow_networks: %w", err)
+			}
+		}
+		extraLocal = append(extraLocal, p.Masked())
+	}
+	return nil
+}
+
+// isLocalIP reports whether ip belongs to a private, loopback or link-local
+// range, or to a network listed in allow_networks.
 func isLocalIP(ip net.IP) bool {
 	addr, ok := netip.AddrFromSlice(ip)
 	if !ok {
 		return false
 	}
 	addr = addr.Unmap()
-	for _, p := range localPrefixes {
+	for _, p := range append(localPrefixes, extraLocal...) {
 		if p.Contains(addr) {
 			return true
 		}

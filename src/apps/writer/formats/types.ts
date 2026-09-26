@@ -3,6 +3,7 @@
 // schema in src/editor/extensions.ts.
 
 import type { JSONContent } from '@tiptap/core'
+import { normalizeTag } from '../spell/variants'
 
 export type PageSize = 'A4' | 'A5' | 'Letter' | 'Legal'
 
@@ -55,17 +56,17 @@ export function pageDimensionsMm(page: PageSettings): { width: number; height: n
   return page.orientation === 'landscape' ? { width: h, height: w } : { width: w, height: h }
 }
 
-// Paragraph languages (attrs.lang) and their tags in files.
+// Paragraph languages (attrs.lang: a regional variant such as "en-GB", or a
+// bare code in older documents) and their tags in files.
 export const LANG_TAGS: Record<string, string> = { es: 'es-ES', gl: 'gl-ES', en: 'en-US', fr: 'fr-FR', de: 'de-DE' }
 
 export function langTag(code: unknown): string | undefined {
-  return typeof code === 'string' ? LANG_TAGS[code] : undefined
+  return normalizeTag(code) ?? undefined
 }
 
-// Our language code from a tag ("gl-ES", "de_AT", "fr"), when it is one we check.
+// Our variant tag from a file's tag ("gl-ES", "en_GB", "es-PE" → "es-CO", "fr"), when it is a language we check.
 export function langCode(tag: string | null | undefined): string | null {
-  const code = (tag ?? '').toLowerCase().split(/[-_]/)[0]
-  return code in LANG_TAGS ? code : null
+  return normalizeTag(tag)
 }
 
 export const DEFAULT_FONT = 'Calibri'

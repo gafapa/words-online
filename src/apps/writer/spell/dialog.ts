@@ -6,8 +6,9 @@ import { TextSelection } from '@tiptap/pm/state'
 import { t } from '../../../core/i18n'
 import { el } from '../../../ui/widgets'
 import type { FoundIssue, SpellController } from './plugin'
-import { LANGS, type Lang } from './types'
+import { LANGS } from './types'
 import { describe, kindLabel, langName, showReplacement } from './ui'
+import { VARIANTS } from './variants'
 
 let open: HTMLDialogElement | null = null
 
@@ -23,8 +24,12 @@ export function spellingDialog(spell: SpellController): void {
   open = dialog
 
   const lang = el('select', { class: 'spell-lang', title: t('Document language') })
-  for (const l of LANGS) lang.append(new Option(langName(l), l, false, l === spell.docLang()))
-  lang.addEventListener('change', () => spell.setDocLang(lang.value as Lang))
+  for (const l of LANGS) {
+    const group = el('optgroup', { label: langName(l) })
+    for (const v of VARIANTS) if (v.lang === l) group.append(new Option(v.name, v.tag, false, v.tag === spell.docLang()))
+    lang.append(group)
+  }
+  lang.addEventListener('change', () => spell.setDocLang(lang.value))
   const close = el('button', { type: 'button', class: 'spell-close', textContent: '✕', title: t('Close') })
   close.setAttribute('aria-label', t('Close'))
   const kind = el('div', { class: 'spell-kind' })

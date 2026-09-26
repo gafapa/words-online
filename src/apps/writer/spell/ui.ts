@@ -6,9 +6,20 @@ import { el, showContextMenu, showDialog, toast, type MenuEntry, type MenuItem }
 import type { FoundIssue, SpellController } from './plugin'
 import { LANGS, type Lang } from './types'
 import { personalWords } from './settings'
+import { VARIANTS, variantName } from './variants'
 import './spell.css'
 
 export const langName = (lang: Lang): string => languages.find((l) => l.code === lang)?.name ?? lang
+
+// Variants in menus, grouped by language.
+function variantItems(run: (tag: string) => void, active: ((tag: string) => boolean) | null, enabled: () => boolean): MenuEntry[] {
+  const out: MenuEntry[] = []
+  VARIANTS.forEach((v, i) => {
+    if (i && VARIANTS[i - 1].lang !== v.lang) out.push('-')
+    out.push({ label: v.name, run: () => run(v.tag), active: active ? () => active(v.tag) : undefined, enabled })
+  })
+  return out
+}
 
 // Explanation of an issue in the interface language (Harper and LanguageTool
 // give their own messages).
@@ -74,12 +85,12 @@ export function toolsMenu(spell: SpellController): { label: string; items: MenuE
       {
         label: t('Language'),
         submenu: [
-          ...LANGS.map((lang): MenuItem => ({ label: langName(lang), run: () => spell.setDocLang(lang), active: () => spell.docLang() === lang, enabled: editable })),
+          ...variantItems((tag) => spell.setDocLang(tag), (tag) => spell.docLang() === tag, editable),
           '-',
           {
             label: t('Selected paragraphs'),
             submenu: [
-              ...LANGS.map((lang): MenuItem => ({ label: langName(lang), run: () => setParagraphLang(spell, lang), enabled: editable })),
+              ...variantItems((tag) => setParagraphLang(spell, tag), null, editable),
               '-',
               { label: t('Same as the document'), run: () => setParagraphLang(spell, null), enabled: editable },
             ],
@@ -98,7 +109,7 @@ export function toolsMenu(spell: SpellController): { label: string; items: MenuE
   }
 }
 
-function setParagraphLang(spell: SpellController, lang: Lang | null) {
+function setParagraphLang(spell: SpellController, lang: string | null) {
   spell.editor.chain().focus().setParagraphLanguage(lang).run()
 }
 
@@ -132,23 +143,22 @@ export async function contextMenuFor(spell: SpellController, pos: number, x: num
   return true
 }
 
-// Status bar: document language and what the checker is doing.
-export function mountStatus(spell: SpellController, statusbar: HTMLElement): void {
+// Status bar (language slot): document language and what the checker is doing.
+export function languageButton(spell: SpellController): HTMLButtonElement {
   const button = el('button', { type: 'button', class: 'status-lang hide-narrow' })
-  const spacer = statusbar.querySelector('.spacer')
-  statusbar.insertBefore(button, spacer)
   const render = () => {
-    const lang = langName(spell.docLang())
+    const lang = variantName(spell.docLang())
     const loading = spell.loading.size > 0
     button.textContent = !spell.enabled ? lang : loading ? t('{language} · loading dictionary…', { language: lang }) : lang
     button.title = t('Document language (Tools → Language)')
   }
   button.addEventListener('click', () => {
     const rect = button.getBoundingClientRect()
-    showContextMenu(rect.left, rect.top, LANGS.map((lang) => ({ label: langName(lang), run: () => spell.setDocLang(lang), active: () => spell.docLang() === lang, enabled: () => spell.editor.isEditable })))
+    showContextMenu(rect.left, rect.top, variantItems((tag) => spell.setDocLang(tag), (tag) => spell.docLang() === tag, () => spell.editor.isEditable))
   })
   spell.onChange(render)
   render()
+  return button
 }
 
 export async function languageToolDialog(spell: SpellController): Promise<void> {
@@ -188,7 +198,7 @@ export async function languageToolDialog(spell: SpellController): Promise<void> 
 
 export async function personalDictionaryDialog(spell: SpellController): Promise<void> {
   const select = el('select', { class: 'field' })
-  for (const lang of LANGS) select.append(new Option(langName(lang), lang, false, lang === spell.docLang()))
+  for (const lang of LANGS) select.append(new Option(langName(lang), lang, false, lang === spell.docBase()))
   const list = el('ul', { class: 'spell-words' })
   const render = () => {
     const lang = select.value as Lang

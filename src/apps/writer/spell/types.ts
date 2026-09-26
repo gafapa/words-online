@@ -29,6 +29,9 @@ export interface Issue {
 export interface Paragraph {
   text: string
   lang: Lang
+  // Regional variant (BCP 47 tag, "en-GB"): chooses the spelling dictionary
+  // and Harper's dialect. The language's first variant when absent.
+  variant?: string
   // Where the paragraph lives: capitalization is not checked in list items,
   // table cells and headings.
   context?: 'paragraph' | 'heading' | 'list' | 'table'

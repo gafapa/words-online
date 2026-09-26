@@ -1,25 +1,25 @@
 // Spelling and grammar worker: dictionaries, rules, Harper and LanguageTool
 // run here so typing never waits for them.
 
-import { Checker, type HarperLike } from './checker'
+import { Checker, dictOf, type HarperLike } from './checker'
 import type { CheckOptions, Lang, Paragraph } from './types'
 
 export type WorkerRequest =
-  | { type: 'config'; dictionaries: Record<Lang, string> }
+  | { type: 'config'; dictionaries: Record<string, string> }
   | { type: 'personal'; lang: Lang; words: string[] }
   | { type: 'check'; id: number; paragraphs: Paragraph[]; options: CheckOptions }
-  | { type: 'suggest'; id: number; word: string; lang: Lang }
+  | { type: 'suggest'; id: number; word: string; dict: string }
   | { type: 'disable-rule'; rule: string }
 
 export type WorkerEvent =
   | { type: 'result'; id: number; results: { issues: import('./types').Issue[]; pending: boolean }[] }
   | { type: 'suggestions'; id: number; list: string[] }
-  | { type: 'ready'; lang: Lang }
-  | { type: 'dictionary-error'; lang: Lang }
+  | { type: 'ready'; dict: string }
+  | { type: 'dictionary-error'; dict: string }
   | { type: 'harper'; ready: boolean }
   | { type: 'languagetool'; ok: boolean }
 
-let urls: Record<Lang, string> | null = null
+let urls: Record<string, string> | null = null
 
 async function fetchText(url: string): Promise<string> {
   const res = await fetch(url)
@@ -40,9 +40,9 @@ async function loadHarper(): Promise<HarperLike> {
 }
 
 const checker = new Checker(
-  async (lang) => {
-    if (!urls) throw new Error('No dictionaries')
-    const [aff, dic] = await Promise.all([fetchText(`${urls[lang]}.aff.txt`), fetchText(`${urls[lang]}.dic.txt`)])
+  async (dict) => {
+    if (!urls?.[dict]) throw new Error('No dictionaries')
+    const [aff, dic] = await Promise.all([fetchText(`${urls[dict]}.aff.txt`), fetchText(`${urls[dict]}.dic.txt`)])
     return { aff, dic }
   },
   loadHarper,
@@ -51,9 +51,9 @@ const checker = new Checker(
 const post = (event: WorkerEvent) => (self as unknown as Worker).postMessage(event)
 
 function prepare(paragraphs: Paragraph[], options: CheckOptions) {
-  for (const lang of new Set(paragraphs.map((p) => p.lang))) {
-    if (options.spelling && checker.state(lang) === 'none') {
-      checker.ensure(lang).then((h) => post(h ? { type: 'ready', lang } : { type: 'dictionary-error', lang }))
+  for (const dict of new Set(paragraphs.map(dictOf))) {
+    if (options.spelling && checker.state(dict) === 'none') {
+      checker.ensure(dict).then((h) => post(h ? { type: 'ready', dict } : { type: 'dictionary-error', dict }))
     }
   }
   if (options.grammar && checker.harperState === 'none' && paragraphs.some((p) => p.lang === 'en')) {
@@ -67,8 +67,8 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
   else if (msg.type === 'personal') checker.setPersonal(msg.lang, msg.words)
   else if (msg.type === 'disable-rule') checker.disabledRules.add(msg.rule)
   else if (msg.type === 'suggest') {
-    await checker.ensure(msg.lang)
-    post({ type: 'suggestions', id: msg.id, list: checker.suggest(msg.word, msg.lang) })
+    await checker.ensure(msg.dict)
+    post({ type: 'suggestions', id: msg.id, list: checker.suggest(msg.word, msg.dict) })
   } else if (msg.type === 'check') {
     prepare(msg.paragraphs, msg.options)
     const hadLt = !!msg.options.languageTool

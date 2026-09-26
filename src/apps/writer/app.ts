@@ -1,5 +1,6 @@
 // Word processor: TipTap editor in a paged print layout with menus, toolbar,
 // status bar, find & replace, headers/footers, footnotes and page setup.
+// Reference implementation of the shared app frame (src/ui/frame.ts).
 
 import * as Y from 'yjs'
 import { Editor, generateHTML, getSchema, type JSONContent } from '@tiptap/core'
@@ -15,11 +16,14 @@ import { appInfo } from '../registry'
 import { docPath, newDocPath } from '../../core/router'
 import { createLocalDocument, type Session } from '../../core/session'
 import { setupChrome } from '../../ui/chrome'
+import { mountFrame } from '../../ui/frame'
 import { renderShell } from '../../ui/shell'
-import { toast } from '../../ui/widgets'
+import { icon, toast } from '../../ui/widgets'
+import { ChevronDown, ChevronUp, X } from 'lucide'
+import type { ZoomControl } from '../../ui/zoom'
 import { Find, setupFindPanel } from './find'
 import { mmToPx, notesHtml, Pagination, relayout, type Layout, type PageGeometry } from './pages'
-import { buildMenus, buildToolbar, setupContextMenu } from './commands'
+import { buildToolbar, setupContextMenu, writerFrame, ZOOMS } from './commands'
 import { t, tn } from '../../core/i18n'
 import { authorDirectory, PENDING_COMMENTS, userIdOf, type Access } from './collab'
 import { Review, type CommentRecord, type CommentThread } from './review'
@@ -30,7 +34,7 @@ import { PositionIndex, encodeAnchor } from './ypos'
 import type { CommentData } from './formats/types'
 import { authorColor } from './formats/review'
 import { SpellController, spellExtension } from './spell/plugin'
-import { mountStatus, openSpellDialog } from './spell/ui'
+import { languageButton, openSpellDialog } from './spell/ui'
 
 const UNTITLED = t('Untitled document')
 const ZOOM_KEY = 'words-online:zoom'
@@ -40,9 +44,9 @@ const MAIN_HTML = `
     <div class="find-row">
       <input data-find placeholder="${t('Find in document')}" aria-label="${t('Find')}" />
       <span data-count class="find-count"></span>
-      <button type="button" data-prev title="${t('Previous (Shift+Enter)')}">↑</button>
-      <button type="button" data-next title="${t('Next (Enter)')}">↓</button>
-      <button type="button" data-close title="${t('Close (Esc)')}">✕</button>
+      <button type="button" data-prev title="${t('Previous (Shift+Enter)')}" aria-label="${t('Previous (Shift+Enter)')}"></button>
+      <button type="button" data-next title="${t('Next (Enter)')}" aria-label="${t('Next (Enter)')}"></button>
+      <button type="button" data-close title="${t('Close (Esc)')}" aria-label="${t('Close (Esc)')}"></button>
     </div>
     <div class="find-row" data-replace-row>
       <input data-replace placeholder="${t('Replace with')}" aria-label="${t('Replace with')}" />
@@ -66,16 +70,13 @@ const MAIN_HTML = `
   <input id="file-input" type="file" hidden />
   <input id="image-input" type="file" accept="image/*" hidden />`
 
+// Moved into the shared status bar (left: page and counts; right: mode and comments).
 const STATUS_HTML = `
   <span id="status-page"></span>
   <span id="status-words"></span>
   <span id="status-chars" class="hide-narrow"></span>
-  <span class="spacer"></span>
   <span id="status-mode" class="status-mode" hidden></span>
-  <button id="status-comments" class="status-comments" hidden></button>
-  <span class="hide-narrow">${t('Zoom')}</span>
-  <input id="zoom-range" type="range" min="50" max="200" step="10" value="100" aria-label="${t('Zoom')}" class="hide-narrow" />
-  <button id="zoom-value" class="zoom-value" title="${t('Reset zoom')}">100%</button>`
+  <button id="status-comments" class="status-comments" hidden></button>`
 
 export interface WriterContext {
   session: Session
@@ -110,6 +111,7 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
   const meta = doc.getMap<unknown>('meta')
   const shell = renderShell(appInfo('writer'), root)
   shell.main.innerHTML = MAIN_HTML
+  for (const [sel, node] of [['[data-prev]', ChevronUp], ['[data-next]', ChevronDown], ['[data-close]', X]] as const) shell.main.querySelector(sel)!.append(icon(node, 16))
   shell.statusbar.innerHTML = STATUS_HTML
   setupChrome(session, UNTITLED)
 
@@ -279,8 +281,7 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
 
   const canvas = document.getElementById('canvas')!
   const zoomWrap = document.getElementById('zoom-wrap')!
-  const zoomRange = document.getElementById('zoom-range') as HTMLInputElement
-  const zoomValue = document.getElementById('zoom-value')!
+  let zoomControl: ZoomControl | undefined
   let zoom = Number(localStorage.getItem(ZOOM_KEY)) || (window.innerWidth < 900 ? 0 : 1)
   const railWidth = () => (rail.hidden || window.innerWidth <= 760 ? 0 : rail.offsetWidth + 16)
   const effectiveZoom = () => (zoom > 0 ? zoom : Math.min(2, (canvas.clientWidth - 32 - railWidth()) / geometry().width))
@@ -289,8 +290,7 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
     paper.style.transform = `scale(${z})`
     zoomWrap.style.width = `${paper.offsetWidth * z}px`
     zoomWrap.style.height = `${paper.offsetHeight * z}px`
-    zoomRange.value = String(Math.round(z * 100))
-    zoomValue.textContent = zoom > 0 ? `${Math.round(z * 100)}%` : t('Fit')
+    zoomControl?.update()
     review?.reposition()
   }
   const setZoom = (value: number) => {
@@ -302,8 +302,6 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
     }
     updateZoomBox()
   }
-  zoomRange.addEventListener('input', () => setZoom(Number(zoomRange.value) / 100))
-  zoomValue.addEventListener('click', () => setZoom(1))
   new ResizeObserver(updateZoomBox).observe(paper)
   window.addEventListener('resize', updateZoomBox)
 
@@ -331,15 +329,6 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
   }
   editor.on('update', updateStatus)
   editor.on('selectionUpdate', updateStatus)
-
-  const saveState = document.getElementById('save-state')!
-  let saveTimer = 0
-  doc.on('update', () => {
-    saveState.textContent = t('Saving…')
-    clearTimeout(saveTimer)
-    saveTimer = window.setTimeout(() => (saveState.textContent = t('Saved in this browser')), 600)
-  })
-  saveState.textContent = t('Saved in this browser')
 
   // ---------- Documents ----------
 
@@ -441,10 +430,27 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
     showContributions: () => void import('./authorship').then((a) => a.contributionsDialog(editor, session, authors)),
     spell,
   }
-  buildMenus(ctx, shell.menubar)
-  buildToolbar(ctx, shell.toolbar)
+  const statusItems = [...shell.statusbar.children] as HTMLElement[]
+  const frame = mountFrame({
+    session,
+    shell,
+    ...writerFrame(ctx),
+    zoom: {
+      get: effectiveZoom,
+      set: setZoom,
+      fit: () => setZoom(0),
+      isFit: () => zoom === 0,
+      min: 0.5,
+      max: 2,
+      presets: ZOOMS,
+    },
+    status: { language: languageButton(spell) },
+  })
+  zoomControl = frame.status?.zoom
+  frame.status?.left.append(...statusItems.filter((n) => !n.matches('.status-mode, .status-comments')))
+  frame.status?.addRight(...statusItems.filter((n) => n.matches('.status-mode, .status-comments')))
+  buildToolbar(ctx, frame.toolbar)
   setupContextMenu(ctx)
-  mountStatus(spell, shell.statusbar)
   document.addEventListener('keydown', (e) => {
     if (e.key === 'F7' && !e.ctrlKey && !e.metaKey && !e.altKey) {
       e.preventDefault()
@@ -499,26 +505,12 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
   }
   editor.on('transaction', updateCommentsButton)
 
+  // Common keys (Ctrl+O/S/P/F/H, Ctrl+/, F1) come from the frame; Ctrl+Alt+M comments.
   document.addEventListener('keydown', (e) => {
     const mod = e.ctrlKey || e.metaKey
     if (!mod) return
     const key = e.key.toLowerCase()
-    if (key === 'f' && !e.shiftKey) {
-      e.preventDefault()
-      find.open(false)
-    } else if (key === 'h') {
-      e.preventDefault()
-      find.open(true)
-    } else if (key === 'p') {
-      e.preventDefault()
-      print()
-    } else if (key === 's') {
-      e.preventDefault()
-      toast(t('All changes are saved automatically in this browser'))
-    } else if (key === 'o') {
-      e.preventDefault()
-      fileInput.click()
-    } else if ((key === 'm' || e.code === 'KeyM') && e.altKey) {
+    if ((key === 'm' || e.code === 'KeyM') && e.altKey) {
       e.preventDefault()
       review!.startComment()
     }

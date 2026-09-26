@@ -6,6 +6,9 @@ import { Hunspell } from './hunspell'
 import { runRules } from './rules/index'
 import { maskSkipped, spellTokens } from './tokenize'
 import type { CheckOptions, Issue, Lang, Paragraph } from './types'
+import { dictOf, VARIANTS, variantOf } from './variants'
+
+export { dictOf }
 
 export interface DictionaryData {
   aff: string
@@ -15,6 +18,8 @@ export interface DictionaryData {
 // The part of Harper's linter we use.
 export interface HarperLike {
   lint(text: string, options?: { language?: 'plaintext' }): Promise<HarperLint[]>
+  // Dialect: 0 American, 1 British, 2 Australian, 3 Canadian.
+  setDialect?(dialect: number): Promise<void>
 }
 interface HarperLint {
   span(): { start: number; end: number }
@@ -33,52 +38,65 @@ const EXTRA_WORDS: Partial<Record<Lang, string[]>> = {
   de: ['formativ', 'formative', 'formativen', 'formativer', 'formatives', 'formativem', 'summativ', 'summative', 'summativen', 'summativer', 'summatives'],
 }
 
-// LanguageTool language codes.
+// LanguageTool language codes (English has regional rules).
 const LT_LANG: Record<Lang, string> = { es: 'es', gl: 'gl-ES', en: 'en-US', fr: 'fr', de: 'de-DE' }
+const LT_VARIANTS = new Set(['en-US', 'en-GB', 'en-AU', 'en-CA'])
+const HARPER_DIALECT: Record<string, number> = { 'en-US': 0, 'en-GB': 1, 'en-AU': 2, 'en-CA': 3 }
 
+function ltLang(p: Paragraph): string {
+  const tag = variantOf(p.variant)?.tag ?? ''
+  return LT_VARIANTS.has(tag) && p.lang === 'en' ? tag : LT_LANG[p.lang]
+}
+
+const langOfDict = (dict: string): Lang => VARIANTS.find((v) => v.dict === dict)!.lang
+
+// Dictionaries are keyed by dictionary id ("es", "en-gb"); personal words
+// and extra words by language (shared by its variants).
 export class Checker {
-  private dictionaries = new Map<Lang, Hunspell>()
-  private states = new Map<Lang, State>()
-  private loading = new Map<Lang, Promise<Hunspell | null>>()
+  private dictionaries = new Map<string, Hunspell>()
+  private states = new Map<string, State>()
+  private loading = new Map<string, Promise<Hunspell | null>>()
   private personal = new Map<Lang, Set<string>>()
   private harper: HarperLike | null = null
   private harperLoading: Promise<HarperLike | null> | null = null
   harperState: State | 'none' = 'none'
+  private harperDialect = 0
   // Rules the user chose to ignore in this session.
   disabledRules = new Set<string>()
 
   constructor(
-    private source: (lang: Lang) => Promise<DictionaryData>,
+    private source: (dict: string) => Promise<DictionaryData>,
     private loadHarper?: () => Promise<HarperLike>,
     private fetchImpl: typeof fetch = (...args) => fetch(...args),
   ) {}
 
-  state(lang: Lang): State | 'none' {
-    return this.states.get(lang) ?? 'none'
+  state(dict: string): State | 'none' {
+    return this.states.get(dict) ?? 'none'
   }
 
   // Loads a dictionary once; resolves null when it cannot be loaded (offline).
-  ensure(lang: Lang): Promise<Hunspell | null> {
-    let p = this.loading.get(lang)
+  ensure(dict: string): Promise<Hunspell | null> {
+    let p = this.loading.get(dict)
     if (!p) {
-      this.states.set(lang, 'loading')
-      p = this.source(lang).then(
+      this.states.set(dict, 'loading')
+      const lang = langOfDict(dict)
+      p = this.source(dict).then(
         ({ aff, dic }) => {
           const h = new Hunspell(aff, dic)
           for (const w of EXTRA_WORDS[lang] ?? []) h.addWord(w)
           for (const w of this.personal.get(lang) ?? []) h.add(w)
-          this.dictionaries.set(lang, h)
-          this.states.set(lang, 'ready')
+          this.dictionaries.set(dict, h)
+          this.states.set(dict, 'ready')
           return h
         },
         () => {
-          this.states.set(lang, 'error')
+          this.states.set(dict, 'error')
           // Try again next time (for example once back online).
-          this.loading.delete(lang)
+          this.loading.delete(dict)
           return null
         },
       )
-      this.loading.set(lang, p)
+      this.loading.set(dict, p)
     }
     return p
   }
@@ -107,15 +125,16 @@ export class Checker {
     const set = new Set(words)
     const old = this.personal.get(lang) ?? new Set()
     this.personal.set(lang, set)
-    const h = this.dictionaries.get(lang)
-    if (!h) return
-    for (const w of old) if (!set.has(w)) h.remove(w)
-    for (const w of set) if (!old.has(w)) h.add(w)
+    for (const [dict, h] of this.dictionaries) {
+      if (langOfDict(dict) !== lang) continue
+      for (const w of old) if (!set.has(w)) h.remove(w)
+      for (const w of set) if (!old.has(w)) h.add(w)
+    }
   }
 
   // Misspelled words of a paragraph; null while its dictionary is not loaded.
-  spelling(masked: string, lang: Lang): Issue[] | null {
-    const h = this.dictionaries.get(lang)
+  spelling(masked: string, dict: string): Issue[] | null {
+    const h = this.dictionaries.get(dict)
     if (!h) return null
     const out: Issue[] = []
     for (const t of spellTokens(masked)) {
@@ -130,8 +149,8 @@ export class Checker {
     return out
   }
 
-  suggest(word: string, lang: Lang, max = 5): string[] {
-    const h = this.dictionaries.get(lang)
+  suggest(word: string, dict: string, max = 5): string[] {
+    const h = this.dictionaries.get(dict)
     if (!h) return []
     const apostrophe = word.includes('’')
     const list = h.suggest(word.replace(/’/g, "'"), max)
@@ -144,7 +163,7 @@ export class Checker {
     let pending = false
     let spelling: Issue[] = []
     if (options.spelling) {
-      const found = this.spelling(masked, p.lang)
+      const found = this.spelling(masked, dictOf(p))
       if (found) spelling = found
       else pending = true
     }
@@ -152,12 +171,17 @@ export class Checker {
     return { issues: merge(spelling, grammar), pending }
   }
 
-  async harperIssues(text: string): Promise<Issue[]> {
+  async harperIssues(text: string, variant?: string): Promise<Issue[]> {
     const harper = this.harper
     if (!harper) return []
     const masked = maskSkipped(text)
     let lints: HarperLint[]
     try {
+      const dialect = HARPER_DIALECT[variantOf(variant)?.tag ?? ''] ?? 0
+      if (dialect !== this.harperDialect && harper.setDialect) {
+        await harper.setDialect(dialect)
+        this.harperDialect = dialect
+      }
       lints = await harper.lint(masked, { language: 'plaintext' })
     } catch {
       return []
@@ -191,7 +215,7 @@ export class Checker {
   }
 
   // One request for several paragraphs; issues per paragraph, or null on failure.
-  async languageTool(url: string, paragraphs: Paragraph[], lang: Lang, spelling: boolean): Promise<Issue[][] | null> {
+  async languageTool(url: string, paragraphs: Paragraph[], lang: string, spelling: boolean): Promise<Issue[][] | null> {
     const sep = '\n\n'
     const texts = paragraphs.map((p) => maskSkipped(p.text).replace(/￼/g, ' '))
     const starts: number[] = []
@@ -200,7 +224,7 @@ export class Checker {
       starts.push(offset)
       offset += t.length + sep.length
     }
-    const body = new URLSearchParams({ text: texts.join(sep), language: LT_LANG[lang] })
+    const body = new URLSearchParams({ text: texts.join(sep), language: lang })
     let data: { matches?: LtMatch[] }
     try {
       const ctrl = new AbortController()
@@ -248,12 +272,12 @@ export class Checker {
       if (this.harper) {
         for (let i = 0; i < paragraphs.length; i++) {
           if (paragraphs[i].lang !== 'en') continue
-          results[i].issues = merge(results[i].issues, await this.harperIssues(paragraphs[i].text))
+          results[i].issues = merge(results[i].issues, await this.harperIssues(paragraphs[i].text, paragraphs[i].variant))
         }
       }
       if (options.languageTool) {
-        const byLang = new Map<Lang, number[]>()
-        paragraphs.forEach((p, i) => p.text.trim() && byLang.set(p.lang, [...(byLang.get(p.lang) ?? []), i]))
+        const byLang = new Map<string, number[]>()
+        paragraphs.forEach((p, i) => p.text.trim() && byLang.set(ltLang(p), [...(byLang.get(ltLang(p)) ?? []), i]))
         for (const [lang, indexes] of byLang) {
           // Requests of at most ~15,000 characters.
           for (let k = 0; k < indexes.length; ) {
