@@ -668,8 +668,20 @@ npm install
 npm run dev       # dev server, reachable on the LAN
 npm run build     # type-check and build into dist/
 npm run preview   # serve the production build
-node scripts/test-spell.mjs   # grammar rule tests
+npm test          # grammar rule tests + end-to-end tests (build first)
 ```
+
+### Tests
+
+- `npm run test:unit`: grammar rule tests (`scripts/test-spell.mjs`).
+- `npm run test:e2e`: Playwright tests in `tests/e2e/` against the production
+  build (`vite preview`) and a local Nostr relay (`tests/relay.mjs`), never
+  public relays: every app opens without errors, the UI language follows the
+  browser, two browsers edit the same document, `.drawio`/HTML files open from
+  the home screen, and the installed app works offline.
+- GitHub Actions (`.github/workflows/ci.yml`) runs the type check, both test
+  suites and the build on every pull request and on pushes to `main`; the
+  Playwright report is attached to failed runs.
 
 ## Deployment
 

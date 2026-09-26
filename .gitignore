@@ -2,3 +2,5 @@ node_modules
 dist
 public/excalidraw
 public/diagram-libs
+test-results/
+playwright-report/
