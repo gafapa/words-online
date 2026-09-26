@@ -113,7 +113,6 @@
 /* ---------- Dark theme ---------- */
 
 html[data-a11y-theme='dark'] {
-  --brand-fg: #0b1a33;
   --bg: #202124; --canvas: #141517; --surface: #2b2c30; --surface-alt: #303134; --text: #e8eaed; --muted: #b4b8bd;
   --border: #53575d; --divider: #53575d; --hover: #3a3c41; --hover-strong: rgb(255 255 255 / 0.1);
   --active: #27456f; --active-fg: #e8eaed; --accent: #8ab4f8; --on-accent: #0b1a33; --focus: #8ab4f8;

@@ -29,6 +29,8 @@ export interface MenuItem {
   run?: () => void
   active?: () => boolean
   enabled?: () => boolean
+  // Evaluated when the menu opens; hidden items (and separators left dangling) are skipped.
+  visible?: () => boolean
   submenu?: MenuEntry[]
 }
 export type MenuEntry = MenuItem | '-'
@@ -39,7 +41,7 @@ export interface Menu {
 }
 
 // UI zoom from the accessibility preferences: fixed positions are given in unzoomed pixels.
-const uiZoom = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--a11y-ui-zoom')) || 1
+export const uiZoom = (): number => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--a11y-ui-zoom')) || 1
 
 const ownRows = (list: HTMLElement) =>
   [...list.children].filter((n): n is HTMLButtonElement => n instanceof HTMLButtonElement && !n.disabled)
@@ -203,6 +205,18 @@ export function shortcutLabel(shortcut: string): string {
   return shortcut.replace(/\b(Ctrl|Shift|Enter|Del|Arrow|Wheel)\b/g, (k) => names[k])
 }
 
+// Drops hidden items, then leading, trailing and repeated separators.
+function visibleEntries(items: MenuEntry[]): MenuEntry[] {
+  const out: MenuEntry[] = []
+  for (const item of items) {
+    if (item === '-') {
+      if (out.length && out[out.length - 1] !== '-') out.push(item)
+    } else if (!item.visible || item.visible()) out.push(item)
+  }
+  if (out[out.length - 1] === '-') out.pop()
+  return out
+}
+
 function renderItems(items: MenuEntry[], close: () => void, beforeRun = () => {}, parentRow?: HTMLElement): HTMLElement {
   const list = el('div', { class: 'menu-list', role: 'menu' })
   let submenu: HTMLElement | null = null
@@ -219,7 +233,7 @@ function renderItems(items: MenuEntry[], close: () => void, beforeRun = () => {}
     keepInViewport(submenu, z)
     if (focus) focusRow(submenu, 0)
   }
-  for (const item of items) {
+  for (const item of visibleEntries(items)) {
     if (item === '-') {
       list.append(el('div', { class: 'menu-sep', role: 'separator' }))
       continue
@@ -398,6 +412,8 @@ export function tableGrid(onPick: (rows: number, cols: number) => void, size = 1
 export interface DialogButton {
   label: string
   primary?: boolean
+  // Destructive action (red); combine with primary for the default button.
+  danger?: boolean
   value: string
 }
 
@@ -409,7 +425,7 @@ export function showDialog(title: string, body: HTMLElement, buttons: DialogButt
     const dialog = el('dialog', { class: wide ? 'dlg wide' : 'dlg' })
     const form = el('form', { method: 'dialog' })
     const actions = el('div', { class: 'dlg-actions' })
-    for (const b of buttons) actions.append(el('button', { value: b.value, textContent: b.label, class: b.primary ? 'primary' : '' }))
+    for (const b of buttons) actions.append(el('button', { value: b.value, textContent: b.label, class: [b.primary ? 'primary' : '', b.danger ? 'danger' : ''].join(' ').trim() }))
     const heading = el('h2', { textContent: title, id: `dlg-title-${++dialogCount}` })
     dialog.setAttribute('aria-labelledby', heading.id)
     form.append(heading, body, actions)
@@ -442,6 +458,21 @@ export async function promptText(title: string, label: string, value = '', multi
     { label: t('OK'), value: 'ok', primary: true },
   ])
   return result === 'ok' ? input.value : null
+}
+
+// Themed replacement for window.confirm(): resolves true when confirmed.
+//   if (!(await confirmDialog(t('Delete “{title}”?', { title }), t('This cannot be undone.'), { confirmLabel: t('Delete'), danger: true }))) return
+export async function confirmDialog(
+  title: string,
+  text = '',
+  { confirmLabel = t('OK'), cancelLabel = t('Cancel'), danger = false }: { confirmLabel?: string; cancelLabel?: string; danger?: boolean } = {},
+): Promise<boolean> {
+  const body = el('div', { class: 'confirm-body' }, text ? el('p', { textContent: text }) : null)
+  const result = await showDialog(title, body, [
+    { label: cancelLabel, value: 'cancel' },
+    { label: confirmLabel, value: 'ok', primary: true, danger },
+  ])
+  return result === 'ok'
 }
 
 let toastTimer = 0

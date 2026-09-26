@@ -6,7 +6,7 @@ import { t } from '../core/i18n'
 import { homePath } from '../core/router'
 import { accessibilityButton } from './accessibility'
 import { el, icon } from './widgets'
-import { Inbox, Share2 } from 'lucide'
+import { Cloud, Inbox, Share2 } from 'lucide'
 
 export interface Shell {
   menubar: HTMLElement
@@ -17,15 +17,15 @@ export interface Shell {
 
 export function renderShell(app: AppInfo, root: HTMLElement): Shell {
   root.innerHTML = `
-    <div class="app app-${app.type}">
+    <div class="app app-${app.type}" style="--app-color:${app.color}">
       <header class="appbar">
         <div class="appbar-main">
-          <a class="app-logo" href="${homePath()}" title="${t('All documents')}" style="background:${app.color}">${app.letter}</a>
+          <a class="app-logo" href="${homePath()}">${app.letter}</a>
           <div class="title-block">
             <div class="title-row">
               <input id="doc-title" class="doc-title" aria-label="${t('Title')}" spellcheck="false" />
               <span id="access-badge" class="access-badge" hidden></span>
-              <span id="save-state" class="save-state"></span>
+              <span class="save-indicator"><span id="save-state" class="save-state"></span></span>
             </div>
             <nav id="menubar" class="menubar" aria-label="${t('Menu')}"></nav>
           </div>
@@ -43,6 +43,12 @@ export function renderShell(app: AppInfo, root: HTMLElement): Shell {
       <footer id="statusbar" class="statusbar"></footer>
     </div>`
   root.querySelector('.appbar-actions')!.prepend(accessibilityButton())
+  // The logo leads to the home screen; its tooltip names the app of the suite.
+  const logo = root.querySelector<HTMLAnchorElement>('.app-logo')!
+  logo.title = `${app.product} · ${t('All documents')}`
+  logo.setAttribute('aria-label', logo.title)
+  // Save state: an icon (the only part shown on phones) and a label (#save-state).
+  root.querySelector('.save-indicator')!.prepend(icon(Cloud, 16))
   // Icon and label; on phones only the icon is shown (the label stays for screen readers).
   root.querySelector('#btn-handin')!.append(icon(Inbox, 18), el('span', { class: 'btn-label', textContent: t('Hand in') }))
   root.querySelector('#btn-share')!.append(icon(Share2, 18), el('span', { class: 'btn-label', textContent: t('Share') }))

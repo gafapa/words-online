@@ -1,4 +1,4 @@
-// Apps of the suite. Each app is loaded with a dynamic import() only when opened.
+// Apps of the Ofimeo suite. Each app is loaded with a dynamic import() only when opened.
 
 import type { Session, SubmitFile } from '../core/session'
 import type { DocType } from '../core/store'
@@ -19,6 +19,8 @@ export interface AppModule {
 export interface AppInfo {
   type: DocType
   name: string // e.g. "Document"
+  // Name of the app within the suite, e.g. "Ofimeo Docs" ("Ofimeo Documentos" in Spanish).
+  product: string
   plural: string // e.g. "Documents"
   newLabel: string
   untitled: string
@@ -34,6 +36,7 @@ export const APPS: AppInfo[] = [
   {
     type: 'writer',
     name: t('Document'),
+    product: t('Ofimeo Docs'),
     plural: t('Documents'),
     newLabel: t('New document'),
     untitled: t('Untitled document'),
@@ -45,6 +48,7 @@ export const APPS: AppInfo[] = [
   {
     type: 'sheet',
     name: t('Spreadsheet'),
+    product: t('Ofimeo Sheets'),
     plural: t('Spreadsheets'),
     newLabel: t('New spreadsheet'),
     untitled: t('Untitled spreadsheet'),
@@ -56,6 +60,7 @@ export const APPS: AppInfo[] = [
   {
     type: 'draw',
     name: t('Drawing'),
+    product: t('Ofimeo Drawing'),
     plural: t('Drawings'),
     newLabel: t('New drawing'),
     untitled: t('Untitled drawing'),
@@ -67,6 +72,7 @@ export const APPS: AppInfo[] = [
   {
     type: 'diagram',
     name: t('Diagram'),
+    product: t('Ofimeo Diagrams'),
     plural: t('Diagrams'),
     newLabel: t('New diagram'),
     untitled: t('Untitled diagram'),
@@ -78,6 +84,7 @@ export const APPS: AppInfo[] = [
   {
     type: 'slides',
     name: t('Presentation'),
+    product: t('Ofimeo Slides'),
     plural: t('Presentations'),
     newLabel: t('New presentation'),
     untitled: t('Untitled presentation'),
@@ -87,6 +94,9 @@ export const APPS: AppInfo[] = [
     load: () => import('./slides'),
   },
 ]
+
+// Name of the suite (a brand: never translated).
+export const SUITE = 'Ofimeo'
 
 export function appInfo(type: DocType): AppInfo {
   return APPS.find((a) => a.type === type) ?? APPS[0]

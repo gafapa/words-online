@@ -58,7 +58,7 @@
 /* ---------- Header & footer dialog ---------- */
 
 .hf-dialog { display: flex; flex-direction: column; gap: 6px; }
-.hf-toolbar { display: flex; gap: 2px; background: #edf2fa; border-radius: 8px; padding: 3px; }
+.hf-toolbar { display: flex; gap: 2px; background: var(--toolbar-bg); border-radius: var(--radius-l); padding: 3px; }
 .hf-label { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; margin-top: 6px; }
 .link-btn { border: 0; background: none; color: var(--accent); padding: 0; }
 .hf-editor { border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-family: var(--doc-font); font-size: 10pt; min-height: 48px; }
@@ -171,9 +171,9 @@
 .ProseMirror .sg-active { background: rgb(26 115 232 / 0.12); }
 .ProseMirror.show-authorship .author-run { background: color-mix(in srgb, var(--author-color) 22%, transparent); box-shadow: inset 0 -2px 0 var(--author-color); }
 
-.status-mode { padding: 1px 8px; border-radius: 10px; background: var(--active); font-size: 12px; }
-.status-mode.suggesting { background: #e6f4ea; color: #137333; }
-.status-comments { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 1px 8px; font-size: 12px; }
+.status-mode { padding: 1px 8px; border-radius: var(--radius-pill); background: var(--active); font-size: var(--fs-s); }
+.status-mode.suggesting { background: var(--success-bg); color: var(--success-fg); }
+.status-comments { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-pill); padding: 1px 8px; font-size: var(--fs-s); }
 @media (min-width: 761px) { .status-comments { display: none; } }
 .toolbar .tb-review .tb-mode { width: 118px; }
 .tb-access { align-self: center; padding: 0 8px; color: var(--muted); font-size: 13px; }

@@ -1,15 +1,17 @@
-// App chrome shared by every document type: title, access badge, presence
-// avatars, connection status, share dialog (permission links), hand in and
-// user name.
+// App chrome shared by every document type: title, access badge, save state,
+// presence avatars, connection status, share dialog (permission links), hand
+// in and user name.
 
 import QRCode from 'qrcode'
+import { CloudCheck, CloudUpload } from 'lucide'
+import { appInfo } from '../apps/registry'
 import { buildHandIn, downloadBlob, printDocument } from '../core/handin'
 import { t } from '../core/i18n'
 import { updateAuthor, type Access, type Session } from '../core/session'
 import * as store from '../core/store'
 import { setupAutoVersions } from '../core/versions'
 import { handInToShare, setupNextcloud } from './nextcloud'
-import { el, promptText, showDialog, toast } from './widgets'
+import { el, icon, promptText, showDialog, toast } from './widgets'
 import './edu.css'
 
 export function accessLabel(access: Access | undefined): string {
@@ -27,7 +29,7 @@ export function setupChrome(session: Session, untitled: string): void {
   const syncTitle = () => {
     const title = String(meta.get('title') ?? '')
     if (document.activeElement !== titleInput) titleInput.value = title
-    document.title = `${title || untitled} · Words Online`
+    document.title = `${title || untitled} · ${appInfo(session.type).product}`
   }
   titleInput.addEventListener('input', () => session.canEdit && meta.set('title', titleInput.value))
   titleInput.addEventListener('keydown', (e) => e.key === 'Enter' && titleInput.blur())
@@ -101,8 +103,33 @@ export function setupChrome(session: Session, untitled: string): void {
   document.getElementById('btn-share')!.addEventListener('click', () => openShareDialog(session))
   document.getElementById('btn-handin')?.addEventListener('click', () => void handIn(session, untitled))
 
+  setupSaveState(session)
   setupAutoVersions(session)
   setupNextcloud(session)
+}
+
+// Save state ("Saving…" / "Saved in this browser") for every app: an icon, always
+// shown (phones show only the icon), and a label. The shared status bar
+// (statusbar.ts) moves the indicator into the status bar.
+export function setupSaveState(session: Session): void {
+  const indicator = document.querySelector<HTMLElement>('.save-indicator')
+  const label = document.getElementById('save-state')
+  if (!indicator || !label) return
+  let timer = 0
+  const render = (saving: boolean) => {
+    const text = saving ? t('Saving…') : t('Saved in this browser')
+    label.textContent = text
+    indicator.classList.toggle('saving', saving)
+    indicator.title = text
+    indicator.setAttribute('role', 'status')
+    indicator.querySelector('svg')?.replaceWith(icon(saving ? CloudUpload : CloudCheck, 16))
+  }
+  session.doc.on('update', () => {
+    if (!indicator.classList.contains('saving')) render(true)
+    clearTimeout(timer)
+    timer = window.setTimeout(() => render(false), 600)
+  })
+  render(false)
 }
 
 type LinkChoice = Access | 'copy'
