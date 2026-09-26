@@ -1,13 +1,16 @@
 // PowerPoint (.pptx) import: slides with text boxes and placeholders
 // (formatted paragraphs, bullets), basic shapes, pictures, straight connectors,
-// tables, backgrounds and speaker notes. Placeholders take their position and
-// default text size from the slide layout and master, and theme colors resolve
-// through the presentation theme. Charts, SmartArt and animations are skipped.
+// tables, charts, SmartArt, backgrounds and speaker notes. Placeholders take
+// their position and default text size from the slide layout and master, and
+// theme colors resolve through the presentation theme. Charts become pictures
+// drawn from their data (kept with the object); SmartArt uses the drawing
+// PowerPoint stores with it, or a box with its text. Animations are skipped.
 
 import JSZip from 'jszip'
 import { t } from '../../../core/i18n'
 import { newCellId, type CellRecord } from '../../diagram/model'
 import { SLIDE_SIZES, type Ratio, type SlideData } from '../model'
+import { parseChart, renderChartSvg, svgDataUri } from './chart'
 
 const EMU_PER_PX = 9525
 
@@ -152,7 +155,7 @@ async function walkTree(ctx: Ctx, tree: Element, transform: GroupTransform): Pro
     if (name === 'sp') await shape(ctx, node, transform)
     else if (name === 'pic') await picture(ctx, node, transform)
     else if (name === 'cxnSp') connector(ctx, node, transform)
-    else if (name === 'graphicFrame') graphicFrame(ctx, node, transform)
+    else if (name === 'graphicFrame') await graphicFrame(ctx, node, transform)
     else if (name === 'grpSp') {
       const xfrm = kid(kid(node, 'grpSpPr'), 'xfrm')
       const outer = readXfrm(xfrm)
@@ -308,11 +311,15 @@ async function picture(ctx: Ctx, node: Element, transform: GroupTransform): Prom
   push(ctx, { vertex: 1, style, geometry: geometry(ctx, x) })
 }
 
-function graphicFrame(ctx: Ctx, node: Element, transform: GroupTransform): void {
-  const tbl = find(node, 'tbl')
+async function graphicFrame(ctx: Ctx, node: Element, transform: GroupTransform): Promise<void> {
   const xfrm = readXfrm(kid(node, 'xfrm'))
-  if (!tbl || !xfrm) return
+  if (!xfrm) return
   const x = transform ? transform(xfrm) : xfrm
+  const uri = attr(find(node, 'graphicData'), 'uri') ?? ''
+  if (uri.endsWith('/chart')) return chartFrame(ctx, node, x)
+  if (uri.endsWith('/diagram')) return smartArt(ctx, node, x)
+  const tbl = find(node, 'tbl')
+  if (!tbl) return
   const s = ctx.scale / EMU_PER_PX
   const cols = kids(kid(tbl, 'tblGrid'), 'gridCol').map((c) => num(attr(c, 'w')) * s)
   const rows = kids(tbl, 'tr')
@@ -342,6 +349,65 @@ function graphicFrame(ctx: Ctx, node: Element, transform: GroupTransform): void 
     })
     y += h
   }
+}
+
+// ---------- Charts and SmartArt ----------
+
+const REL_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+
+// A chart as a picture of it, drawn from the cached data in the chart part.
+async function chartFrame(ctx: Ctx, node: Element, x: Xfrm): Promise<void> {
+  const ref = find(node, 'chart')
+  const rid = ref?.getAttributeNS(REL_NS, 'id') ?? attr(ref, 'r:id')
+  const path = rid ? ctx.slide.rels.get(rid) : undefined
+  const part = path ? await readPart(ctx.zip, path) : null
+  const chart = part ? parseChart(part.doc, (fill) => (fill ? colorOf(ctx, fill) : null)) : null
+  if (!chart) return
+  const s = ctx.scale / EMU_PER_PX
+  const svg = renderChartSvg(chart, x.w * s, x.h * s, cssFont(ctx.minorFont))
+  push(ctx, {
+    vertex: 1,
+    style: `shape=image;imageAspect=0;slideChart=1;image=${svgDataUri(svg)};`,
+    geometry: geometry(ctx, x),
+    data: JSON.stringify({ chart }),
+  })
+}
+
+// SmartArt: the shapes of its drawing part (positions relative to the frame), else a box with its text.
+async function smartArt(ctx: Ctx, node: Element, x: Xfrm): Promise<void> {
+  const ids = find(node, 'relIds')
+  const dm = ids?.getAttributeNS(REL_NS, 'dm') ?? attr(ids, 'r:dm')
+  const dataPath = dm ? ctx.slide.rels.get(dm) : undefined
+  const data = dataPath ? await readPart(ctx.zip, dataPath) : null
+  const drawingRel = attr(find(data?.doc, 'dataModelExt'), 'relId')
+  const drawingPath = (drawingRel ? ctx.slide.rels.get(drawingRel) : undefined) ?? relOfType(ctx.slide, 'diagrams/drawing')
+  const drawing = drawingPath ? await readPart(ctx.zip, drawingPath) : null
+  const tree = find(drawing?.doc, 'spTree')
+  const shapes = tree ? [...tree.children].filter((c) => c.localName === 'sp' || c.localName === 'grpSp') : []
+  if (tree && shapes.length) {
+    const offset = (inner: Xfrm): Xfrm => ({ ...inner, x: inner.x + x.x, y: inner.y + x.y })
+    // The drawing's pictures and theme colors resolve against its own part.
+    const slide = ctx.slide
+    ctx.slide = { ...drawing!, rels: new Map([...slide.rels, ...drawing!.rels]) }
+    try {
+      await walkTree(ctx, tree, offset)
+    } finally {
+      ctx.slide = slide
+    }
+    return
+  }
+  // No drawing: the text of the diagram's points, as a list in a dashed box.
+  const texts = findAll(data?.doc, 'pt')
+    .filter((pt) => !['parTrans', 'sibTrans', 'pres', 'doc'].includes(attr(pt, 'type') ?? 'node'))
+    .map((pt) => findAll(pt, 't').map((t) => t.textContent ?? '').join(''))
+    .filter((text) => text.trim())
+  const html = texts.length ? `<ul>${texts.map((t) => `<li>${escapeHtml(t)}</li>`).join('')}</ul>` : escapeHtml(t('SmartArt'))
+  push(ctx, {
+    vertex: 1,
+    value: html,
+    style: `rounded=1;arcSize=4;whiteSpace=wrap;html=1;dashed=1;fillColor=none;strokeColor=#9aa0a6;align=left;verticalAlign=top;spacing=12;fontSize=${round(18 / 0.75 * ctx.scale)};fontColor=${ctx.colors.tx1 ?? '#000000'};fontFamily=${cssFont(ctx.minorFont)};`,
+    geometry: geometry(ctx, x),
+  })
 }
 
 // ---------- Colors ----------

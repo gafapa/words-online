@@ -191,7 +191,11 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
   const editor = new Editor({
     element: document.getElementById('editor')!,
     extensions: [
-      ...bodyExtensions({ history: false, placeholder: t('Start typing…') }),
+      ...bodyExtensions({
+        history: false,
+        placeholder: t('Start typing…'),
+        toc: { pageOf: (view, pos) => pageOfPosition(currentLayout(view), pos), defaultTitle: () => tocTitle(spell.docLang()) },
+      }),
       Collaboration.configure({ document: doc, field: 'body' }),
       CollaborationCaret.configure({
         provider: { awareness },
@@ -561,6 +565,21 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
   // Header/footer schema must be registered for rendering even before first use.
   void getSchema(hfExtensions)
   return ctx
+}
+
+// Page (1-based) of a heading, from the layout's heading anchors.
+function pageOfPosition(layout: Layout, pos: number): number | null {
+  const exact = layout.anchors.get(pos)
+  if (exact) return exact.page + 1
+  let best: { pos: number; page: number } | null = null
+  for (const [p, a] of layout.anchors) if (p <= pos && (!best || p > best.pos)) best = { pos: p, page: a.page }
+  return best ? best.page + 1 : null
+}
+
+// Title of a new table of contents in the document language.
+function tocTitle(lang: unknown): string {
+  const base = String(lang ?? '').slice(0, 2)
+  return { es: 'Índice', gl: 'Índice', fr: 'Table des matières', de: 'Inhaltsverzeichnis' }[base] ?? 'Contents'
 }
 
 function isEmptyDoc(json: JSONContent): boolean {

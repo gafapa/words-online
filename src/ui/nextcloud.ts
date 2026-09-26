@@ -32,6 +32,7 @@ const SAVE_EXTS: Record<DocType, string[]> = {
   draw: ['excalidraw', 'png', 'svg'],
   diagram: ['drawio', 'svg', 'png'],
   slides: ['pptx', 'odp'],
+  forms: ['oform', 'csv'],
 }
 const EXT_ALIASES: Record<string, string> = { htm: 'html', xml: 'drawio' }
 

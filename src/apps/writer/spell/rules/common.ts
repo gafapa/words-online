@@ -11,7 +11,7 @@ type Found = Omit<Issue, 'kind' | 'rule'>
 const REPEAT_OK: Record<Lang, Set<string>> = {
   en: wordSet('had that bye no so very really much many far'),
   es: wordSet('no ya bla ja je muy tan poco'),
-  gl: wordSet('no xa bla ja je moi tan pouco'),
+  gl: wordSet('no xa bla ja je moi tan pouco se'),
   fr: wordSet('nous vous bla ha très si'),
   de: wordSet('die der das dem den des sie ja bla sehr so'),
 }
@@ -129,6 +129,8 @@ export const sentenceCapital: Rule = {
       const word = m[0]
       // "iPhone", "eBay": mixed case is intentional.
       if (!/^\p{Ll}/u.test(word) || /\p{Lu}/u.test(word.slice(1))) return null
+      // List markers: "a) …", "b. …".
+      if (word.length === 1 && /^[).]/.test(text[from + 1] ?? '')) return null
       return word
     }
     const flag = (from: number, word: string) =>

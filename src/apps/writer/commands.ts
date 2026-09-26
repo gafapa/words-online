@@ -76,6 +76,24 @@ export const ZOOMS = [0.5, 0.75, 0.9, 1, 1.25, 1.5, 2]
 const dialogs = () => import('./dialogs')
 const sections = () => import('./sections')
 
+function tocItems(editor: Editor): MenuEntry[] {
+  return [
+    { label: t('Headings 1–3'), run: () => editor.chain().focus().insertTableOfContents(3).run() },
+    { label: t('Headings 1–6'), run: () => editor.chain().focus().insertTableOfContents(6).run() },
+    '-',
+    { label: t('Update table of contents'), run: () => editor.commands.updateTablesOfContents(), enabled: () => hasNode(editor, 'tableOfContents') },
+  ]
+}
+
+export function hasNode(editor: Editor, name: string): boolean {
+  let found = false
+  editor.state.doc.descendants((node) => {
+    if (node.type.name === name) found = true
+    return !found && !node.isAtom
+  })
+  return found
+}
+
 function currentColumns(ctx: WriterContext): number {
   const { doc, selection } = ctx.editor.state
   let index = 0
@@ -245,6 +263,7 @@ export function writerFrame(ctx: WriterContext): Pick<FrameSpec, 'file' | 'edit'
           { label: t('Link…'), shortcut: mod('K'), run: () => dialogs().then((d) => d.editLink(ctx)) },
           '-',
           { label: t('Footnote…'), shortcut: isMac ? '⌥⌘F' : 'Ctrl+Alt+F', run: () => dialogs().then((d) => d.insertFootnote(ctx)) },
+          { label: t('Table of contents'), submenu: tocItems(editor) },
           { label: t('Header and footer…'), run: () => dialogs().then((d) => d.editHeaderFooter(ctx)) },
           '-',
           { label: t('Page break'), shortcut: mod('Enter'), run: run((e) => e.chain().focus().setPageBreak().run()) },

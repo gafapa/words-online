@@ -172,7 +172,7 @@ Galician, English, French and German.
   agua*), queísmo and more dequeísmo verbs, laísmo with verbs of saying and
   giving, *le lo* → *se lo*, *en base a* (style) and *a nivel de* (optional
   style); lowercase months and days (es, gl, fr; names such as *Julio* or
-  *Hospital 12 de Octubre* excepted); Galician Castilianisms (about 200 RAG
+  *Hospital 12 de Octubre* excepted); Galician Castilianisms (about 250 RAG
   forms, some only in context: *este año*, *a miña madre*), contractions
   (*de o* → *do*, *a o* → *ao*, *por as* → *polas*; not before an infinitive
   or with capitalized place names) and diacritic accents (*é, dá, vén, está,

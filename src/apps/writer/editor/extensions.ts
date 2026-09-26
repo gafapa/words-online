@@ -14,6 +14,7 @@ import { TaskList, TaskItem } from '@tiptap/extension-list'
 import { CharacterCount, Placeholder } from '@tiptap/extensions'
 import { CellBackground, Footnote, PageBreak, PageBreakShortcut, PageNumber, ParagraphFormat, SectionBreak } from './nodes'
 import { Equation } from './equation'
+import { TableOfContents, type TocOptions } from './toc'
 import { Suggesting } from './suggestions'
 import { CommentRange } from './comment-range'
 import { ParagraphLanguage } from '../spell/lang'
@@ -59,6 +60,8 @@ interface Options {
   // Collaboration replaces the local undo history.
   history?: boolean
   placeholder?: string
+  // Page numbers and default title for tables of contents (body editor only).
+  toc?: Partial<TocOptions>
 }
 
 function common(options: Options): AnyExtension[] {
@@ -94,6 +97,7 @@ export function bodyExtensions(options: Options = {}): AnyExtension[] {
     PageBreak,
     PageBreakShortcut,
     SectionBreak,
+    options.toc ? TableOfContents.configure(options.toc) : TableOfContents,
     Footnote,
     Equation,
     Suggesting,

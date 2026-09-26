@@ -32,6 +32,8 @@ export const CASES: Case[] = [
   ['es', 'Vivió en EE.UU. durante años.', none],
   ['de', 'Das war z.B. gut, bzw. sehr gut.', none],
   ['en', 'iPhone sales grew.', none],
+  ['es', 'a) Paso de vapor a líquido', none],
+  ['gl', 'Preguntou se se podía.', none],
   ['en', 'Go to https://example.com/a,b now.', none],
   // ---------- Spanish ----------
   ['es', 'Haber si vienes mañana.', [['es-a-ver-haber', 'A ver si']]],
