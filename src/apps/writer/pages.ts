@@ -217,7 +217,6 @@ class PaginationView {
   private measure() {
     const { view } = this
     if (!view.dom.isConnected) return
-    const t0 = performance.now()
     const first = this.options.firstSection()
     const sections = sectionsOf(view.state.doc, first)
     const width = Math.max(...sections.map((s) => pageGeometry(s.page).width))
@@ -243,7 +242,6 @@ class PaginationView {
     if (changed || unplaced) view.dispatch(view.state.tr.setMeta(paginationKey, { layout, places }).setMeta('addToHistory', false))
     this.latest = layout
     this.options.onLayout(layout)
-    ;((window as any).__pm ??= []).push(Math.round(performance.now() - t0))
     // Blocks measured before they had their final width need a second pass.
     if ((changed || unplaced) && this.passes++ < 3) this.measure()
   }

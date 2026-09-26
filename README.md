@@ -105,8 +105,8 @@ Galician, English, French and German.
   *quelque fois*, *on a pas*, *si il* (fr), *das / dass* after verbs of saying
   and thinking, *seit / seid*, *als / wie* after comparatives (de). English
   grammar also uses [Harper](https://writewithharper.com) (WebAssembly, about
-  8 MB compressed, loaded only for English text). Rule tests:
-  `node scripts/test-spell.mjs`.
+  8 MB compressed, loaded only for English text). More rules below. Rule
+  tests: `node scripts/test-spell.mjs`.
 - Right click an underlined word: up to five suggestions, *Ignore*, *Ignore
   all* (this session), *Add to dictionary* (a personal dictionary per language,
   kept in this browser; *Tools → Personal dictionary…* lists and removes
@@ -148,6 +148,47 @@ Galician, English, French and German.
   34 ms median with checking vs 30 ms without (the rest is layout of the
   pages). The Galician dictionary takes about 55 MB of memory in the worker
   (Spanish 11 MB); Harper about 100 MB more.
+- **Regional variants** (`spell/variants.ts`): Español (España, México,
+  Argentina, Colombia, Chile, Estados Unidos), Galego, English (US, UK,
+  Australia, Canada), Français, Deutsch. The document and paragraph language
+  is stored as a BCP 47 tag (`en-GB`, `es-MX`; older documents with a bare
+  `es` still work), written to Word as `w:lang` and to OpenDocument as
+  `fo:language` + `fo:country`, and read back (other regions map to the
+  closest variant: `es-PE` → `es-CO`, `en-IE` → `en-GB`). Until a document
+  has a language, the interface language in the browser's region is used
+  (an `es-MX` browser gets *Español (México)*). Each variant has its own
+  dictionary file (the `dictionary-en-gb`, `-en-au`, `-en-ca`, `-es-mx`,
+  `-es-ar`, `-es-co`, `-es-cl`, `-es-us` packages by wooorm, same licenses as
+  the base ones: MIT/BSD for English, GPL/LGPL/MPL for Spanish; Spain uses the
+  general RLA-ES Spanish dictionary), loaded only when used; Harper uses the
+  matching English dialect. Personal dictionaries are per language.
+- **More offline rules**, each tested with right and wrong sentences in
+  `spell/rules/tests.ts`: Spanish diacritic accents where only one reading is
+  possible (*él/el* before a verb, a pronoun or punctuation; *tú, mí, sé, té,
+  más, sí, aún/aun, está*), accents of question and exclamation words after
+  `¿` / `¡` and in indirect questions (*no sé dónde*), *de el / a el* →
+  *del / al*, article–noun agreement for a curated list of nouns (*el
+  problema, la mano, el aprendizaje*, -ción/-dad nouns, *el agua / esta
+  agua*), queísmo and more dequeísmo verbs, laísmo with verbs of saying and
+  giving, *le lo* → *se lo*, *en base a* (style) and *a nivel de* (optional
+  style); lowercase months and days (es, gl, fr; names such as *Julio* or
+  *Hospital 12 de Octubre* excepted); Galician Castilianisms (about 200 RAG
+  forms, some only in context: *este año*, *a miña madre*), contractions
+  (*de o* → *do*, *a o* → *ao*, *por as* → *polas*; not before an infinitive
+  or with capitalized place names) and diacritic accents (*é, dá, vén, está,
+  máis*); English *its/it's, your/you're, their/there* and capitalized days
+  and months; French *quant/quand*, *tout/tous les jours* and pleonasms;
+  German *einzigste*, *wider/wieder* and words written together by mistake.
+  Words quoted as words («hecho», "el") are not corrected. On about 30,000
+  words of clean text (the writer, slides and diagram templates in es/gl/fr/de,
+  the interface translations and hand-written texts) the new rules give one
+  false positive, a Spanish verb quoted in a Galician explanation.
+- **Diagrams and slides**: `spell/inline.ts` exports
+  `attachSpellcheck(element, lang?)`, which checks any contenteditable
+  element (the label editors) with the same worker and underlines issues with
+  the CSS Custom Highlight API, without changing the element's HTML (an
+  overlay is drawn in browsers without it); right click shows suggestions,
+  *Ignore all* and *Add to dictionary*.
 
 ## Spreadsheet
 
