@@ -62,9 +62,71 @@ export function spellingDialog(spell: SpellController): void {
   let wrapped = false
   const cursor = () => editor.state.selection.from
 
+  // Highlight of the current issue in the document: the editor selection is not
+  // shown while the focus is in the dialog.
+  const marks = el('div', { class: 'spell-current-layer' })
+  document.body.append(marks)
+  const issueRange = (): Range | null => {
+    if (!current) return null
+    try {
+      const view = editor.view
+      const a = view.domAtPos(current.from)
+      const b = view.domAtPos(current.to)
+      const range = document.createRange()
+      range.setStart(a.node, a.offset)
+      range.setEnd(b.node, b.offset)
+      return range
+    } catch {
+      return null
+    }
+  }
+  const place = () => {
+    marks.replaceChildren()
+    const range = issueRange()
+    if (!range) return
+    const seen = new Set<string>()
+    for (const r of range.getClientRects()) {
+      // Nested inline elements report the same line box more than once.
+      const key = `${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)}`
+      if (!r.width || seen.has(key)) continue
+      seen.add(key)
+      const box = el('div', { class: `spell-current ${current!.issue.kind}` })
+      Object.assign(box.style, { left: `${r.left - 2}px`, top: `${r.top - 2}px`, width: `${r.width + 4}px`, height: `${r.height + 4}px` })
+      marks.append(box)
+    }
+  }
+  // Brings the issue to the upper part of the view and keeps the dialog off it.
+  const reveal = () => {
+    const range = issueRange()
+    if (!range) return
+    let rect = range.getBoundingClientRect()
+    let scroller: HTMLElement | null = editor.view.dom.parentElement
+    while (scroller && !(scroller.scrollHeight > scroller.clientHeight && /auto|scroll/.test(getComputedStyle(scroller).overflowY))) scroller = scroller.parentElement
+    const area = scroller ? scroller.getBoundingClientRect() : new DOMRect(0, 0, innerWidth, innerHeight)
+    const target = area.top + area.height * 0.35
+    if (rect.top < area.top + 40 || rect.bottom > area.bottom - 40 || Math.abs(rect.top - target) > area.height * 0.3) {
+      if (scroller) scroller.scrollTop += rect.top - target
+      else window.scrollBy(0, rect.top - target)
+      rect = range.getBoundingClientRect()
+    }
+    dialog.classList.remove('bottom')
+    const d = dialog.getBoundingClientRect()
+    const overlaps = rect.right > d.left && rect.left < d.right && rect.bottom > d.top && rect.top < d.bottom
+    if (overlaps) dialog.classList.add('bottom')
+    place()
+  }
+  const onScroll = () => place()
+  window.addEventListener('scroll', onScroll, true)
+  window.addEventListener('resize', onScroll)
+  editor.on('transaction', onScroll)
+
   const finish = () => {
     open = null
     unsubscribe()
+    window.removeEventListener('scroll', onScroll, true)
+    window.removeEventListener('resize', onScroll)
+    editor.off('transaction', onScroll)
+    marks.remove()
     dialog.remove()
     editor.commands.focus()
   }
@@ -92,6 +154,7 @@ export function spellingDialog(spell: SpellController): void {
     list.replaceChildren()
     change.value = ''
     if (!found) {
+      marks.replaceChildren()
       kind.textContent = ''
       message.textContent = ''
       context.replaceChildren()
@@ -112,7 +175,8 @@ export function spellingDialog(spell: SpellController): void {
     const mark = el('mark', { class: found.issue.kind, textContent: text.slice(a, b) })
     context.replaceChildren((a > 120 ? '…' : '') + before, mark, after + (b + 120 < text.length ? '…' : ''))
     // Select it in the document so it can be seen.
-    editor.view.dispatch(editor.state.tr.setSelection(TextSelection.create(editor.state.doc, found.from, found.to)).scrollIntoView())
+    editor.view.dispatch(editor.state.tr.setSelection(TextSelection.create(editor.state.doc, found.from, found.to)))
+    requestAnimationFrame(() => current === found && reveal())
     status.textContent = ''
     void spell.suggestions(found).then((suggestions) => {
       if (current !== found) return

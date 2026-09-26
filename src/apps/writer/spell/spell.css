@@ -28,6 +28,11 @@ dialog.spell-dialog {
   border: 0; border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow); z-index: 900;
   background: var(--surface); color: var(--text);
 }
+.spell-dialog.bottom { inset: auto 16px 40px auto; }
+/* The issue being reviewed in the dialog. */
+.spell-current-layer { position: fixed; inset: 0; pointer-events: none; z-index: 899; }
+.spell-current { position: fixed; border-radius: 3px; outline: 2px solid #d93025; background: rgb(217 48 37 / 0.18); }
+.spell-current.grammar, .spell-current.style { outline-color: #1a73e8; background: rgb(26 115 232 / 0.18); }
 .spell-dialog h2 { margin: 0 0 10px; font-size: 18px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
 .spell-dialog h2 .spell-close { margin-left: auto; border: 0; background: none; font-size: 18px; color: var(--muted); }
 .spell-dialog .spell-lang { font-size: 13px; }
