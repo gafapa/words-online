@@ -315,7 +315,7 @@ export function backupReminder(): HTMLElement | null {
       ' ',
       since,
       ' ',
-      t('Clearing the browser data deletes them.'),
+      t('Clearing the browser data deletes the documents stored here.'),
     ),
     el('div', { class: 'backup-reminder-actions' }, now, more, dismiss),
   )

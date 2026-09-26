@@ -5,7 +5,8 @@ import Collaboration from '@tiptap/extension-collaboration'
 import { NodeSelection } from '@tiptap/pm/state'
 import { Bold, Italic, Underline, TextAlignStart, TextAlignCenter, TextAlignEnd, Hash } from 'lucide'
 import { headerFooterExtensions } from './editor/extensions'
-import { PAGE_SIZES_MM, type PageSettings, type PageSize } from './formats/types'
+import { MAX_COLUMNS, PAGE_SIZES_MM, type PageSettings, type PageSize } from './formats/types'
+import { allSections, currentSectionIndex, setSections } from './sections'
 import { colorPalette, el, icon, promptText, showDialog, toast } from '../../ui/widgets'
 import type { WriterContext } from './app'
 import { t } from '../../core/i18n'
@@ -135,8 +136,22 @@ export async function specialCharacters(ctx: WriterContext): Promise<void> {
   await showDialog(t('Special characters'), grid, [{ label: t('Close'), value: 'ok', primary: true }])
 }
 
+// "Apply to" choice when the document has several sections.
+function applyToField(ctx: WriterContext, count: number): { field: HTMLElement | null; target: () => number | null } {
+  if (count < 2) return { field: null, target: () => null }
+  const select = el(
+    'select',
+    { class: 'field' },
+    el('option', { value: 'section', textContent: t('This section') }),
+    el('option', { value: 'all', textContent: t('Whole document') }),
+  )
+  const index = currentSectionIndex(ctx.editor)
+  return { field: el('label', { class: 'field-label span2' }, t('Apply to'), select), target: () => (select.value === 'all' ? null : index) }
+}
+
 export async function pageSetup(ctx: WriterContext): Promise<void> {
-  const page = ctx.getPage()
+  const sections = allSections(ctx)
+  const page = sections[currentSectionIndex(ctx.editor)].page
   const size = el('select', { class: 'field' })
   for (const s of Object.keys(PAGE_SIZES_MM) as PageSize[]) {
     const [w, h] = PAGE_SIZES_MM[s]
@@ -153,6 +168,7 @@ export async function pageSetup(ctx: WriterContext): Promise<void> {
   const bottom = margin(t('Bottom'), page.margins.bottom)
   const left = margin(t('Left'), page.margins.left)
   const right = margin(t('Right'), page.margins.right)
+  const apply = applyToField(ctx, sections.length)
   const body = el(
     'div',
     { class: 'form grid2' },
@@ -162,6 +178,7 @@ export async function pageSetup(ctx: WriterContext): Promise<void> {
     bottom.label,
     left.label,
     right.label,
+    ...(apply.field ? [apply.field] : []),
     el('p', { class: 'hint span2', textContent: t('Page setup applies to everyone editing this document.') }),
   )
   if ((await showDialog(t('Page setup'), body, [{ label: t('Cancel'), value: 'cancel' }, { label: t('Apply'), value: 'ok', primary: true }])) !== 'ok') return
@@ -179,7 +196,38 @@ export async function pageSetup(ctx: WriterContext): Promise<void> {
       right: mm(right.input, page.margins.right),
     },
   }
-  ctx.setPage(next)
+  setSections(ctx, apply.target(), (s) => ({ ...s, page: next }))
+}
+
+// Text columns of the section at the cursor (or the whole document).
+export async function columnsDialog(ctx: WriterContext, preset?: number): Promise<void> {
+  const sections = allSections(ctx)
+  const index = currentSectionIndex(ctx.editor)
+  const current = sections[index].columns
+  if (preset) {
+    setSections(ctx, sections.length > 1 ? index : null, (s) => ({ ...s, columns: { ...s.columns, count: preset } }))
+    return
+  }
+  const count = el('select', { class: 'field' })
+  for (let n = 1; n <= MAX_COLUMNS; n++) count.append(el('option', { value: String(n), textContent: String(n) }))
+  count.value = String(current.count)
+  const gap = el('input', { type: 'number', min: '0', max: '5', step: '0.1', value: String(Math.round(current.gap) / 10), class: 'field' })
+  const line = el('input', { type: 'checkbox' })
+  line.checked = current.separator
+  const apply = applyToField(ctx, sections.length)
+  const body = el(
+    'div',
+    { class: 'form grid2' },
+    el('label', { class: 'field-label' }, t('Number of columns'), count),
+    el('label', { class: 'field-label' }, `${t('Spacing')} (cm)`, gap),
+    el('label', { class: 'check span2' }, line, ' ', t('Line between columns')),
+    ...(apply.field ? [apply.field] : []),
+    el('p', { class: 'hint span2', textContent: t('Insert a continuous section break to change the number of columns within a page.') }),
+  )
+  if ((await showDialog(t('Columns'), body, [{ label: t('Cancel'), value: 'cancel' }, { label: t('Apply'), value: 'ok', primary: true }])) !== 'ok') return
+  const g = parseFloat(gap.value)
+  const columns = { count: Number(count.value), gap: Number.isFinite(g) ? clamp(g * 10, 0, 50) : current.gap, separator: line.checked }
+  setSections(ctx, apply.target(), (s) => ({ ...s, columns }))
 }
 
 // Header and footer are edited in small collaborative editors bound to their own fragments.

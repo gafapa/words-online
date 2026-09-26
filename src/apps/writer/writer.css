@@ -21,39 +21,51 @@
 .canvas-row { display: flex; align-items: flex-start; gap: 16px; width: max-content; min-width: 100%; justify-content: center; }
 .zoom-wrap { flex: none; }
 .paper {
-  --page-height: 1123px;
   position: relative;
   transform-origin: 0 0;
-  background: var(--surface);
-  box-shadow: var(--shadow);
   font-family: var(--doc-font);
   font-size: 11pt;
   line-height: 1.15;
   color: #000;
 }
+/* Sheets are drawn by the page layer; the paper itself stays transparent (gaps show the canvas). */
+#paper.paper { background: transparent; box-shadow: none; }
+.page-layer { position: absolute; inset: 0; pointer-events: none; }
+.page-sheet { position: absolute; background: var(--paper); box-shadow: var(--shadow); }
+#page-sheets { z-index: 0; }
+#editor { position: absolute; left: 0; top: 0; width: 100%; z-index: 1; }
+.page-chrome { z-index: 2; }
 .page-header, .page-footer {
-  display: flex; flex-direction: column; overflow: hidden; color: #333; font-size: 10pt;
-  cursor: default;
+  position: absolute; display: flex; flex-direction: column; overflow: hidden; color: #333; font-size: 10pt;
+  cursor: default; pointer-events: auto;
 }
 .page-header { justify-content: flex-end; padding-bottom: 8px !important; }
 .page-footer { justify-content: flex-start; padding-top: 8px !important; }
 .page-header:hover, .page-footer:hover { background: rgb(26 115 232 / 0.04); outline: 1px dashed rgb(26 115 232 / 0.3); outline-offset: -1px; }
 .paper .page-header p, .paper .page-footer p { margin: 0; }
-.page-header:empty::after, .page-footer:empty::after { content: ''; }
-
-.page-spacer { user-select: none; position: relative; }
-/* Like Word, space before is dropped at the top of a page. */
-.page-spacer + * { margin-top: 0 !important; }
-.page-fill { height: var(--fill); }
-.page-gap {
-  background: var(--canvas);
-  box-shadow: inset 0 6px 6px -6px rgb(60 64 67 / 0.4), inset 0 -6px 6px -6px rgb(60 64 67 / 0.4);
-}
+.page-notes-box { position: absolute; display: flex; flex-direction: column; justify-content: flex-end; }
+.column-line { position: absolute; width: 0; border-left: 1px solid #555; }
 .page-notes { display: flow-root; font-size: 9pt; line-height: 1.2; }
 .paper .page-notes hr { width: 33%; margin: 7px 0 8px; border: 0; border-top: 1px solid #555; height: 0; }
 .page-note { padding: 1px 0; }
 .page-note sup { font-size: 0.75em; }
 .page-notes.measure { position: absolute; left: -10000px; top: 0; visibility: hidden; padding: 0; }
+
+/* Paged editor: blocks are placed by the pagination (node decorations). Containers
+   (lists, quotes) stay in the flow and only their children are placed. */
+.ProseMirror.paged { position: relative; height: 100%; padding: 0; }
+.ProseMirror.paged > * { position: absolute; left: var(--content-left); right: var(--content-right); top: 0; }
+.ProseMirror.paged > :is(ul, ol, blockquote) { position: static; margin-left: var(--content-left); margin-right: var(--content-right); }
+.ProseMirror.paged :is(ul, ol, blockquote) { margin-top: 0; }
+.ProseMirror.paged blockquote { border-left: 0; padding-left: 0; }
+.ProseMirror.paged blockquote > :not(ul, ol, blockquote) { border-left: 3px solid #ccc; padding-left: 12pt; }
+.ProseMirror.paged [data-page-split] { margin: 0; }
+.ProseMirror .section-break { height: 0; margin: 4px 0; border-top: 1px dashed #9aa0a6; position: relative; }
+.ProseMirror .section-break::after {
+  content: attr(data-label); position: absolute; left: 50%; top: -8px; transform: translateX(-50%);
+  background: var(--paper); color: #777; font: 11px system-ui, sans-serif; padding: 0 6px; white-space: nowrap;
+}
+.ProseMirror .section-break.ProseMirror-selectednode { border-top-color: var(--accent); }
 
 /* ---------- Header & footer dialog ---------- */
 
@@ -206,12 +218,11 @@
   .ProseMirror .comment-hl { background: none; border: 0; }
   .canvas { padding: 0; overflow: visible; background: #fff; }
   .zoom-wrap { width: auto !important; height: auto !important; margin: 0; }
-  /* Exactly N sheets: absorbs sub-pixel rounding that would add a blank page. */
-  .paper { transform: none !important; box-shadow: none; height: calc(var(--pages, 1) * var(--page-height)); overflow: hidden; }
-  .page-gap { display: none; }
-  .page-fill { height: calc(var(--fill) - 4px); }
-  .page-spacer .page-footer { break-after: page; }
+  .paper { transform: none !important; overflow: hidden; }
+  .page-sheet { box-shadow: none; }
   .page-header:hover, .page-footer:hover { outline: 0; background: none; }
+  .ProseMirror .section-break { border: 0; }
+  .ProseMirror .section-break::after { display: none; }
   .ProseMirror .page-break { border: 0; margin: 0; }
   .ProseMirror .page-break::after { display: none; }
   .ProseMirror sup.footnote-ref { color: inherit; }

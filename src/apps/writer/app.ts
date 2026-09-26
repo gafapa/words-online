@@ -11,7 +11,7 @@ import { Node as PMNode, type Schema } from '@tiptap/pm/model'
 import { Transform } from '@tiptap/pm/transform'
 import { allExtensions, bodyExtensions, headerFooterExtensions } from './editor/extensions'
 import { exportFile, importFile, OPEN_ACCEPT, type ExportFormat } from './formats'
-import { DEFAULT_PAGE, langCode, langTag, pageDimensionsMm, type DocumentData, type PageSettings } from './formats/types'
+import { DEFAULT_PAGE, langCode, langTag, normalizeColumns, pageDimensionsMm, type Columns, type DocumentData, type PageSettings } from './formats/types'
 import { appInfo } from '../registry'
 import { docPath, newDocPath } from '../../core/router'
 import { createLocalDocument, type Session } from '../../core/session'
@@ -22,7 +22,7 @@ import { icon, toast } from '../../ui/widgets'
 import { ChevronDown, ChevronUp, X } from 'lucide'
 import type { ZoomControl } from '../../ui/zoom'
 import { Find, setupFindPanel } from './find'
-import { mmToPx, notesHtml, Pagination, relayout, type Layout, type PageGeometry } from './pages'
+import { currentLayout, notesHtml, PAGE_GAP_PX, Pagination, relayout, type Layout } from './pages'
 import { buildToolbar, setupContextMenu, writerFrame, ZOOMS } from './commands'
 import { t, tn } from '../../core/i18n'
 import { authorDirectory, PENDING_COMMENTS, userIdOf, type Access } from './collab'
@@ -59,9 +59,9 @@ const MAIN_HTML = `
     <div class="canvas-row">
       <div id="zoom-wrap" class="zoom-wrap">
         <div id="paper" class="paper">
-          <div id="first-header" class="page-header"></div>
+          <div id="page-sheets" class="page-layer"></div>
           <div id="editor"></div>
-          <div id="page-tail" class="page-tail"></div>
+          <div id="page-chrome" class="page-layer page-chrome"></div>
         </div>
       </div>
       <aside id="review-rail" class="review-rail" aria-label="${t('Comments and suggestions')}" hidden></aside>
@@ -84,6 +84,9 @@ export interface WriterContext {
   meta: Y.Map<unknown>
   getPage: () => PageSettings
   setPage: (page: PageSettings) => void
+  getColumns: () => Columns
+  setColumns: (columns: Columns) => void
+  layout: () => Layout
   setZoom: (zoom: number) => void
   getZoom: () => number
   find: { open: (replace?: boolean) => void }
@@ -130,20 +133,19 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
   }
   const setPage = (page: PageSettings) => meta.set('page', JSON.stringify(page))
 
-  const geometry = (): PageGeometry => {
-    const page = getPage()
-    const { width, height } = pageDimensionsMm(page)
-    return {
-      width: Math.round(mmToPx(width)),
-      height: Math.round(mmToPx(height)),
-      margins: {
-        top: Math.round(mmToPx(page.margins.top)),
-        right: Math.round(mmToPx(page.margins.right)),
-        bottom: Math.round(mmToPx(page.margins.bottom)),
-        left: Math.round(mmToPx(page.margins.left)),
-      },
+  // Columns of the first section (later sections: section break nodes).
+  const getColumns = (): Columns => {
+    const raw = meta.get('columns')
+    if (typeof raw === 'string') {
+      try {
+        return normalizeColumns(JSON.parse(raw))
+      } catch {
+        // Fall through to one column.
+      }
     }
+    return normalizeColumns(null)
   }
+  const setColumns = (columns: Columns) => meta.set('columns', JSON.stringify(normalizeColumns(columns)))
 
   // ---------- Header / footer rendering ----------
 
@@ -178,9 +180,11 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
   // ---------- Editor ----------
 
   const paper = document.getElementById('paper')!
-  const firstHeader = document.getElementById('first-header')!
-  const tail = document.getElementById('page-tail')!
-  let layout: Layout = { breaks: [], pages: 1, tailFill: 0, tailNotes: [], tailFirstNote: 1 }
+  const sheets = document.getElementById('page-sheets')!
+  const pageChrome = document.getElementById('page-chrome')!
+  const editorHost = document.getElementById('editor')!
+  let layout: Layout = { pages: [], width: 794, height: 1123, anchors: new Map() }
+  let printing = false
   let review: Review | null = null
   const spell = new SpellController(meta, () => editor.isEditable)
 
@@ -193,7 +197,11 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
         provider: { awareness },
         user: { name: user.name, color: user.color },
       }),
-      Pagination.configure({ getGeometry: geometry, chrome, onLayout: (l) => applyLayout(l) }),
+      Pagination.configure({
+        firstSection: () => ({ page: getPage(), columns: getColumns() }),
+        gap: () => (printing ? 0 : PAGE_GAP_PX),
+        onLayout: (l) => applyLayout(l),
+      }),
       Find,
       spellExtension(spell),
     ],
@@ -235,43 +243,54 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
     return true
   }
 
+  // Sheets under the editor; headers, footers, footnotes and column lines over it.
+  let drawn = ''
   function applyLayout(next: Layout) {
     layout = next
-    const geo = geometry()
-    paper.style.setProperty('--pages', String(layout.pages))
-    firstHeader.innerHTML = chrome.header(1, layout.pages)
-    tail.innerHTML =
-      `<div class="page-fill" style="--fill:${layout.tailFill}px"></div>` +
-      notesHtml(layout.tailNotes, layout.tailFirstNote) +
-      `<div class="page-footer" style="height:${geo.margins.bottom}px">${chrome.footer(layout.pages, layout.pages)}</div>`
-    tail.querySelectorAll<HTMLElement>('.page-notes, .page-footer').forEach((n) => (n.style.padding = `0 ${geo.margins.right}px 0 ${geo.margins.left}px`))
+    const total = layout.pages.length
+    const pages = layout.pages.map((p) => {
+      const { width, height, margins: m } = p.geo
+      const box = (top: number, h: number) => `left:${p.x}px;top:${p.y + top}px;width:${width}px;height:${h}px`
+      return {
+        sheet: `<div class="page-sheet" style="${box(0, height)}"></div>`,
+        chrome:
+          `<div class="page-header" data-page="${p.index}" style="${box(0, m.top)};padding:0 ${m.right}px 0 ${m.left}px">${chrome.header(p.index + 1, total)}</div>` +
+          (p.notes.length ? `<div class="page-notes-box" style="left:${p.x + m.left}px;top:${p.y}px;width:${width - m.left - m.right}px;height:${height - m.bottom}px">${notesHtml(p.notes, p.firstNote)}</div>` : '') +
+          p.lines.map((l) => `<div class="column-line" style="left:${p.x + l.x}px;top:${p.y + l.top}px;height:${l.bottom - l.top}px"></div>`).join('') +
+          `<div class="page-footer" data-page="${p.index}" style="${box(height - m.bottom, m.bottom)};padding:0 ${m.right}px 0 ${m.left}px">${chrome.footer(p.index + 1, total)}</div>`,
+      }
+    })
+    const html = pages.map((p) => p.sheet).join('') + '\u0000' + pages.map((p) => p.chrome).join('')
+    if (html !== drawn) {
+      drawn = html
+      sheets.innerHTML = pages.map((p) => p.sheet).join('')
+      pageChrome.innerHTML = pages.map((p) => p.chrome).join('')
+    }
+    paper.style.width = `${layout.width}px`
+    paper.style.height = `${layout.height}px`
+    editorHost.style.height = `${layout.height}px`
+    paper.style.setProperty('--pages', String(total))
     updateStatus()
     updateZoomBox()
     review?.reposition()
   }
 
-  // Applies page geometry to the paper and the print stylesheet.
+  // Page size for printing (mixed sizes are printed through the PDF export).
   const printStyle = document.createElement('style')
   document.head.append(printStyle)
   function applyGeometry() {
-    const geo = geometry()
-    const page = getPage()
-    const { width, height } = pageDimensionsMm(page)
-    paper.style.width = `${geo.width}px`
-    paper.style.setProperty('--page-height', `${geo.height}px`)
-    firstHeader.style.height = `${geo.margins.top}px`
-    firstHeader.style.padding = `0 ${geo.margins.right}px 0 ${geo.margins.left}px`
-    editor.view.dom.style.padding = `0 ${geo.margins.right}px 0 ${geo.margins.left}px`
+    const { width, height } = pageDimensionsMm(getPage())
     printStyle.textContent = `@page { size: ${width}mm ${height}mm; margin: 0 }`
     relayout(editor.view)
   }
   applyGeometry()
 
   meta.observe((event) => {
-    if (event.keysChanged.has('page')) applyGeometry()
+    if (event.keysChanged.has('page') || event.keysChanged.has('columns')) applyGeometry()
   })
   const onChromeChange = () => {
     refreshChrome()
+    drawn = ''
     relayout(editor.view)
   }
   headerFragment.observeDeep(onChromeChange)
@@ -284,7 +303,7 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
   let zoomControl: ZoomControl | undefined
   let zoom = Number(localStorage.getItem(ZOOM_KEY)) || (window.innerWidth < 900 ? 0 : 1)
   const railWidth = () => (rail.hidden || window.innerWidth <= 760 ? 0 : rail.offsetWidth + 16)
-  const effectiveZoom = () => (zoom > 0 ? zoom : Math.min(2, (canvas.clientWidth - 32 - railWidth()) / geometry().width))
+  const effectiveZoom = () => (zoom > 0 ? zoom : Math.min(2, (canvas.clientWidth - 32 - railWidth()) / layout.width))
   function updateZoomBox() {
     const z = effectiveZoom()
     paper.style.transform = `scale(${z})`
@@ -315,7 +334,8 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
       const coords = editor.view.coordsAtPos(editor.state.selection.head)
       const rect = paper.getBoundingClientRect()
       const y = (coords.top - rect.top) / effectiveZoom()
-      return Math.min(layout.pages, Math.max(1, Math.floor(y / (geometry().height + 24)) + 1))
+      const page = [...layout.pages].reverse().find((p) => p.y <= y + 1)
+      return page ? page.index + 1 : 1
     } catch {
       return 1
     }
@@ -323,7 +343,7 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
   function updateStatus() {
     const words = editor.storage.characterCount.words() as number
     const chars = editor.storage.characterCount.characters() as number
-    statusPage.textContent = t('Page {page} of {pages}', { page: currentPage(), pages: layout.pages })
+    statusPage.textContent = t('Page {page} of {pages}', { page: currentPage(), pages: Math.max(1, layout.pages.length) })
     statusWords.textContent = tn(words, '{n} word', '{n} words')
     statusChars.textContent = tn(chars, '{n} character', '{n} characters')
   }
@@ -360,6 +380,7 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
       header: headerFragment.length && !isEmptyDoc(header) ? header : null,
       footer: footerFragment.length && !isEmptyDoc(footer) ? footer : null,
       page: getPage(),
+      columns: getColumns(),
       lang: langTag(spell.docLang()),
     }
   }
@@ -386,10 +407,23 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
     { ext: 'txt', label: t('Plain text (.txt)'), build: exportBlob('txt') },
   ]
 
-  const print = () => {
-    // Printing uses the same page geometry as the screen at 100%.
+  const print = async () => {
+    // Pages of different sizes cannot share one @page size: print the PDF instead.
+    const sizes = layout.pages.map((p) => `${p.geo.width}x${p.geo.height}`)
+    if (new Set(sizes).size > 1) {
+      void import('./pdf').then((m) => m.printPdf(ctx))
+      return
+    }
+    // Printing uses the same page geometry as the screen at 100%, without gaps.
+    printing = true
+    paper.classList.add('printing')
+    relayout(editor.view)
+    await new Promise((r) => requestAnimationFrame(r))
     paper.style.transform = 'none'
     window.print()
+    printing = false
+    paper.classList.remove('printing')
+    relayout(editor.view)
     updateZoomBox()
   }
 
@@ -410,7 +444,10 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
     download,
     print,
     openUrl,
-    pages: () => layout.pages,
+    pages: () => Math.max(1, layout.pages.length),
+    layout: () => currentLayout(editor.view),
+    getColumns,
+    setColumns,
     access,
     review,
     authorship,
@@ -542,6 +579,7 @@ export async function importFileAsDocument(file: File): Promise<string> {
     if (imported.header && !isEmptyDoc(imported.header)) prosemirrorJSONToYXmlFragment(schema, imported.header, ydoc.getXmlFragment('header'))
     if (imported.footer && !isEmptyDoc(imported.footer)) prosemirrorJSONToYXmlFragment(schema, imported.footer, ydoc.getXmlFragment('footer'))
     ydoc.getMap<unknown>('meta').set('page', JSON.stringify(imported.page))
+    if (imported.columns && imported.columns.count > 1) ydoc.getMap<unknown>('meta').set('columns', JSON.stringify(imported.columns))
     const lang = langCode(imported.lang)
     if (lang) ydoc.getMap<unknown>('meta').set('lang', lang)
     // The new document has no comments channel yet: the first editor to open it moves them there.

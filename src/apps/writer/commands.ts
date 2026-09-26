@@ -74,6 +74,20 @@ const STYLES: [ParagraphStyle, string][] = [
 export const ZOOMS = [0.5, 0.75, 0.9, 1, 1.25, 1.5, 2]
 
 const dialogs = () => import('./dialogs')
+const sections = () => import('./sections')
+
+function currentColumns(ctx: WriterContext): number {
+  const { doc, selection } = ctx.editor.state
+  let index = 0
+  let columns = ctx.getColumns().count
+  doc.forEach((node, offset) => {
+    if (node.type.name === 'sectionBreak' && offset < selection.from) {
+      index++
+      columns = Number(node.attrs.columns) || 1
+    }
+  })
+  return index ? columns : ctx.getColumns().count
+}
 
 // Marks that record review information rather than formatting.
 const REVIEW_MARKS = new Set(['authorship', 'insertion', 'deletion', 'commentRange'])
@@ -234,6 +248,13 @@ export function writerFrame(ctx: WriterContext): Pick<FrameSpec, 'file' | 'edit'
           { label: t('Header and footer…'), run: () => dialogs().then((d) => d.editHeaderFooter(ctx)) },
           '-',
           { label: t('Page break'), shortcut: mod('Enter'), run: run((e) => e.chain().focus().setPageBreak().run()) },
+          {
+            label: t('Section break'),
+            submenu: [
+              { label: t('Next page'), run: () => sections().then((m) => m.insertSectionBreak(ctx, 'nextPage')) },
+              { label: t('Continuous'), run: () => sections().then((m) => m.insertSectionBreak(ctx, 'continuous')) },
+            ],
+          },
           { label: t('Horizontal line'), run: run((e) => e.chain().focus().setHorizontalRule().run()) },
           { label: t('Special character…'), run: () => dialogs().then((d) => d.specialCharacters(ctx)) },
         ],
@@ -288,6 +309,18 @@ export function writerFrame(ctx: WriterContext): Pick<FrameSpec, 'file' | 'edit'
           { label: t('Bulleted list'), shortcut: mod('Shift+8'), run: run((e) => e.chain().focus().toggleBulletList().run()), active: () => editor.isActive('bulletList') },
           { label: t('Numbered list'), shortcut: mod('Shift+7'), run: run((e) => e.chain().focus().toggleOrderedList().run()), active: () => editor.isActive('orderedList') },
           { label: t('Checklist'), shortcut: mod('Shift+9'), run: run((e) => e.chain().focus().toggleTaskList().run()), active: () => editor.isActive('taskList') },
+        ],
+      },
+      {
+        label: t('Columns'),
+        submenu: [
+          ...[1, 2, 3].map((n) => ({
+            label: n === 1 ? t('One column') : n === 2 ? t('Two columns') : t('Three columns'),
+            run: () => dialogs().then((d) => d.columnsDialog(ctx, n)),
+            active: () => currentColumns(ctx) === n,
+          })),
+          '-',
+          { label: t('More columns…'), run: () => dialogs().then((d) => d.columnsDialog(ctx)) },
         ],
       },
       { label: t('Increase indent'), shortcut: 'Tab', run: () => indent(editor, 1) },

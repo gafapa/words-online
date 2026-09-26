@@ -24,12 +24,12 @@ export interface DrawContext {
 }
 
 // Excalidraw's canvas background presets (DEFAULT_CANVAS_BACKGROUND_PICKS).
-const BACKGROUNDS: [string, string][] = [
-  ['#ffffff', 'White'],
-  ['#f8f9fa', 'Light gray'],
-  ['#f5faff', 'Light blue'],
-  ['#fffce8', 'Light yellow'],
-  ['#fdf8f6', 'Light rose'],
+const backgrounds = (): [string, string][] => [
+  ['#ffffff', t('White')],
+  ['#f8f9fa', t('Light gray')],
+  ['#f5faff', t('Light blue')],
+  ['#fffce8', t('Light yellow')],
+  ['#fdf8f6', t('Light rose')],
 ]
 
 const container = () => document.querySelector<HTMLElement>('.draw-host .excalidraw')
@@ -159,8 +159,8 @@ export function drawFrame(ctx: DrawContext): Pick<FrameSpec, 'file' | 'edit' | '
   }
 
   const backgroundItems = (): MenuEntry[] => [
-    ...BACKGROUNDS.map(([color, name]) => ({
-      label: t(name),
+    ...backgrounds().map(([color, label]) => ({
+      label,
       active: () => ctx.background().toLowerCase() === color,
       enabled: editable,
       run: () => ctx.setBackground(color),

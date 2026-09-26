@@ -54,6 +54,9 @@ interface Placement {
   top: number // paper y of the border box
   left: number // paper x of the column
   width: number // column width
+  mt: number // the block's own top margin (absolute boxes are placed by their margin box)
+  insetL: number // padding of enclosing lists and quotes
+  insetR: number
 }
 
 interface PluginValue {
@@ -470,14 +473,17 @@ class Engine {
       const n = section.columns.count
       const gap = mmToPx(section.columns.gap)
       const colWidth = n > 1 ? (regionWidth - (n - 1) * gap) / n : regionWidth
-      const place = { top: page.y + p.top, left: regionLeft + p.col * (colWidth + gap), width: colWidth }
-      if (p.unit.owner) {
-        subPlaces.set(p.unit.dom, place)
-        if (!unitPlace.has(p.unit.owner)) {
-          unitPlace.set(p.unit.owner, place)
-          places.set(p.unit.pos, place)
+      const u = p.unit
+      const place = { top: page.y + p.top, left: regionLeft + p.col * (colWidth + gap), width: colWidth, mt: u.mt, insetL: u.insetL, insetR: u.insetR }
+      if (u.owner) {
+        subPlaces.set(u.dom, place)
+        if (!unitPlace.has(u.owner)) {
+          // The atom itself starts where its first child is placed.
+          const own = { ...place, mt: 0 }
+          unitPlace.set(u.owner, own)
+          places.set(u.pos, own)
         }
-      } else places.set(p.unit.pos, place)
+      } else places.set(u.pos, place)
       if (p.unit.heading) anchors.set(p.unit.pos, { page: p.page, y: p.top })
       if (p.unit.fresh) unplaced = true
     }
@@ -515,6 +521,10 @@ class Engine {
         }
         return
       }
+      // Headings stay with the block that follows them.
+      const prev = this.placed[this.placed.length - 1]
+      const carry = prev && prev.unit.heading && !prev.unit.owner && prev.page === this.page.index && prev.col === this.col && prev.top > this.regionTop + 1 && this.placed.length > this.regionStart + 1 ? prev : null
+      if (carry) this.placed.pop()
       if (this.col + 1 < this.columns.count) {
         this.col++
         this.y = this.regionTop
@@ -523,6 +533,12 @@ class Engine {
       } else {
         this.finishRegion(false)
         this.newPage()
+      }
+      if (carry) {
+        this.placed.push({ unit: carry.unit, page: this.page.index, col: this.col, top: this.y })
+        this.y += carry.unit.height
+        this.prevMb = carry.unit.mb
+        this.atTop = false
       }
     }
   }
@@ -604,7 +620,7 @@ function applySubUnits(units: Unit[], places: Map<number, Placement>) {
 function layoutSignature(layout: Layout, places: Map<number, Placement>): string {
   const pages = layout.pages.map((p) => `${p.x},${p.y},${p.geo.width}x${p.geo.height},${p.notes.join('\u0001')},${p.firstNote},${p.lines.map((l) => `${l.x}:${l.top}:${l.bottom}`).join(';')}`)
   const parts: string[] = []
-  for (const [pos, p] of places) parts.push(`${pos}:${Math.round(p.top)}:${Math.round(p.left)}:${Math.round(p.width)}`)
+  for (const [pos, p] of places) parts.push(`${pos}:${Math.round(p.top - p.mt)}:${Math.round(p.left + p.insetL)}:${Math.round(p.width - p.insetL - p.insetR)}`)
   return `${layout.width}|${pages.join('|')}|${parts.join(',')}`
 }
 
@@ -615,7 +631,10 @@ function buildDecorations(state: EditorState, layout: Layout, places: Map<number
   for (const [pos, p] of places) {
     const node = pos < size ? state.doc.nodeAt(pos) : null
     if (!node) continue
-    decorations.push(Decoration.node(pos, pos + node.nodeSize, { style: '', 'data-place': `${Math.round(p.top)},${Math.round(p.left)},${Math.round(width - p.left - p.width)}` }))
+    const top = Math.round(p.top - p.mt)
+    const left = Math.round(p.left + p.insetL)
+    const right = Math.round(width - p.left - p.width + p.insetR)
+    decorations.push(Decoration.node(pos, pos + node.nodeSize, { style: `position:absolute;top:${top}px;left:${left}px;right:${right}px` }))
   }
   return DecorationSet.create(state.doc, decorations)
 }

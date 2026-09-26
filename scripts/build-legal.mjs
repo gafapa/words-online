@@ -195,10 +195,10 @@ ${nav && page !== 'index' ? LANGS.map((l) => `<link rel="alternate" hreflang="${
 <header class="bar">
 <a class="brand" href="${css}../">${BRAND}<span>${esc(site)}</span></a>
 <a href="${css}../">${fill(ui.back, { site: esc(site) })}</a>
-<span class="spacer"></span>
+${nav ? '' : `<a href="index.html">${ui.legal}</a>\n`}<span class="spacer"></span>
 ${langs}
 </header>
-<div class="layout">
+<div class="layout${nav ? '' : ' single'}">
 ${pages}
 <main id="content" tabindex="-1">
 ${notes}${body}
@@ -255,7 +255,7 @@ for (const lang of LANGS) {
   const updated = context(lang, 'index').value('lastUpdated')
   for (const d of docs) {
     // A table of contents for the long documents.
-    const toc = d.headings.length >= 4 ? `<details class="toc" open><summary>${UI[lang].toc}</summary><ol>${d.headings.map((h) => `<li><a href="#${h.id}">${h.content}</a></li>`).join('')}</ol></details>` : ''
+    const toc = d.headings.length >= 4 ? `<details class="toc" open><summary>${UI[lang].toc}</summary><ul>${d.headings.map((h) => `<li><a href="#${h.id}">${h.content}</a></li>`).join('')}</ul></details>` : ''
     const body = d.html.replace(/(<\/h1>)/, `$1\n${toc}`)
     writeFileSync(join(out, lang, `${d.page}.html`), frame({ lang, page: d.page, title: d.title, body, nav, draft: d.draft, updated }))
     pageCount++

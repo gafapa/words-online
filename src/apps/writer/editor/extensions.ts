@@ -12,7 +12,7 @@ import Superscript from '@tiptap/extension-superscript'
 import { TableKit } from '@tiptap/extension-table'
 import { TaskList, TaskItem } from '@tiptap/extension-list'
 import { CharacterCount, Placeholder } from '@tiptap/extensions'
-import { CellBackground, Footnote, PageBreak, PageBreakShortcut, PageNumber, ParagraphFormat } from './nodes'
+import { CellBackground, Footnote, PageBreak, PageBreakShortcut, PageNumber, ParagraphFormat, SectionBreak } from './nodes'
 import { Equation } from './equation'
 import { Suggesting } from './suggestions'
 import { CommentRange } from './comment-range'
@@ -93,6 +93,7 @@ export function bodyExtensions(options: Options = {}): AnyExtension[] {
     TaskItem.configure({ nested: true }),
     PageBreak,
     PageBreakShortcut,
+    SectionBreak,
     Footnote,
     Equation,
     Suggesting,

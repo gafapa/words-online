@@ -101,7 +101,7 @@ export function mountDraw(session: Session, root: HTMLElement): void {
   const zoom: ZoomTarget = {
     get: () => api()?.getAppState().zoom.value ?? 1,
     set: setZoom,
-    fit: () => api()?.scrollToContent(undefined, { fitToViewport: true, viewportZoomFactor: 0.9 }),
+    fit: () => api()?.scrollToContent(undefined, { fitToContent: true }),
     min: MIN_ZOOM,
     max: MAX_ZOOM,
     presets: [0.25, 0.5, 0.75, 1, 1.5, 2, 3],
