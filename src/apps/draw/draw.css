@@ -1,0 +1,4 @@
+/* Drawing: Excalidraw fills the main area. */
+
+.draw-host { flex: 1; min-height: 0; position: relative; }
+.draw-host .excalidraw { --color-primary: #e8710a; }

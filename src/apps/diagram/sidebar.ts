@@ -1,0 +1,223 @@
+// Left panel with the shape libraries: search, collapsible libraries, click to
+// insert at the center of the view, or drag onto the canvas (or into a container).
+// Libraries enabled in "More shapes" (libraries.ts) are appended to the built-in ones.
+
+import { Cell, Geometry, Graph, Point, gestureUtils, type AbstractGraph } from '@maxgraph/core'
+import { el } from '../../ui/widgets'
+import { renderSvg } from './export'
+import { applyLook, buildCells, styleFromString, type EditorGraph } from './graph'
+import type { PaletteCell, PaletteItem, PaletteLibrary } from './palette'
+import { t } from '../../core/i18n'
+
+export type { PaletteItem, PaletteLibrary }
+
+const THUMB = 34
+const MAX_RESULTS = 200
+
+export interface SidebarOptions {
+  // Opens the "More shapes" dialog.
+  more?: () => void
+  // Loads what items need before their thumbnails are drawn (null: nothing missing).
+  prepare?: (items: PaletteItem[]) => Promise<unknown> | null
+}
+
+// New detached cells for a palette item, positioned at (0, 0).
+export function createItemCells(item: PaletteItem): Cell[] {
+  if (!item.cells) return [createItemCell(item)]
+  const cells = buildCells(item.cells)
+  // The template's ids are only local references: the model assigns new ones.
+  const clearIds = (cell: Cell) => {
+    cell.id = null
+    for (let i = 0; i < cell.getChildCount(); i++) clearIds(cell.getChildAt(i))
+  }
+  cells.forEach(clearIds)
+  return cells
+}
+
+function createItemCell(item: PaletteItem): Cell {
+  const style = styleFromString(item.style)
+  if (item.edge) {
+    const geo = new Geometry(0, 0, item.width, item.height)
+    geo.relative = true
+    geo.setTerminalPoint(new Point(0, item.height), true)
+    geo.setTerminalPoint(new Point(item.width, 0), false)
+    const edge = new Cell(item.value ?? '', geo, style)
+    edge.setEdge(true)
+    return edge
+  }
+  const cell = new Cell(item.value ?? '', new Geometry(0, 0, item.width, item.height), style)
+  cell.setVertex(true)
+  item.children?.forEach((child) => cell.insert(childCell(child)))
+  return cell
+}
+
+function childCell(item: PaletteCell): Cell {
+  const cell = new Cell(item.value ?? '', new Geometry(item.x, item.y, item.width, item.height), styleFromString(item.style))
+  cell.setVertex(true)
+  if (item.connectable === false) cell.setConnectable(false)
+  item.children?.forEach((child) => cell.insert(childCell(child)))
+  return cell
+}
+
+export class ShapeSidebar {
+  readonly element: HTMLElement
+  private readonly thumbs = new Map<PaletteItem, string>()
+  private thumbGraph: Graph | null = null
+  private readonly open = new Set<string>()
+  private extra: PaletteLibrary[] = []
+  private readonly render: () => void
+
+  constructor(
+    private readonly graph: EditorGraph,
+    private readonly libraries: PaletteLibrary[],
+    private readonly insert: (cells: Cell[], x: number, y: number, target: Cell | null) => void,
+    private readonly insertAtCenter: (cells: Cell[]) => void,
+    private readonly options: SidebarOptions = {},
+  ) {
+    const search = el('input', { type: 'search', class: 'sidebar-search', placeholder: t('Search shapes') })
+    const list = el('div', { class: 'sidebar-list' })
+    this.element = el('aside', { class: 'diagram-sidebar', ariaLabel: t('Shapes') }, search, list)
+    if (options.more) {
+      const more = el('button', { type: 'button', class: 'sidebar-more', textContent: t('More shapes…') })
+      more.addEventListener('click', () => options.more?.())
+      this.element.append(more)
+    }
+    if (libraries[0]) this.open.add(libraries[0].id)
+    if (libraries[1]) this.open.add(libraries[1].id)
+
+    const render = (this.render = () => {
+      list.replaceChildren()
+      const all = [...libraries, ...this.extra]
+      const query = search.value.trim().toLowerCase()
+      if (query) {
+        const words = query.split(/\s+/)
+        const matches = (item: PaletteItem) => {
+          const text = item.tags ? `${item.label} ${item.tags}`.toLowerCase() : item.label.toLowerCase()
+          return words.every((w) => text.includes(w))
+        }
+        const found = all.flatMap((lib) => lib.items).filter(matches)
+        list.append(found.length ? this.grid(found.slice(0, MAX_RESULTS)) : el('div', { class: 'sidebar-empty', textContent: t('No shapes found') }))
+        if (found.length > MAX_RESULTS) list.append(el('div', { class: 'sidebar-empty', textContent: `${found.length - MAX_RESULTS} more: refine the search` }))
+        return
+      }
+      for (const lib of all) {
+        const header = el('button', { type: 'button', class: 'sidebar-lib', textContent: lib.name })
+        header.classList.toggle('open', this.open.has(lib.id))
+        header.addEventListener('click', () => {
+          if (this.open.has(lib.id)) this.open.delete(lib.id)
+          else this.open.add(lib.id)
+          render()
+        })
+        list.append(header)
+        if (this.open.has(lib.id)) list.append(this.grid(lib.items))
+      }
+    })
+    search.addEventListener('input', render)
+    render()
+  }
+
+  // Libraries shown after the built-in ones (e.g. from "More shapes").
+  setExtraLibraries(libraries: PaletteLibrary[]): void {
+    this.extra = libraries
+    this.render()
+  }
+
+  private grid(items: PaletteItem[]): HTMLElement {
+    const grid = el('div', { class: 'sidebar-grid' })
+    const buttons = items.map((item) => {
+      const button = el('button', { type: 'button', class: 'sidebar-item', title: item.label })
+      button.setAttribute('aria-label', item.label)
+      button.addEventListener('click', () => this.insertAtCenter(createItemCells(item)))
+      this.makeDraggable(button, item)
+      grid.append(button)
+      return button
+    })
+    // Thumbnails are drawn a few at a time to keep the page responsive.
+    const draw = () => {
+      let i = 0
+      const step = () => {
+        const end = Math.min(i + 40, buttons.length)
+        for (; i < end; i++) buttons[i].innerHTML = this.thumbnail(items[i])
+        if (i < buttons.length) requestAnimationFrame(() => grid.isConnected && step())
+      }
+      step()
+    }
+    const loading = items.some((item) => !this.thumbs.has(item)) ? this.options.prepare?.(items) : null
+    if (!loading) draw()
+    else {
+      grid.classList.add('loading')
+      void loading.finally(() => {
+        grid.classList.remove('loading')
+        draw()
+      })
+    }
+    return grid
+  }
+
+  private makeDraggable(button: HTMLElement, item: PaletteItem): void {
+    const preview = el('div', { class: 'sidebar-drag-preview' })
+    preview.style.width = `${item.width}px`
+    preview.style.height = `${item.height}px`
+    const source = gestureUtils.makeDraggable(
+      button,
+      this.graph,
+      (_graph: AbstractGraph, _evt: MouseEvent, target: Cell | null, x?: number, y?: number) =>
+        this.insert(createItemCells(item), x ?? 0, y ?? 0, item.edge ? null : target),
+      preview,
+      0,
+      0,
+      true,
+      true,
+      !item.edge,
+    )
+    source.setGuidesEnabled(true)
+    // Keep the pointer at the center of the preview.
+    const createPreview = source.createPreviewElement.bind(source)
+    source.createPreviewElement = (graph: AbstractGraph) => {
+      const s = graph.view.scale
+      source.previewOffset = new Point((-item.width * s) / 2, (-item.height * s) / 2)
+      return createPreview(graph)
+    }
+  }
+
+  // Cached SVG markup of a palette item, rendered by an offscreen graph.
+  private thumbnail(item: PaletteItem): string {
+    const cached = this.thumbs.get(item)
+    if (cached !== undefined) return cached
+    if (!this.thumbGraph) {
+      const host = el('div', { class: 'sidebar-thumb-host' })
+      document.body.append(host)
+      this.thumbGraph = new Graph(host, undefined, [])
+      applyLook(this.thumbGraph)
+    }
+    const graph = this.thumbGraph
+    const model = graph.getDataModel()
+    const cells = createItemCells(item)
+    let svg: SVGSVGElement
+    try {
+      model.beginUpdate()
+      try {
+        graph.addCells(cells, graph.getDefaultParent())
+      } finally {
+        model.endUpdate()
+      }
+      const scale = Math.min(THUMB / Math.max(item.width, 1), THUMB / Math.max(item.height, 1), 1)
+      svg = renderSvg(graph, { scale, border: 1, background: null })
+    } catch (e) {
+      // A template that cannot be drawn keeps an empty button (and the others still render).
+      console.warn(`Could not draw the "${item.label}" shape:`, e)
+      model.clear()
+      this.thumbs.set(item, '')
+      return ''
+    }
+    model.beginUpdate()
+    try {
+      cells.forEach((cell) => model.remove(cell))
+    } finally {
+      model.endUpdate()
+    }
+    const markup = new XMLSerializer().serializeToString(svg)
+    this.thumbs.set(item, markup)
+    return markup
+  }
+}

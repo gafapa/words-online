@@ -1,0 +1,67 @@
+/* Home screen */
+
+body:has(.home) { overflow: auto; }
+.home { min-height: 100vh; background: var(--surface); }
+.home-bar { display: flex; align-items: center; gap: 12px; padding: 10px 24px; border-bottom: 1px solid var(--border); }
+.home-bar h1 { font-size: 20px; font-weight: 500; margin: 0; }
+.home-bar .spacer { flex: 1; }
+.home-language { padding: 5px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); }
+.home-logo { width: 36px; height: 36px; border-radius: 8px; background: var(--accent); color: #fff; font: 700 22px/36px Arial, sans-serif; text-align: center; }
+.home-inner { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+.home-new { background: var(--bg); padding: 20px 0 28px; }
+.home-section-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0 14px; }
+.home-section-title h2 { font-size: 16px; font-weight: 500; margin: 0; }
+.home-open { border: 1px solid var(--border); background: var(--surface); border-radius: 6px; padding: 6px 14px; }
+.home-open:hover { background: var(--hover); }
+
+.new-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px; }
+.new-card {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  height: 150px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
+  color: var(--text); text-decoration: none; transition: border-color 0.15s, box-shadow 0.15s;
+}
+.new-card:hover:not(.disabled) { border-color: var(--accent); box-shadow: 0 1px 4px rgb(0 0 0 / 0.12); }
+.new-card.disabled { opacity: 0.55; cursor: default; }
+.new-label { font-weight: 500; }
+.soon { position: absolute; top: 8px; right: 8px; font-size: 11px; color: var(--muted); background: var(--bg); border-radius: 10px; padding: 2px 8px; }
+
+.app-icon { display: inline-grid; place-items: center; color: #fff; font-family: Arial, sans-serif; font-weight: 700; flex: none; }
+.app-icon.large { width: 56px; height: 56px; border-radius: 12px; font-size: 30px; }
+.app-icon.small { width: 24px; height: 24px; border-radius: 5px; font-size: 13px; }
+
+.home-recent { padding: 16px 0 32px; }
+.home-search { width: min(320px, 50vw); padding: 7px 12px; border: 1px solid var(--border); border-radius: 18px; background: var(--bg); }
+.home-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.chip { border: 1px solid var(--border); background: var(--surface); border-radius: 16px; padding: 4px 12px; font-size: 13px; }
+.chip.active { background: var(--active); border-color: var(--active); color: #041e49; }
+
+.doc-table { display: flex; flex-direction: column; }
+.doc-row {
+  display: grid; grid-template-columns: 24px 1fr 120px 110px 32px; align-items: center; gap: 14px;
+  padding: 10px 12px; border-radius: 20px; color: var(--text); text-decoration: none;
+}
+.doc-row:hover { background: var(--hover); }
+.doc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.doc-type, .doc-date { color: var(--muted); font-size: 13px; }
+.row-more { border: 0; background: none; border-radius: 50%; width: 32px; height: 32px; font-size: 18px; color: var(--muted); }
+.row-more:hover { background: rgb(0 0 0 / 0.08); }
+.empty { color: var(--muted); padding: 24px 12px; }
+
+.notice { max-width: 560px; margin: 80px auto; padding: 0 24px; text-align: center; }
+.notice h1 { font-weight: 500; }
+
+@media (max-width: 640px) {
+  .home-bar { padding: 8px 16px; }
+  .home-inner { padding: 0 16px; }
+  .doc-row { grid-template-columns: 24px 1fr 32px; }
+  .doc-type, .doc-date { display: none; }
+  .home-section-title { flex-wrap: wrap; }
+  .home-bar { gap: 8px; }
+  .home-bar .user-name, .offline-control { display: none; }
+}
+
+.offline-control { display: flex; align-items: center; }
+.offline-ready { color: var(--ok); font-size: 13px; white-space: nowrap; }
+.offline-pending { color: var(--muted); font-size: 13px; white-space: nowrap; }
+
+.access-tag { font-size: 11px; color: #7a4f01; background: #fef7e0; border: 1px solid #f4d58d; border-radius: 10px; padding: 1px 7px; margin-left: 8px; font-weight: 400; }
