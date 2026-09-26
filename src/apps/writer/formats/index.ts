@@ -25,7 +25,9 @@ export async function importFile(file: File): Promise<Imported> {
           type: 'doc',
           content: text.split(/\r?\n/).map((line) => (line ? { type: 'paragraph', content: [{ type: 'text', text: line }] } : { type: 'paragraph' })),
         }
-  return { body, header: null, footer: null, page: DEFAULT_PAGE }
+  // <html lang="…"> gives the document language.
+  const lang = ext === 'html' || ext === 'htm' ? /<html\b[^>]*\blang=["']?([A-Za-z_-]+)/i.exec(text)?.[1] : undefined
+  return { body, header: null, footer: null, page: DEFAULT_PAGE, lang }
 }
 
 export async function exportFile(format: ExportFormat, data: DocumentData, html: string, text: string): Promise<Blob> {
@@ -35,7 +37,8 @@ export async function exportFile(format: ExportFormat, data: DocumentData, html:
     case 'odt':
       return (await import('./odt-export')).exportOdt(data)
     case 'html': {
-      const doc = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(data.title)}</title></head><body>${html}</body></html>`
+      const lang = data.lang ? ` lang="${escapeHtml(data.lang)}"` : ''
+      const doc = `<!doctype html><html${lang}><head><meta charset="utf-8"><title>${escapeHtml(data.title)}</title></head><body>${html}</body></html>`
       return new Blob([doc], { type: 'text/html' })
     }
     case 'txt':

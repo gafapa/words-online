@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { spellDictionaries } from './scripts/spell-dictionaries.mjs'
 
 // draw.io shape libraries (scripts/build-diagram-libs.mjs): only the catalog is
 // precached; a library is cached the first time it is used.
@@ -13,7 +14,13 @@ const libsRevision = existsSync(libsCatalog) ? createHash('sha256').update(readF
 // Relative base so the build can be served from any static host or subpath.
 export default defineConfig({
   base: './',
+  // The spelling worker loads Harper (English grammar) with a dynamic import.
+  worker: { format: 'es' },
+  // Harper finds its WebAssembly file next to its module (new URL(…, import.meta.url)).
+  optimizeDeps: { exclude: ['harper.js'] },
   plugins: [
+    // Spelling dictionaries as separate files, cached the first time a language is used.
+    spellDictionaries(),
     // Installable web app that works offline. The suite and every app are
     // precached; CJK handwriting fonts are cached the first time they are used.
     VitePWA({
@@ -66,6 +73,12 @@ export default defineConfig({
             urlPattern: ({ url }) => url.pathname.includes('/excalidraw/fonts/'),
             handler: 'CacheFirst',
             options: { cacheName: 'excalidraw-fonts', cacheableResponse: { statuses: [0, 200] } },
+          },
+          {
+            // Spelling dictionaries (content-hashed names) and Harper's WebAssembly (English grammar).
+            urlPattern: ({ url }) => url.pathname.includes('/dictionaries/') || /\/harper_wasm[^/]*\.wasm$/.test(url.pathname),
+            handler: 'CacheFirst',
+            options: { cacheName: 'spelling', cacheableResponse: { statuses: [0, 200] }, expiration: { maxEntries: 24 } },
           },
           {
             // Stencils, shape code, palettes and images; the files of a draw.io release never change.

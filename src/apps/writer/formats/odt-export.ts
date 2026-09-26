@@ -9,6 +9,7 @@ import {
   SUBTITLE_SIZE_PT,
   TITLE_SIZE_PT,
   pageDimensionsMm,
+  langTag,
   type DocumentData,
   type PageSettings,
 } from './types'
@@ -94,7 +95,7 @@ export async function exportOdt(data: DocumentData): Promise<Blob> {
       `<office:automatic-styles>${bodyStyles.xml()}</office:automatic-styles>` +
       `<office:body><office:text>${trackedChanges(shared.changes)}${body || '<text:p text:style-name="Standard"/>'}</office:text></office:body></office:document-content>`,
   )
-  zip.file('styles.xml', stylesXml(data.page, masterStyles, shared.fonts, header, footer))
+  zip.file('styles.xml', stylesXml(data.page, masterStyles, shared.fonts, header, footer).replace(DEFAULT_LANGUAGE, languageProps(data.lang) || DEFAULT_LANGUAGE))
   zip.file('meta.xml', metaXml(data.title))
   shared.pictures.forEach((pic, name) => zip.file(`Pictures/${name}`, pic.data))
   shared.formulas.forEach((mathml, name) => zip.file(`${name}/content.xml`, `<?xml version="1.0" encoding="UTF-8"?>${mathml}`))
@@ -129,8 +130,9 @@ class AutoStyles {
     return name
   }
 
-  paragraph(parent: string, props: string[]): string {
-    return props.length ? this.add('paragraph', 'P', parent, `<style:paragraph-properties ${props.join(' ')}/>`) : parent
+  paragraph(parent: string, props: string[], text = ''): string {
+    if (!props.length && !text) return parent
+    return this.add('paragraph', 'P', parent, (props.length ? `<style:paragraph-properties ${props.join(' ')}/>` : '') + (text ? `<style:text-properties ${text}/>` : ''))
   }
 
   list(kind: ListKind): string {
@@ -196,7 +198,7 @@ class Writer {
         const lineHeight = parseFloat(a.lineHeight)
         if (lineHeight > 0) props.push(`fo:line-height="${Math.round(lineHeight * 100)}%"`)
         if (breakBefore) props.push('fo:break-before="page"')
-        const style = this.styles.paragraph(parent, props)
+        const style = this.styles.paragraph(parent, props, languageProps(langTag(a.lang)))
         const content = (prefix ? escapeText(prefix) : '') + (await this.inline(node.content ?? []))
         return heading
           ? `<text:h text:style-name="${style}" text:outline-level="${level}">${content}</text:h>`
@@ -580,6 +582,15 @@ function fontDecls(fonts: Set<string>): string {
     return `<style:font-face style:name="${escapeXml(f)}" svg:font-family="${escapeXml(quoteFont(f))}"${pitch}/>`
   })
   return `<office:font-face-decls>${decls.join('')}</office:font-face-decls>`
+}
+
+const DEFAULT_LANGUAGE = 'fo:language="en" fo:country="US"'
+
+// fo:language / fo:country of a language tag ("es-ES").
+function languageProps(tag: string | undefined): string {
+  const [language, country] = (tag ?? '').split('-')
+  if (!/^[a-z]{2,3}$/.test(language ?? '')) return ''
+  return `fo:language="${language}"${country ? ` fo:country="${country.toUpperCase()}"` : ''}`
 }
 
 function textProps(size: number, extra = ''): string {

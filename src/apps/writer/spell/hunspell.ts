@@ -294,6 +294,12 @@ export class Hunspell {
     else if (existing !== flags) this.words.set(word, [existing, flags])
   }
 
+  // A word without affixes, as if it were in the dictionary (suggested too).
+  addWord(word: string): void {
+    this.addEntry(word, '')
+    this.cache.clear()
+  }
+
   // Personal dictionary entries (plain words, any case accepted as typed).
   add(word: string): void {
     this.personal.add(word)

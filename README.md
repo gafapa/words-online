@@ -20,7 +20,7 @@ find each other.
   and margins, page breaks, header and footer with page number / page count,
   footnotes at the foot of each page, zoom, and printing / PDF that matches the
   screen.
-- Menu bar (File, Edit, View, Insert, Format, Table, Review, Help), classic toolbar,
+- Menu bar (File, Edit, View, Insert, Format, Table, Tools, Review, Help), classic toolbar,
   context menu, status bar (page X of Y, words, characters) and keyboard shortcuts.
 - Paragraph styles (Normal, Title, Subtitle, Headings), fonts, sizes in points,
   bold/italic/underline/strike, sub/superscript, text and highlight colors,
@@ -70,6 +70,80 @@ find each other.
   comments channel the first time an editor opens it.
 - Access: *view* and *comment* links open the text read-only; the File menu has
   *Make a copy*, *Save version…* and *Version history…*.
+
+### Spelling and grammar
+
+Offline and private: checks run in a Web Worker in the browser and no text is
+sent anywhere (unless a LanguageTool server is turned on, see below). Spanish,
+Galician, English, French and German.
+
+- **Spelling** (red wavy underline) with Hunspell dictionaries and our own
+  checker (`spell/hunspell.ts`): stems and affix rules are kept as they are and
+  affixes are stripped when a word is checked (two-level suffixes, prefixes,
+  German compounds, `REP`/`MAP`/`KEY` suggestions). Loading takes 0.05–0.4 s;
+  nspell, which expands every form up front, did not finish loading the
+  Galician dictionary in 9 minutes (over 1 GB) and needs 7 s for French. Code
+  blocks, inline code, URLs, emails, numbers, words with digits, acronyms in
+  capitals and mixed-case names (`iPhone`) are skipped. The word being typed is
+  underlined only once the cursor leaves it.
+- **Grammar and style** (blue wavy / dotted underline): an offline rule set
+  (`spell/rules/`, one file per language, each rule tagged with language and
+  category): repeated words, double spaces, spaces before or missing after
+  punctuation, capital letters at the start of paragraphs and sentences
+  (abbreviations and initials excepted), `¿…?` / `¡…!` pairs (Spanish; in
+  Galician the opening mark is optional, so only unclosed ones), French no-break
+  spaces before `; : ! ?` and inside `« »` (suggested, as a style issue, where
+  an ordinary space was typed), and frequent confusions only in unambiguous
+  contexts: *a ver / haber*, *echo / hecho*, *halla / haya*, *sino / si no*,
+  *ahí / hay*, *porque / por qué*, dequeísmo… (es), Castilianisms with the RAG
+  forms (*entonces → entón*, *hasta → ata*, *desde luego → desde logo*; *pero →
+  mais* only as an optional style suggestion) (gl), *a / à*, *ça / sa*,
+  *quelque fois*, *on a pas*, *si il* (fr), *das / dass* after verbs of saying
+  and thinking, *seit / seid*, *als / wie* after comparatives (de). English
+  grammar also uses [Harper](https://writewithharper.com) (WebAssembly, about
+  8 MB compressed, loaded only for English text). Rule tests:
+  `node scripts/test-spell.mjs`.
+- Right click an underlined word: up to five suggestions, *Ignore*, *Ignore
+  all* (this session), *Add to dictionary* (a personal dictionary per language,
+  kept in this browser; *Tools → Personal dictionary…* lists and removes
+  words). Grammar issues show their explanation in the interface language
+  (Harper's and LanguageTool's messages come in the text's language) and
+  *Ignore this kind of issue*.
+- **Tools → Spelling and grammar…** (F7): walks through the issues from the
+  cursor, like Word or LibreOffice: *Change*, *Change all*, *Ignore*, *Ignore
+  all* / *Ignore rule*, *Add to dictionary*, *Next*. The dialog is not modal.
+- **Language**: each document has a language (*Tools → Language*, also the
+  status bar), shared with collaborators; until one is chosen, the interface
+  language is used. Paragraphs can have their own (*Tools → Language →
+  Selected paragraphs*, a `lang` attribute written to Word as `w:lang` and to
+  OpenDocument as `fo:language` / `fo:country`, and read back). Templates set
+  the language of their content.
+- *Tools → Check spelling as you type* / *Check grammar as you type* switch
+  the underlines off (remembered in this browser); the browser's own spell
+  checker is used only while ours is off.
+- Underlines are ProseMirror decorations: the document and its Yjs state are
+  never changed, collaborators do not see each other's underlines or ignored
+  words, and they are not printed. Only paragraphs that changed are checked
+  again (ProseMirror reuses unchanged nodes; results are cached by text), after
+  a short pause in typing, nearest to the cursor first.
+- **LanguageTool** (optional, off by default): *Tools → Grammar → Use a
+  LanguageTool server…* takes the address of a
+  [LanguageTool](https://languagetool.org) server (open source; a school can
+  host its own) whose `/v2/check` results are merged with the offline ones
+  (overlapping issues are shown once; its spelling results are not used). The
+  dialog warns that the text of checked documents is sent to that server.
+- Dictionaries are separate files (`dictionaries/<lang>-<hash>.aff.txt` /
+  `.dic.txt`, generated by `scripts/spell-dictionaries.mjs` from the
+  `dictionary-*` packages without their morphological fields, so the Galician
+  one goes from 9.5 MB to 2.4 MB, 0.7 MB compressed), downloaded the first
+  time a language is checked and then cached by the service worker, like
+  Harper's WebAssembly: after one use, checking works offline.
+- Measured (Chromium, 56-page document, 27,000 words): first full check
+  0.6–0.8 s (dictionary download included; 3.2 s for English, which loads
+  Harper); keystroke-to-paint while typing in the middle of the document
+  34 ms median with checking vs 30 ms without (the rest is layout of the
+  pages). The Galician dictionary takes about 55 MB of memory in the worker
+  (Spanish 11 MB); Harper about 100 MB more.
 
 ## Spreadsheet
 
@@ -446,6 +520,11 @@ src/
       editor/        TipTap extensions and custom nodes (equation, suggestions)
       formats/       DOCX / ODT import and export (loaded on demand);
                      math.ts converts MathML / OMML / LaTeX
+      spell/         Spelling and grammar: plugin.ts (decorations, incremental
+                     checks), worker.ts + checker.ts (runs off the main thread),
+                     hunspell.ts, tokenize.ts, rules/ (offline rules and tests),
+                     ui.ts (Tools menu, context menu, status), dialog.ts (F7),
+                     lang.ts (paragraph language)
 ```
 
 Each app and each converter is a separate chunk, loaded only when used.
@@ -465,6 +544,7 @@ npm install
 npm run dev       # dev server, reachable on the LAN
 npm run build     # type-check and build into dist/
 npm run preview   # serve the production build
+node scripts/test-spell.mjs   # grammar rule tests
 ```
 
 ## Deployment
@@ -506,6 +586,20 @@ The build uses relative paths, so any static host or subfolder works.
   restriction (they may not be used in, or distributed for, Atlassian products
   or its marketplace; diagrams made with them are not affected). The generated
   `diagram-libs/` folder keeps that `LICENSE` and a `NOTICE`.
+- Spelling and grammar: only paragraph-level languages (not single words);
+  suggestions are ranked by edit distance, without word frequencies; Harper
+  covers English only and its messages are in English; the offline rules are
+  deliberately few (precision over recall) and German noun capitalization is
+  left to the dictionary. The sheet's cell editor draws text on a canvas, so the
+  browser's spell checker cannot underline there; diagram and slide labels and
+  speaker notes use the browser's spell checker in the interface language.
+- Credits: dictionaries from [wooorm/dictionaries](https://github.com/wooorm/dictionaries),
+  each under its own license and served as separate files with it
+  (`dictionaries/<lang>-LICENSE.txt`): Spanish from RLA-ES / LibreOffice
+  (GPL-3.0, LGPL-3.0 or MPL-1.1), Galician from hunspell-gl (GPL-3.0), English
+  from SCOWL / wordlist.aspell.net (MIT and BSD), French from Grammalecte
+  (MPL-2.0), German from igerman98 by Björn Jacke (GPL-2.0 or GPL-3.0).
+  English grammar by Harper (Apache-2.0).
 - Spreadsheet: the app bundle is large (~2 MB gzipped, loaded only when a sheet
   is opened). Univer's paid features (charts, pivot tables, native printing,
   official collaboration server) are not used. The mutation log is never

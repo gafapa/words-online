@@ -16,6 +16,7 @@ import { CellBackground, Footnote, PageBreak, PageBreakShortcut, PageNumber, Par
 import { Equation } from './equation'
 import { Suggesting } from './suggestions'
 import { CommentRange } from './comment-range'
+import { ParagraphLanguage } from '../spell/lang'
 
 // Stores the plain font name but renders it with a generic fallback, so documents
 // using fonts that are not installed still look close to the original.
@@ -77,6 +78,7 @@ function common(options: Options): AnyExtension[] {
     Subscript,
     Superscript,
     ParagraphFormat,
+    ParagraphLanguage,
     ...(options.placeholder ? [Placeholder.configure({ placeholder: options.placeholder })] : []),
   ]
 }

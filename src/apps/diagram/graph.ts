@@ -318,6 +318,13 @@ export function createGraph(container: HTMLElement): EditorGraph {
 function richTextEditing(graph: Graph): void {
   const editor = graph.getPlugin<CellEditorHandler>('CellEditorHandler')
   if (!editor) return
+  // The browser's spell checker, in the interface language, while a label is edited.
+  const init = editor.init.bind(editor)
+  editor.init = () => {
+    init()
+    editor.textarea?.setAttribute('spellcheck', 'true')
+    editor.textarea?.setAttribute('lang', document.documentElement.lang)
+  }
   const isRich = (cell: Cell) => String((cell.getStyle() as Record<string, unknown> | null)?.html ?? '') === '1'
   const getInitialValue = editor.getInitialValue.bind(editor)
   editor.getInitialValue = (state, trigger) => (isRich(state.cell) ? sanitizeHtml(String(graph.getEditingValue(state.cell, trigger) ?? '')) : getInitialValue(state, trigger))

@@ -2,7 +2,7 @@
 
 import type { JSONContent } from '@tiptap/core'
 import JSZip from 'jszip'
-import { DEFAULT_PAGE, PAGE_SIZES_MM, type CommentData, type ImportedDocument, type PageSettings, type PageSize } from './types'
+import { DEFAULT_PAGE, PAGE_SIZES_MM, langCode, type CommentData, type ImportedDocument, type PageSettings, type PageSize } from './types'
 import { attr, bytesToDataUrl, child, children, mimeFromPath, parseXml, toHex } from '../../../core/formats'
 import { ommlToLatex } from './math'
 import { authorColor } from './review'
@@ -63,6 +63,8 @@ interface Context {
   defaultSize?: number
   // Comments whose range is open at the current point of the document.
   openComments: Set<string>
+  // Document language (w:lang of the default run properties).
+  lang?: string
 }
 
 // Tracked change around the runs being read (w:ins / w:del).
@@ -126,6 +128,7 @@ export async function importDocx(file: ArrayBuffer): Promise<ImportedDocument> {
   const defaults = resolveRun([rPrOf(ctx.docDefaults), ...chain('Normal', ctx).map((s) => s.rPr).reverse()], ctx)
   ctx.defaultFont = defaults.font
   ctx.defaultSize = defaults.size
+  ctx.lang = [rPrOf(ctx.docDefaults), ...chain('Normal', ctx).map((s) => s.rPr)].map(langOf).find(Boolean) ?? undefined
 
   const docPart: Part = { path: 'word/document.xml', rels: await readRels(zip, 'word/document.xml') }
   const body = child(parseXml(documentXml).documentElement, 'body')
@@ -138,6 +141,7 @@ export async function importDocx(file: ArrayBuffer): Promise<ImportedDocument> {
     header: await headerFooter(sectPr, 'headerReference', docPart, ctx),
     footer: await headerFooter(sectPr, 'footerReference', docPart, ctx),
     page: pageSettings(sectPr),
+    lang: ctx.lang,
     comments: parseComments(xmlRoot(await read('word/comments.xml')), xmlRoot(await read('word/commentsExtended.xml'))),
   }
 }
@@ -351,6 +355,10 @@ function chain(styleId: string | null, ctx: Context): StyleDef[] {
   return out
 }
 
+function langOf(rPr: Element | null | undefined): string | null {
+  return attr(child(rPr ?? null, 'lang'), 'val')
+}
+
 function rPrOf(docDefaults: Element | null): Element | null {
   return child(child(docDefaults, 'rPrDefault'), 'rPr')
 }
@@ -503,6 +511,10 @@ async function paragraph(p: Element, ctx: Context, part: Part): Promise<Item[]> 
   const line = Number(attr(spacing, 'line'))
   const rule = attr(spacing, 'lineRule') ?? 'auto'
   if (line > 0 && rule === 'auto') attrs.lineHeight = String(Math.round((line / 240) * 100) / 100)
+  // Language of the paragraph (its mark, first run or style) when it differs from the document's.
+  const firstRun = [...p.getElementsByTagNameNS('*', 'r')].find((r) => child(r, 't'))
+  const lang = langCode([child(pPr, 'rPr'), child(firstRun ?? null, 'rPr'), ...styles.map((s) => s.rPr)].map(langOf).find(Boolean))
+  if (lang && lang !== langCode(ctx.lang)) attrs.lang = lang
 
   // Lists: numbering from direct formatting or the paragraph style.
   const numId = firstAttr(pPrs, 'numPr', 'numId', 'numId')

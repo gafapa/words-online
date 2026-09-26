@@ -39,6 +39,7 @@ import type { WriterContext } from './app'
 import { homePath } from '../../core/router'
 import { t } from '../../core/i18n'
 import { documentMenuItems } from '../../ui/versions'
+import { contextMenuFor, toolsMenu } from './spell/ui'
 
 export const FONTS = [
   'Arial',
@@ -299,6 +300,7 @@ export function buildMenus(ctx: WriterContext, container: HTMLElement): void {
         { label: t('Cell background…'), run: () => dialogs().then((d) => d.cellBackground(ctx)), enabled: inTable },
       ], editable),
     },
+    toolsMenu(ctx.spell),
     {
       label: t('Review'),
       items: [
@@ -611,6 +613,10 @@ export function setupContextMenu(ctx: WriterContext): void {
       )
     }
     items.push('-', { label: t('Clear formatting'), shortcut: mod('\\'), run: () => clearFormatting(editor) })
-    showContextMenu(e.clientX, e.clientY, items)
+    // On a spelling or grammar issue, its suggestions come first.
+    const x = e.clientX
+    const y = e.clientY
+    if (pos) void contextMenuFor(ctx.spell, pos.pos, x, y, items).then((shown) => shown || showContextMenu(x, y, items))
+    else showContextMenu(x, y, items)
   })
 }

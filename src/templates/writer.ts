@@ -462,7 +462,7 @@ const BUILDERS: Record<string, Builder> = {
 }
 
 export async function createWriterTemplate(id: string, lang: Lang, name: string): Promise<string> {
-  const html = `<!doctype html><html><head><meta charset="utf-8"></head><body>${BUILDERS[id](lang)}</body></html>`
+  const html = `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"></head><body>${BUILDERS[id](lang)}</body></html>`
   const module = await appInfo('writer').load!()
   return module.importFile(new File([html], `${name}.html`, { type: 'text/html' }))
 }

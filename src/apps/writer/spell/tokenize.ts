@@ -19,11 +19,12 @@ export function tokens(text: string): Token[] {
 }
 
 const SKIP = [
+  // Emails first (their domain would be taken for a domain name).
+  /[\p{L}\p{N}._%+-]+@[\p{L}\p{N}.-]+\.\p{L}{2,}/gu,
   // URLs and domain names.
   /\b(?:https?:\/\/|ftp:\/\/|mailto:|www\.)[^\s<>"«»]+/giu,
   /\b[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)*\.(?:com|org|net|edu|gov|es|gal|eus|cat|fr|de|at|ch|uk|us|eu|io|info|pt|it|be|mx|ar|html?|php|pdf|docx?|odt|xlsx?|ods|pptx?|png|jpe?g|gif|svg|txt|md|js|ts|py|zip)\b(?:\/[^\s<>"«»]*)?/gu,
-  // Emails, @mentions and #hashtags.
-  /[\p{L}\p{N}._%+-]+@[\p{L}\p{N}.-]+\.\p{L}{2,}/gu,
+  // @mentions and #hashtags.
   /(?<![\p{L}\p{N}])[@#][\p{L}\p{N}_]+/gu,
   // Paths and identifiers with underscores, slashes or backslashes between letters.
   /[\p{L}\p{N}]*[_\\][\p{L}\p{N}_\\]*/gu,

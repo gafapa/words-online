@@ -32,6 +32,9 @@ export interface Paragraph {
   // Where the paragraph lives: capitalization is not checked in list items,
   // table cells and headings.
   context?: 'paragraph' | 'heading' | 'list' | 'table'
+  // Last character of the previous paragraph: after "," (a letter's greeting) a
+  // paragraph may start in lowercase.
+  prev?: string
 }
 
 export interface CheckOptions {

@@ -37,7 +37,7 @@ import {
   type IRunOptions,
   type ParagraphChild,
 } from 'docx'
-import { DEFAULT_FONT, DEFAULT_FONT_SIZE_PT, HEADING_SIZES_PT, PAGE_SIZES_MM, SUBTITLE_SIZE_PT, TITLE_SIZE_PT, type CommentData, type DocumentData } from './types'
+import { DEFAULT_FONT, DEFAULT_FONT_SIZE_PT, HEADING_SIZES_PT, PAGE_SIZES_MM, SUBTITLE_SIZE_PT, TITLE_SIZE_PT, langTag, type CommentData, type DocumentData } from './types'
 import { loadImage, toHex, toPt, type LoadedImage } from '../../../core/formats'
 import { latexToMathML } from '../../../ui/equation'
 import { mathmlToOmml } from './math'
@@ -90,6 +90,8 @@ interface Context {
   commentEnds: Map<JSONContent, number[]>
   // Tracked change ids (w:ins / w:del).
   revisions: number
+  // Language of the paragraph being written (w:lang of its runs), when it has its own.
+  lang?: string
 }
 
 // Where a block sits: inside a quote, a table header cell, or as extra content of a list item.
@@ -131,7 +133,7 @@ export async function exportDocx(data: DocumentData): Promise<Blob> {
     creator: 'Words Online',
     styles: {
       default: {
-        document: { run: { font: DEFAULT_FONT, size: DEFAULT_FONT_SIZE_PT * 2 }, paragraph: { spacing: { after: 120 } } },
+        document: { run: { font: DEFAULT_FONT, size: DEFAULT_FONT_SIZE_PT * 2, language: data.lang ? { value: data.lang } : undefined }, paragraph: { spacing: { after: 120 } } },
         title: { run: { size: TITLE_SIZE_PT * 2, color: '000000', font: DEFAULT_FONT }, paragraph: { spacing: { after: 120 } } },
         heading1: heading(HEADING_SIZES_PT[0]),
         heading2: heading(HEADING_SIZES_PT[1]),
@@ -356,6 +358,10 @@ async function paragraph(node: JSONContent, ctx: Context, scope: Scope, numberin
   else if (scope.headerCell) style = STYLE.tableHeading
   if (!numbering && left === undefined && indent) left = (style === STYLE.quote ? QUOTE_INDENT_TWIPS : 0) + TWIPS_PER_INDENT * indent
   const lineHeight = parseFloat(a.lineHeight)
+  const outerLang = ctx.lang
+  ctx.lang = langTag(a.lang)
+  const children = await inlines(node.content ?? [], ctx)
+  ctx.lang = outerLang
   return new Paragraph({
     heading,
     style,
@@ -364,7 +370,7 @@ async function paragraph(node: JSONContent, ctx: Context, scope: Scope, numberin
     alignment: a.textAlign ? ALIGN[a.textAlign] : undefined,
     indent: left !== undefined ? { left } : undefined,
     spacing: lineHeight > 0 ? { line: Math.round(lineHeight * 240), lineRule: LineRuleType.AUTO } : undefined,
-    children: await inlines(node.content ?? [], ctx),
+    children,
   })
 }
 
@@ -411,7 +417,7 @@ async function inlines(nodes: JSONContent[], ctx: Context): Promise<ParagraphChi
 }
 
 async function inline(node: JSONContent, ctx: Context): Promise<ParagraphChild | null> {
-  const opts = runOptions(node.marks ?? [])
+  const opts = { ...runOptions(node.marks ?? []), ...(ctx.lang ? { language: { value: ctx.lang } } : {}) }
   switch (node.type) {
     case 'text': {
       const children = withTabs(node.text ?? '')

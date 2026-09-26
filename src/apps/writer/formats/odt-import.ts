@@ -4,7 +4,7 @@ import JSZip from 'jszip'
 import { getSchema, type JSONContent } from '@tiptap/core'
 import type { Schema } from '@tiptap/pm/model'
 import { allExtensions } from '../editor/extensions'
-import { DEFAULT_FONT, DEFAULT_FONT_SIZE_PT, DEFAULT_PAGE, PAGE_SIZES_MM, type CommentData, type ImportedDocument, type PageSettings, type PageSize } from './types'
+import { DEFAULT_FONT, DEFAULT_FONT_SIZE_PT, DEFAULT_PAGE, PAGE_SIZES_MM, langCode, type CommentData, type ImportedDocument, type PageSettings, type PageSize } from './types'
 import { attr, bytesToDataUrl, child, children, mimeFromPath, parseXml, toHex } from '../../../core/formats'
 import { mathmlToLatex } from './math'
 import { authorColor } from './review'
@@ -33,6 +33,8 @@ interface Ctx {
   images: Map<string | Element, string> // image key -> data URL
   defaultFont?: string
   defaultSize?: number
+  // Document language tag (default paragraph style), e.g. "gl-ES".
+  lang?: string
   // Last number of top-level ordered lists, for continued numbering.
   listEnds: Map<string, number>
   review: Review
@@ -115,6 +117,7 @@ export async function importOdt(file: ArrayBuffer): Promise<ImportedDocument> {
     const base = textFmt(styleChain(ctx, 'Standard', 'paragraph'), ctx, 'all')
     ctx.defaultFont = base.fontFamily
     ctx.defaultSize = base.fontSize
+    ctx.lang = languageOf(styleChain(ctx, 'Standard', 'paragraph'), ctx) ?? undefined
   }
 
   const text = child(child(content, 'body'), 'text')
@@ -143,6 +146,7 @@ export async function importOdt(file: ArrayBuffer): Promise<ImportedDocument> {
     header: header ? normalize(header) : null,
     footer: footer ? normalize(footer) : null,
     page: layout ? pageSettings(layout, !!header, !!footer) : DEFAULT_PAGE,
+    lang: bodyCtx.lang,
     comments: review.comments,
   }
 }
@@ -376,6 +380,8 @@ function paragraph(p: Element, ctx: Ctx, walk: Walk): Item[] {
   }
   const lineHeight = prop(chain, 'paragraph-properties', 'line-height')
   if (lineHeight?.endsWith('%') && parseFloat(lineHeight) > 0) attrs.lineHeight = String(Number((parseFloat(lineHeight) / 100).toFixed(2)))
+  const lang = langCode(languageOf(chain, ctx))
+  if (lang && lang !== langCode(ctx.lang)) attrs.lang = lang
 
   node.attrs = attrs
   const content = inlineContent(p, ctx, textFmt(chain, ctx, look ? 'auto' : 'custom'))
@@ -863,6 +869,18 @@ function styleChain(ctx: Ctx, name: string | null, family: string): StyleDef[] {
 }
 
 // First value of a property along a style chain; `props` is the properties element (null: the style element).
+// fo:language / fo:country of a style chain (or the default paragraph style) as a tag.
+function languageOf(chain: StyleDef[], ctx: Ctx): string | null {
+  const defaults = ctx.defaults.get('paragraph')
+  const own = (el: Element | null | undefined) => attr(child(el ?? null, 'text-properties'), 'language')
+  const style = chain.find((s) => own(s.el))?.el ?? (own(defaults) ? defaults : null)
+  const props = child(style ?? null, 'text-properties')
+  const language = attr(props, 'language')
+  if (!language || language === 'zxx') return null
+  const country = attr(props, 'country')
+  return country && country !== 'none' ? `${language}-${country}` : language
+}
+
 function prop(chain: StyleDef[], props: string | null, name: string): string | null {
   for (const style of chain) {
     const value = attr(props ? child(style.el, props) : style.el, name)

@@ -10,7 +10,7 @@ import { Node as PMNode, type Schema } from '@tiptap/pm/model'
 import { Transform } from '@tiptap/pm/transform'
 import { allExtensions, bodyExtensions, headerFooterExtensions } from './editor/extensions'
 import { exportFile, importFile, OPEN_ACCEPT, type ExportFormat } from './formats'
-import { DEFAULT_PAGE, pageDimensionsMm, type DocumentData, type PageSettings } from './formats/types'
+import { DEFAULT_PAGE, langCode, langTag, pageDimensionsMm, type DocumentData, type PageSettings } from './formats/types'
 import { appInfo } from '../registry'
 import { docPath, newDocPath } from '../../core/router'
 import { createLocalDocument, type Session } from '../../core/session'
@@ -29,6 +29,8 @@ import type { EquationEditDetail } from './editor/equation'
 import { PositionIndex, encodeAnchor } from './ypos'
 import type { CommentData } from './formats/types'
 import { authorColor } from './formats/review'
+import { SpellController, spellExtension } from './spell/plugin'
+import { mountStatus, openSpellDialog } from './spell/ui'
 
 const UNTITLED = t('Untitled document')
 const ZOOM_KEY = 'words-online:zoom'
@@ -98,6 +100,7 @@ export interface WriterContext {
   setSuggesting: (on: boolean) => void
   insertEquation: (display?: boolean) => void
   showContributions: () => void
+  spell: SpellController
 }
 
 export function mountWriter(session: Session, root: HTMLElement): WriterContext {
@@ -177,6 +180,7 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
   const tail = document.getElementById('page-tail')!
   let layout: Layout = { breaks: [], pages: 1, tailFill: 0, tailNotes: [], tailFirstNote: 1 }
   let review: Review | null = null
+  const spell = new SpellController(meta, () => editor.isEditable)
 
   const editor = new Editor({
     element: document.getElementById('editor')!,
@@ -189,10 +193,11 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
       }),
       Pagination.configure({ getGeometry: geometry, chrome, onLayout: (l) => applyLayout(l) }),
       Find,
+      spellExtension(spell),
     ],
     editable,
     editorProps: {
-      attributes: { spellcheck: 'true', lang: navigator.language },
+      // spellcheck and lang come from the spelling extension.
       handlePaste: (_view, event) => insertImageFiles(event.clipboardData?.files),
       handleDrop: (_view, event) => insertImageFiles((event as DragEvent).dataTransfer?.files),
     },
@@ -366,6 +371,7 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
       header: headerFragment.length && !isEmptyDoc(header) ? header : null,
       footer: footerFragment.length && !isEmptyDoc(footer) ? footer : null,
       page: getPage(),
+      lang: langTag(spell.docLang()),
     }
   }
 
@@ -425,10 +431,18 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
       editor.chain().focus().insertContentAt({ from, to }, { type: 'equation', attrs: value }).run()
     },
     showContributions: () => void import('./authorship').then((a) => a.contributionsDialog(editor, session, authors)),
+    spell,
   }
   buildMenus(ctx, shell.menubar)
   buildToolbar(ctx, shell.toolbar)
   setupContextMenu(ctx)
+  mountStatus(spell, shell.statusbar)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'F7' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault()
+      openSpellDialog(spell)
+    }
+  })
 
   // Double-click on a header or footer area to edit them.
   paper.addEventListener('dblclick', (e) => {
@@ -503,7 +517,7 @@ export function mountWriter(session: Session, root: HTMLElement): WriterContext 
   })
 
   // Handle for automated browser tests in development builds only.
-  if (import.meta.env.DEV) (window as unknown as { editor: Editor }).editor = editor
+  if (import.meta.env.DEV) Object.assign(window, { editor, spell })
 
   updateStatus()
   updateZoomBox()
@@ -528,6 +542,8 @@ export async function importFileAsDocument(file: File): Promise<string> {
     if (imported.header && !isEmptyDoc(imported.header)) prosemirrorJSONToYXmlFragment(schema, imported.header, ydoc.getXmlFragment('header'))
     if (imported.footer && !isEmptyDoc(imported.footer)) prosemirrorJSONToYXmlFragment(schema, imported.footer, ydoc.getXmlFragment('footer'))
     ydoc.getMap<unknown>('meta').set('page', JSON.stringify(imported.page))
+    const lang = langCode(imported.lang)
+    if (lang) ydoc.getMap<unknown>('meta').set('lang', lang)
     // The new document has no comments channel yet: the first editor to open it moves them there.
     if (imported.comments?.length) writeImportedComments(ydoc, schema, ranges, imported.comments)
   })

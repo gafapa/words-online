@@ -91,6 +91,15 @@ export const aHa: Rule = {
   check: patternRule([
     { re: w('a (sido|habido)'), fix: (m) => [`ha ${m[1]}`] },
     { re: w('e (sido|hecho|dicho|estado|tenido|visto|podido|querido|comido|venido|llegado|terminado|acabado|leído|escrito|habido)'), fix: (m) => [`he ${m[1]}`] },
+  ]),
+}
+
+export const tuboTuvo: Rule = {
+  id: 'es-tubo-tuvo',
+  langs: ['es'],
+  category: 'confusion',
+  kind: 'grammar',
+  check: patternRule([
     { re: w('tubo que'), fix: () => ['tuvo que'] },
     { re: w('un tuvo'), fix: () => ['un tubo'] },
   ]),
@@ -209,4 +218,4 @@ export const questionMarks: Rule = {
   },
 }
 
-export const esRules: Rule[] = [aVerHaber, echoHecho, hallaHaya, sinoSiNo, ahiHay, aHa, porQue, dequeismo, joined, preteriteS, questionMarks]
+export const esRules: Rule[] = [aVerHaber, echoHecho, hallaHaya, sinoSiNo, ahiHay, aHa, tuboTuvo, porQue, dequeismo, joined, preteriteS, questionMarks]

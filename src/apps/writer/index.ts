@@ -5,8 +5,9 @@ import { yXmlFragmentToProsemirrorJSON } from '@tiptap/y-tiptap'
 import type { Session, SubmitFile } from '../../core/session'
 import { importFileAsDocument, mountWriter, OPEN_ACCEPT } from './app'
 import { exportFile } from './formats'
-import { DEFAULT_PAGE, type DocumentData, type PageSettings } from './formats/types'
+import { DEFAULT_PAGE, langTag, type DocumentData, type PageSettings } from './formats/types'
 import { t } from '../../core/i18n'
+import { UI_LANG } from './spell/settings'
 import './writer.css'
 
 export const accept = OPEN_ACCEPT
@@ -42,6 +43,7 @@ export async function submitFiles(session: Session): Promise<SubmitFile[]> {
     header: fragment('header'),
     footer: fragment('footer'),
     page,
+    lang: langTag(meta.get('lang') ?? UI_LANG),
   }
   const [odt, docx] = await Promise.all([exportFile('odt', data, '', ''), exportFile('docx', data, '', '')])
   return [

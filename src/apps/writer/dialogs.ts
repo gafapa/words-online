@@ -54,6 +54,7 @@ export async function shortcuts(): Promise<void> {
     [t('Insert link'), `${mod}K`],
     [t('Insert footnote'), `${mod}Alt+F`],
     [t('Find / replace'), `${mod}F / ${mod}H`],
+    [t('Spelling and grammar'), 'F7'],
     [t('Undo / redo'), `${mod}Z / ${mod}Y`],
     [t('Clear formatting'), `${mod}\\`],
     [t('Open file'), `${mod}O`],

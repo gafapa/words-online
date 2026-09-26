@@ -132,7 +132,7 @@ export const sentenceCapital: Rule = {
     const flag = (from: number, word: string) =>
       out.push({ from, to: from + word.length, replacements: [word[0].toUpperCase() + word.slice(1)], vars: { word } })
     // Paragraph start (not in lists, tables or headings, not after "…").
-    if (!p.context || p.context === 'paragraph') {
+    if ((!p.context || p.context === 'paragraph') && !/[,;:]/.test(p.prev ?? '')) {
       const start = /^[\s"'«“(¿¡—–-]*/u.exec(text)![0].length
       const word = lowerWord(start)
       if (word && !/^(?:\.\.\.|…)/.test(text) && text.trim().split(/\s+/).length >= 3) flag(start, word)

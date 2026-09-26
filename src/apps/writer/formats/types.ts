@@ -21,6 +21,8 @@ export interface DocumentData {
   footer: JSONContent | null
   page: PageSettings
   comments?: CommentData[]
+  // Document language as a BCP 47 tag ("es-ES"); paragraphs may have their own (attrs.lang).
+  lang?: string
 }
 
 // A comment or, with parentId, a reply (replies have no range of their own).
@@ -51,6 +53,19 @@ export const DEFAULT_PAGE: PageSettings = {
 export function pageDimensionsMm(page: PageSettings): { width: number; height: number } {
   const [w, h] = PAGE_SIZES_MM[page.size] ?? PAGE_SIZES_MM.A4
   return page.orientation === 'landscape' ? { width: h, height: w } : { width: w, height: h }
+}
+
+// Paragraph languages (attrs.lang) and their tags in files.
+export const LANG_TAGS: Record<string, string> = { es: 'es-ES', gl: 'gl-ES', en: 'en-US', fr: 'fr-FR', de: 'de-DE' }
+
+export function langTag(code: unknown): string | undefined {
+  return typeof code === 'string' ? LANG_TAGS[code] : undefined
+}
+
+// Our language code from a tag ("gl-ES", "de_AT", "fr"), when it is one we check.
+export function langCode(tag: string | null | undefined): string | null {
+  const code = (tag ?? '').toLowerCase().split(/[-_]/)[0]
+  return code in LANG_TAGS ? code : null
 }
 
 export const DEFAULT_FONT = 'Calibri'
