@@ -29,6 +29,7 @@ import {
 import { configureDrawioStylesheet } from './shapes'
 import { installSketch } from './shapes/sketch'
 import { installHandles } from './handles'
+import { attachSpellcheck } from '../writer/spell/inline'
 import { newCellId, parseGeometry, type CellRecord, type GeometryRecord } from './model'
 
 // Generated draw.io shape libraries (scripts/build-diagram-libs.mjs, see libraries.ts).
@@ -327,6 +328,8 @@ function richTextEditing(graph: Graph): void {
     init()
     editor.textarea?.setAttribute('spellcheck', 'true')
     editor.textarea?.setAttribute('lang', document.documentElement.lang)
+    // Our spelling and grammar checker (language: the nearest lang attribute).
+    if (editor.textarea) attachSpellcheck(editor.textarea)
   }
   const isRich = (cell: Cell) => String((cell.getStyle() as Record<string, unknown> | null)?.html ?? '') === '1'
   const getInitialValue = editor.getInitialValue.bind(editor)

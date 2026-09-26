@@ -681,7 +681,7 @@ export function documentsSection(): DocsSection {
       void refreshIndex(store.activeDocs()).then(() => {
         if (query) void runSearch()
       })
-    }, 300)
+    }, 1000)
   }
 
   renderLayoutButtons()
