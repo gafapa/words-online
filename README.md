@@ -362,6 +362,127 @@ or menu → *Install*) and it works without a connection for individual work.
   `.ods`, `.csv`, `.drawio`, `.excalidraw` and `.pptx` files ("Open with").
 - Updates are picked up automatically on the next visit.
 
+## Nextcloud
+
+Open documents from a Nextcloud server (schools often have one) and save them
+back, with no server of our own: the browser talks WebDAV directly to
+Nextcloud. Full guide: [docs/nextcloud.md](docs/nextcloud.md).
+
+- **Account**: home screen → **Nextcloud** (or *File → Nextcloud account…*).
+  *Log in with Nextcloud* (Login Flow v2: approve in a Nextcloud tab) or an
+  **app password** (Nextcloud → *Personal settings → Security → Devices &
+  sessions → Create new app password*; never the main password). *Test
+  connection* tells apart a wrong address, an unreachable server, https→http,
+  maintenance, wrong credentials and a server that blocks this site (CORS),
+  and then shows the admin options below. *Sign out* forgets the password (and
+  revokes it when it came from the login flow).
+- **Open from Nextcloud…** (home screen and File menu): file browser with
+  breadcrumbs, search in the folder, sorting and icons per app; the file is
+  imported with the app's importer into a new local document **linked** to it.
+- **Save to Nextcloud** (Ctrl+S) updates the linked file in its format;
+  **Save to Nextcloud as…** chooses folder (or a new one), name and format
+  (the app's download formats). Saves send the file's ETag (`If-Match`): if
+  it changed in Nextcloud meanwhile you choose *Overwrite*, *Save as a copy* or
+  *Cancel*. The app bar shows "Saved to Nextcloud at hh:mm" or unsaved changes.
+  Optional autosave every 2–15 minutes (off by default).
+- The link is kept in this browser's document index only: collaboration stays
+  peer to peer, and only the person who linked the document saves it.
+- **Hand in → Upload to a Nextcloud share link…** sends the hand-in ZIP to a
+  teacher's *File drop* link (`https://host/s/TOKEN`, optional password) via
+  public WebDAV; students need no account.
+- Offline, Nextcloud actions are disabled with a message; nothing else changes.
+
+### Nextcloud for administrators: CORS
+
+Unless Words Online is served from the Nextcloud address, the browser needs
+Nextcloud to allow its origin (CORS). Options:
+
+1. **Same address (recommended)**: copy `dist/` to e.g.
+   `https://cloud.school.org/office/` (nginx: `location ^~ /office/ { alias
+   /var/www/words-online/; }`; Apache: `Alias /office /var/www/words-online`).
+   No CORS needed; everything works, including the login flow.
+2. **The Nextcloud app "WebAppPassword"**: add the Words Online origin to its
+   allowed WebDAV origins. Covers WebDAV (browse, open, save) with app
+   passwords; not the login flow, revocation or share-link uploads.
+3. **CORS headers in the web server**, limited to the Words Online origin and
+   to `remote.php/dav`, `public.php/dav|webdav`, `ocs/v2.php/core/apppassword`
+   and `login/v2`, answering the `OPTIONS` preflight, allowing the
+   `Authorization`, `Depth`, `Destination`, `If-Match`, `If-None-Match`
+   and `OCS-APIRequest` headers and exposing `ETag`. Replace
+   `https://office.example.org`:
+
+```nginx
+# 1) In the http { } block (e.g. /etc/nginx/conf.d/words-online-cors.conf)
+map $http_origin $wo_origin {
+    default "";
+    "https://office.example.org" $http_origin;   # where Words Online runs (one line per site)
+}
+map $request_uri $wo_cors_path {
+    default 0;
+    "~^[^?]*/remote\.php/dav/" 1;
+    "~^[^?]*/public\.php/(dav|webdav)/" 1;
+    "~^[^?]*/ocs/v2\.php/core/apppassword" 1;
+    "~^[^?]*/login/v2" 1;
+}
+map "$wo_cors_path:$wo_origin" $wo_cors_origin {
+    default "";
+    "~^1:(?<o>.+)$" $o;
+}
+map $wo_cors_origin $wo_cors_methods {
+    "" "";
+    default "GET, HEAD, POST, PUT, DELETE, MKCOL, MOVE, COPY, PROPFIND, OPTIONS";
+}
+map $wo_cors_origin $wo_cors_headers {
+    "" "";
+    default "Authorization, Content-Type, Depth, Destination, Overwrite, If-Match, If-None-Match, OCS-APIRequest, X-Requested-With";
+}
+map $wo_cors_origin $wo_cors_expose {
+    "" "";
+    default "ETag, OC-ETag, OC-FileId, Content-Length";
+}
+map $wo_cors_origin $wo_cors_max_age {
+    "" "";
+    default 3600;
+}
+map "$request_method:$wo_cors_origin" $wo_preflight {
+    default 0;
+    "~^OPTIONS:." 1;
+}
+
+# 2) In Nextcloud's server { } block, next to its other add_header lines
+add_header Access-Control-Allow-Origin $wo_cors_origin always;
+add_header Access-Control-Allow-Methods $wo_cors_methods always;
+add_header Access-Control-Allow-Headers $wo_cors_headers always;
+add_header Access-Control-Expose-Headers $wo_cors_expose always;
+add_header Access-Control-Max-Age $wo_cors_max_age always;
+add_header Vary Origin always;
+if ($wo_preflight) {
+    return 204;
+}
+```
+
+```apache
+# In Nextcloud's <VirtualHost> (needs mod_headers and mod_rewrite)
+<IfModule mod_headers.c>
+    SetEnvIfExpr "req('Origin') in { 'https://office.example.org' } && %{REQUEST_URI} =~ m#/(remote\.php/dav/|public\.php/(dav|webdav)/|ocs/v2\.php/core/apppassword|login/v2)#" WO_CORS=1
+    Header always set Access-Control-Allow-Origin "expr=%{req:Origin}" env=WO_CORS
+    Header always set Access-Control-Allow-Methods "GET, HEAD, POST, PUT, DELETE, MKCOL, MOVE, COPY, PROPFIND, OPTIONS" env=WO_CORS
+    Header always set Access-Control-Allow-Headers "Authorization, Content-Type, Depth, Destination, Overwrite, If-Match, If-None-Match, OCS-APIRequest, X-Requested-With" env=WO_CORS
+    Header always set Access-Control-Expose-Headers "ETag, OC-ETag, OC-FileId, Content-Length" env=WO_CORS
+    Header always set Access-Control-Max-Age "3600" env=WO_CORS
+    Header always merge Vary "Origin" env=WO_CORS
+    # Answer the browser's preflight (OPTIONS) here: it never carries a login.
+    RewriteEngine On
+    RewriteCond %{ENV:WO_CORS} =1
+    RewriteCond %{REQUEST_METHOD} =OPTIONS
+    RewriteRule ^ - [R=204,L]
+</IfModule>
+```
+
+Credentials (server, user and app password) are stored in this browser's
+`localStorage` and sent only to that Nextcloud; see *Security notes* in
+[docs/nextcloud.md](docs/nextcloud.md).
+
 ## How collaboration works
 
 1. Click **Share**, pick a link (*Can edit*, *Can comment*, *Can view* or
@@ -432,7 +553,8 @@ The **Hand in** button (next to Share) downloads, in one click, a ZIP named
 `<your name> - <title>.zip` with the document in its original formats and a
 `README.txt` (title, author, date): `.odt` + `.docx` (documents), `.ods` +
 `.xlsx` (spreadsheets), `.excalidraw` + `.png` (drawings), `.drawio` + PNG and
-SVG of every page (diagrams). It then offers *Print / Save as PDF*.
+SVG of every page (diagrams). It then offers *Print / Save as PDF* and
+*Upload to a Nextcloud share link…* (see [Nextcloud](#nextcloud)).
 
 ### Version history
 
@@ -462,6 +584,7 @@ src/
     copy.ts          Copies of documents, template links
     versions.ts      Version history, generic restore
     handin.ts        Hand in (ZIP), printing
+    nextcloud.ts     Nextcloud client: accounts, diagnostics, Login Flow v2, WebDAV, share uploads
     idb.ts           Small IndexedDB key-value store (signed logs)
     formats.ts       Format helpers: XML, colors, units, images
     i18n.ts          UI language, t() translations; locales/ holds the es, gl, fr and de catalogs
@@ -469,6 +592,7 @@ src/
     shell.ts         App frame: app bar, menu bar, toolbar row, status bar
     chrome.ts        Title, presence, connection status, share dialog + QR, hand in
     versions.ts      Make a copy / Save version / Version history (File menu items)
+    nextcloud.ts     Nextcloud dialogs: account, CORS help, file browser, save, status, hand in
     widgets.ts       Menus, context menus, popovers, color palette, dialogs, toasts
     equation.ts      Equation editor (MathLive, lazy) and KaTeX rendering / MathML
     base.css
@@ -600,6 +724,11 @@ The build uses relative paths, so any static host or subfolder works.
   from SCOWL / wordlist.aspell.net (MIT and BSD), French from Grammalecte
   (MPL-2.0), German from igerman98 by Björn Jacke (GPL-2.0 or GPL-3.0).
   English grammar by Harper (Apache-2.0).
+- Nextcloud: one account per browser; saving exports the whole file (no
+  partial or collaborative editing of the file in Nextcloud); a file opened in
+  a format the app cannot write (e.g. `.md`, `.tsv`) is saved with *Save to
+  Nextcloud as…*; image formats (PNG/SVG) save the current page only. Without
+  CORS configured on the server (or the same address), nothing can connect.
 - Spreadsheet: the app bundle is large (~2 MB gzipped, loaded only when a sheet
   is opened). Univer's paid features (charts, pivot tables, native printing,
   official collaboration server) are not used. The mutation log is never
