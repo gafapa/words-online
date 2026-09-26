@@ -99,6 +99,13 @@ export function setupChrome(session: Session, untitled: string): void {
   window.addEventListener('online', renderStatus)
   window.addEventListener('offline', renderStatus)
   renderStatus()
+  // Clicking the status opens the connection test (loaded on demand).
+  status.setAttribute('role', 'button')
+  status.tabIndex = 0
+  status.style.cursor = 'pointer'
+  const openTest = () => void import('./connection').then((m) => m.openConnectionTest(session))
+  status.addEventListener('click', openTest)
+  status.addEventListener('keydown', (e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), openTest()))
 
   document.getElementById('btn-share')!.addEventListener('click', () => openShareDialog(session))
   document.getElementById('btn-handin')?.addEventListener('click', () => void handIn(session, untitled))

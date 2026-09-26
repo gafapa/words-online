@@ -1,21 +1,24 @@
 // Home screen: create documents of every type, open files and list the
 // documents stored in this browser.
 
-import { ALL_ACCEPT, APPS, appForFile, appInfo, type AppInfo } from '../apps/registry'
+import { ALL_ACCEPT, APPS, appForFile, appInfo, SUITE, type AppInfo } from '../apps/registry'
 import { docPath, newDocPath } from '../core/router'
 import { isOfflineCapable, whenOfflineReady } from '../core/offline'
 import { languageSelect, locale, t } from '../core/i18n'
 import * as store from '../core/store'
 import { accessibilityButton } from '../ui/accessibility'
+import { brandMark } from '../ui/brand'
+import { helpMenuItems } from '../ui/menus'
 import { openAccountDialog, openFromNextcloud } from '../ui/nextcloud'
-import { el, icon, showContextMenu, toast } from '../ui/widgets'
-import { Cloud } from 'lucide'
+import { registerShortcuts, showShortcuts } from '../ui/shortcuts'
+import { confirmDialog, el, icon, showContextMenu, toast, uiZoom } from '../ui/widgets'
+import { CircleHelp, Cloud } from 'lucide'
 import './home.css'
 
 type Filter = store.DocType | 'all'
 
 export function mountHome(root: HTMLElement): void {
-  document.title = 'Words Online'
+  document.title = SUITE
   const user = store.loadUser()
   let filter: Filter = 'all'
   let query = ''
@@ -145,7 +148,8 @@ export function mountHome(root: HTMLElement): void {
           {
             label: t('Remove from this browser'),
             run: async () => {
-              if (!confirm(t('Remove “{title}” from this browser? Collaborators keep their copies.', { title: d.title || app.untitled }))) return
+              const question = t('Remove “{title}” from this browser? Collaborators keep their copies.', { title: d.title || app.untitled })
+              if (!(await confirmDialog(t('Remove from this browser'), question, { confirmLabel: t('Remove'), danger: true }))) return
               await store.deleteDoc(d.id)
               renderList()
             },
@@ -173,12 +177,13 @@ export function mountHome(root: HTMLElement): void {
       el(
         'header',
         { class: 'home-bar' },
-        el('span', { class: 'home-logo', textContent: 'W' }),
-        el('h1', { textContent: 'Words Online' }),
+        el('span', { class: 'home-logo' }, brandMark(36)),
+        el('h1', { textContent: SUITE }),
         el('span', { class: 'spacer' }),
         offlineControl(),
         cloudButton,
         languageSelect('home-language'),
+        helpButton(),
         accessibilityButton(true),
         nameInput,
       ),
@@ -209,8 +214,23 @@ export function mountHome(root: HTMLElement): void {
   renderFilters()
   renderList()
   handleLaunchedFiles()
+  // The same keys as in the apps: Ctrl+O opens a file, Ctrl+/ and F1 the shortcuts.
+  registerShortcuts({ open: () => fileInput.click(), save: null, help: () => void showShortcuts() })
   // Titles and new documents from other tabs.
   window.addEventListener('storage', renderList)
+}
+
+// Help menu of the home screen: the apps' Help items (shortcuts, accessibility, connection test, about).
+function helpButton(): HTMLButtonElement {
+  const button = el('button', { type: 'button', class: 'home-help', title: t('Help') }, icon(CircleHelp, 20))
+  button.setAttribute('aria-label', t('Help'))
+  button.setAttribute('aria-haspopup', 'menu')
+  button.addEventListener('click', () => {
+    const rect = button.getBoundingClientRect()
+    const z = uiZoom()
+    showContextMenu(rect.right - 240 * z, rect.bottom + 4, helpMenuItems(undefined, { shortcuts: () => void showShortcuts() }))
+  })
+  return button
 }
 
 // Template gallery, loaded as a separate chunk (src/templates).

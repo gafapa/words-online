@@ -23,7 +23,8 @@ export interface ShortcutActions {
   open?: () => void
   // Default: a toast saying changes are saved automatically. The Nextcloud
   // integration handles Ctrl+S first when the document is linked to a file.
-  save?: () => void
+  // null: Ctrl+S is left to the browser (screens without a document).
+  save?: (() => void) | null
   print?: () => void
   find?: () => void
   replace?: () => void
@@ -63,7 +64,7 @@ export function registerShortcuts(actions: ShortcutActions): void {
         if (key === '/' || e.code === 'Slash') action = a.help
         else if (e.shiftKey) action = undefined
         else if (key === 'o') action = a.open
-        else if (key === 's') action = a.save ?? (() => toast(t('All changes are saved automatically in this browser')))
+        else if (key === 's') action = a.save === null ? undefined : (a.save ?? (() => toast(t('All changes are saved automatically in this browser'))))
         else if (key === 'p') action = a.print
         else if (key === 'f') action = a.find
         else if (key === 'h') action = a.replace
@@ -84,7 +85,7 @@ export function registerShortcuts(actions: ShortcutActions): void {
 export function commonShortcuts(actions: ShortcutActions = registered ?? {}): ShortcutSection[] {
   const file: [string, string][] = []
   if (actions.open) file.push([t('Open file'), 'Ctrl+O'])
-  file.push([t('Save'), 'Ctrl+S'])
+  if (actions.save !== null) file.push([t('Save'), 'Ctrl+S'])
   if (actions.print) file.push([t('Print'), 'Ctrl+P'])
   const edit: [string, string][] = [
     [t('Undo / redo'), 'Ctrl+Z / Ctrl+Y'],
@@ -114,12 +115,12 @@ const keysText = (keys: string) => (isMac ? keys.replace(/Ctrl\+/g, '⌘') : sho
 
 // The "Keyboard shortcuts" dialog: the app's sections first, then the common ones.
 export async function showShortcuts(appSections: ShortcutSection[] = []): Promise<void> {
-  const body = el('div', { class: 'shortcut-sections' })
+  const table = el('table', { class: 'shortcuts shortcut-sections' })
   for (const section of [...appSections, ...commonShortcuts()]) {
     if (!section.rows.length) continue
-    const table = el('table', { class: 'shortcuts' })
+    table.append(el('tr', {}, el('th', { colSpan: 2, scope: 'colgroup', class: 'shortcut-title', textContent: section.title })))
     for (const [label, keys] of section.rows) table.append(el('tr', {}, el('td', { textContent: label }), el('td', {}, el('kbd', { textContent: keysText(keys) }))))
-    body.append(el('h3', { class: 'shortcut-title', textContent: section.title }), table)
   }
+  const body = el('div', { class: 'shortcut-scroll' }, table)
   await showDialog(t('Keyboard shortcuts'), body, [{ label: t('Close'), value: 'ok', primary: true }], true)
 }

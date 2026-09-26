@@ -64,6 +64,8 @@ export interface EditorOptions {
   textSize?: [number, number]
   // Format panel content when nothing is selected.
   formatEmpty?: () => HTMLElement
+  // More rows for the diagram options of the format panel.
+  diagramOptions?: () => HTMLElement[]
   // Files other than images dropped on the canvas.
   openFile?: (file: File) => void
   print?: () => void
@@ -480,6 +482,7 @@ export function createDiagramEditor(session: Session, options: EditorOptions) {
     pageName: () => sync.pageList().find((p) => p.id === sync.page)?.name ?? '',
     renamePage: (name) => sync.renamePage(sync.page, name),
     emptySection: options.formatEmpty,
+    diagramOptions: options.diagramOptions,
   })
   const narrow = window.matchMedia('(max-width: 800px)').matches
   sidebar.element.hidden = narrow || readOnly

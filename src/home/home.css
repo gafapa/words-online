@@ -2,10 +2,14 @@
 
 body:has(.home) { overflow: auto; }
 .home { min-height: 100vh; background: var(--surface); }
-.home-bar { display: flex; align-items: center; gap: 12px; padding: 10px 24px; border-bottom: 1px solid var(--border); }
+/* Same look as the apps' app bar: grey background, 36 px logo. */
+.home-bar { display: flex; align-items: center; gap: 10px; padding: 8px 24px; background: var(--bg); border-bottom: 1px solid var(--border); }
 .home-bar h1 { font-size: var(--fs-xxl); font-weight: 500; margin: 0; }
 .home-bar .spacer { flex: 1; }
 .home-language { padding: 5px 6px; border: 1px solid var(--border); border-radius: var(--radius-m); background: var(--surface); color: var(--text); }
+.brand-mark { display: grid; place-items: center; }
+.home-help { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid transparent; border-radius: var(--radius-pill); background: none; color: var(--text); }
+.home-help:hover { background: var(--hover); border-color: var(--border); }
 .home-logo { flex: none; width: 36px; height: 36px; border-radius: var(--radius-l); background: var(--brand); color: var(--brand-fg); display: grid; place-items: center; }
 .home-logo svg { display: block; }
 .home-inner { max-width: 960px; margin: 0 auto; padding: 0 24px; }
@@ -15,7 +19,7 @@ body:has(.home) { overflow: auto; }
 .home-open { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-m); padding: 6px 14px; }
 .home-open:hover { background: var(--hover); }
 
-.new-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px; }
+.new-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
 .new-card {
   position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
   height: 150px; border: 1px solid var(--border); border-radius: var(--radius-l); background: var(--surface);

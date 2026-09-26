@@ -28,6 +28,7 @@ import {
 } from '@maxgraph/core'
 import { configureDrawioStylesheet } from './shapes'
 import { installSketch } from './shapes/sketch'
+import { installHandles } from './handles'
 import { newCellId, parseGeometry, type CellRecord, type GeometryRecord } from './model'
 
 // Generated draw.io shape libraries (scripts/build-diagram-libs.mjs, see libraries.ts).
@@ -211,6 +212,8 @@ export function createGraph(container: HTMLElement): EditorGraph {
   EdgeHandlerConfig.virtualBendsEnabled = true
   HandleConfig.fillColor = SELECTION_COLOR
   HandleConfig.strokeColor = SELECTION_COLOR
+  // Yellow handles for shape parameters (size, arcSize, callout tail…), like draw.io.
+  installHandles()
 
   const graph = new Graph(container, undefined, [
     CellEditorHandler,

@@ -27,9 +27,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: false,
       manifest: {
-        name: 'Words Online',
-        short_name: 'Words Online',
-        description: 'Collaborative office suite that runs in your browser: documents, spreadsheets, drawings and diagrams.',
+        name: 'Ofimeo',
+        short_name: 'Ofimeo',
+        description: 'Ofimeo: collaborative office suite that runs in your browser: documents, spreadsheets, drawings, diagrams and presentations.',
         start_url: './',
         scope: './',
         display: 'standalone',

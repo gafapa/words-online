@@ -1,8 +1,7 @@
 // App frame: the one place that turns an app's description into the standard
 // Ofimeo frame (menu bar in the standard order, common keyboard shortcuts,
 // shortcuts dialog, toolbar with overflow and status bar with language, save
-// state and zoom). Full guide with examples: see the API reference kept with the
-// UI foundation work (API.md) and the writer (src/apps/writer/app.ts), the
+// state and zoom). The writer (src/apps/writer/app.ts, commands.ts) is the
 // reference implementation.
 //
 //   const shell = renderShell(info, root)            // app bar, toolbar row, main, status bar
@@ -21,7 +20,7 @@
 //
 // Menu bar order: File · Edit · View · Insert · Format · ‹app menus› · Tools · ‹review menus› · Help.
 // Keys (shortcuts.ts): Ctrl+O file.openFile, Ctrl+S save, Ctrl+P file.print, Ctrl+F edit.find,
-// Ctrl+H edit.replace, Ctrl+/ and F1 shortcuts dialog; zoom keys only with spec.keys.
+// Ctrl+H edit.replace, Ctrl+/ and F1 shortcuts dialog; Ctrl++/-/0 only with zoom.keys.
 //
 // Building blocks, usable on their own:
 //   menus.ts      fileMenu, editMenu, helpMenu, helpMenuItems, downloadFormat, openConnectionTest
@@ -40,7 +39,7 @@ import { registerShortcuts, showShortcuts, type ShortcutActions, type ShortcutSe
 import { createStatusBar, type StatusBar, type StatusBarOptions } from './statusbar'
 import { createToolbar, type Toolbar } from './toolbar'
 import { createMenuBar, type Menu, type MenuEntry } from './widgets'
-import type { ZoomTarget } from './zoom'
+import { stepZoom, type ZoomTarget } from './zoom'
 
 // Breakpoints of tokens.css (CSS variables cannot be used in media queries).
 export const BREAKPOINTS = { phone: 600, narrow: 760, tablet: 900 } as const
@@ -104,17 +103,27 @@ export function mountFrame(spec: FrameSpec): Frame {
   createMenuBar(shell.menubar, menus)
 
   const editOptions = spec.edit && !('items' in spec.edit) ? spec.edit : undefined
+  const toolbar = createToolbar(shell.toolbar, { afterAction: spec.afterToolbarAction })
+  const status = spec.status === false ? undefined : createStatusBar(shell, { ...spec.status, zoom: spec.zoom })
+
+  // Zoom keys only when the app's zoom target asks for them (otherwise the browser zooms).
+  const zoom = spec.zoom
+  const zoomKeys: ShortcutActions = zoom?.keys
+    ? {
+        zoomIn: () => (stepZoom(zoom, 1), status?.zoom?.update()),
+        zoomOut: () => (stepZoom(zoom, -1), status?.zoom?.update()),
+        zoomReset: () => (zoom.set(1), status?.zoom?.update()),
+      }
+    : {}
   registerShortcuts({
     open: spec.file.openFile,
     print: spec.file.print,
     find: editOptions?.find,
     replace: editOptions?.replace,
     help: shortcuts,
+    ...zoomKeys,
     ...spec.keys,
   })
   if (!session.hooks.print) session.hooks.print = spec.file.print
-
-  const toolbar = createToolbar(shell.toolbar, { afterAction: spec.afterToolbarAction })
-  const status = spec.status === false ? undefined : createStatusBar(shell, { ...spec.status, zoom: spec.zoom })
   return { menus, toolbar, status, shortcuts }
 }

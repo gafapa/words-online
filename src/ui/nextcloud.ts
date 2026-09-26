@@ -115,7 +115,7 @@ export function nginxSnippet(origin: string): string {
   return `# 1) In the http { } block (e.g. /etc/nginx/conf.d/words-online-cors.conf)
 map $http_origin $wo_origin {
     default "";
-    "${origin}" $http_origin;   # where Words Online runs (one line per site)
+    "${origin}" $http_origin;   # where Ofimeo runs (one line per site)
 }
 map $request_uri $wo_cors_path {
     default 0;
@@ -202,17 +202,17 @@ export function corsHelp(open = false): HTMLElement {
   details.append(
     el('summary', { textContent: t('How an administrator can allow this site') }),
     el('p', { textContent: t('Browsers only let a web page talk to another server when that server allows it (CORS). Nextcloud does not allow other sites by default. Your Nextcloud administrator can choose one of these options:') }),
-    el('h4', { textContent: t('A. Serve Words Online from the Nextcloud address (recommended)') }),
-    el('p', { textContent: t('Copy the files of Words Online (the dist folder of a build) into a folder of the web server that serves Nextcloud, for example {example}. The page and Nextcloud then share one address, so nothing else needs to be configured and “Log in with Nextcloud” works too.', { example: 'https://cloud.school.org/office/' }) }),
+    el('h4', { textContent: t('A. Serve Ofimeo from the Nextcloud address (recommended)') }),
+    el('p', { textContent: t('Copy the files of Ofimeo (the dist folder of a build) into a folder of the web server that serves Nextcloud, for example {example}. The page and Nextcloud then share one address, so nothing else needs to be configured and “Log in with Nextcloud” works too.', { example: 'https://cloud.school.org/office/' }) }),
     el('h4', { textContent: t('B. Nextcloud app “WebAppPassword”') }),
     el('p', { textContent: t('Install the app “WebAppPassword” from the Nextcloud app store and add {origin} to its allowed origins for WebDAV (Administration settings → WebAppPassword). It only covers files (WebDAV), so sign in with an app password; the share link upload for “Hand in” also needs option A or C.', { origin }) }),
     el('h4', { textContent: t('C. CORS headers in the web server') }),
-    el('p', { textContent: t('Allow {origin} for the Nextcloud addresses that Words Online uses (WebDAV, public share uploads, login flow and app password revocation), including the browser’s preflight (OPTIONS) request, the Authorization, Depth, Destination and If-Match headers, and the ETag header in responses. Adjust the origin and reload the web server.', { origin }) }),
+    el('p', { textContent: t('Allow {origin} for the Nextcloud addresses that Ofimeo uses (WebDAV, public share uploads, login flow and app password revocation), including the browser’s preflight (OPTIONS) request, the Authorization, Depth, Destination and If-Match headers, and the ETag header in responses. Adjust the origin and reload the web server.', { origin }) }),
     el('p', { class: 'nc-code-title', textContent: 'Nginx' }),
     codeBlock(nginxSnippet(origin)),
     el('p', { class: 'nc-code-title', textContent: 'Apache' }),
     codeBlock(apacheSnippet(origin)),
-    el('p', { class: 'hint', textContent: t('The full guide is in docs/nextcloud.md, in the source code of Words Online.') }),
+    el('p', { class: 'hint', textContent: t('The full guide is in docs/nextcloud.md, in the source code of Ofimeo.') }),
   )
   return details
 }
@@ -244,7 +244,7 @@ function appPasswordSteps(): HTMLElement {
       {},
       el('li', { textContent: t('Open Nextcloud in the browser and log in.') }),
       el('li', { textContent: t('Click your picture (top right) → Personal settings → Security.') }),
-      el('li', { textContent: t('Under “Devices & sessions”, type a name such as “Words Online” and click “Create new app password”.') }),
+      el('li', { textContent: t('Under “Devices & sessions”, type a name such as “Ofimeo” and click “Create new app password”.') }),
       el('li', { textContent: t('Copy the user name and the app password shown there into this form.') }),
     ),
     el('p', { class: 'hint', textContent: t('Never type your main Nextcloud password here. An app password can be revoked at any time in the same place, and it does not give access to your account settings.') }),

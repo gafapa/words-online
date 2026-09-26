@@ -1,18 +1,22 @@
-# Words Online
+# Ofimeo
 
-A collaborative office suite that runs entirely in the browser, with no server
-of its own. One static build hosts every app; documents live in each browser
+Ofimeo (formerly "Words Online") is a collaborative office suite for schools
+that runs entirely in the browser, with no server of its own. One static build hosts every app; documents live in each browser
 (IndexedDB) and edits travel directly between browsers over WebRTC. Public
 Nostr relays (WebSockets) are only used as a meeting point for browsers to
 find each other.
 
-| App | Status |
-| --- | --- |
-| Word processor (`writer`) | Available |
-| Spreadsheet (`sheet`) | Available |
-| Drawing (`draw`) | Available |
-| Diagram (`diagram`) | Available |
-| Presentation (`slides`) | Available |
+| App | Name in the UI (en / es) | Status |
+| --- | --- | --- |
+| Word processor (`writer`) | Ofimeo Docs / Ofimeo Documentos | Available |
+| Spreadsheet (`sheet`) | Ofimeo Sheets / Ofimeo Hojas de cálculo | Available |
+| Drawing (`draw`) | Ofimeo Drawing / Ofimeo Dibujo | Available |
+| Diagram (`diagram`) | Ofimeo Diagrams / Ofimeo Diagramas | Available |
+| Presentation (`slides`) | Ofimeo Slides / Ofimeo Presentaciones | Available |
+
+Storage keys and database names keep the historical `words-online` prefix
+(`localStorage` `words-online:*`, IndexedDB and cache names), so documents made
+before the rename keep working.
 
 ## Word processor
 
@@ -350,7 +354,7 @@ spaces before `: ; ! ?` and « », German „…“ quotes and formal *Sie*).
 
 ## Offline and installable
 
-Words Online is a Progressive Web App: install it from the browser (address bar
+Ofimeo is a Progressive Web App: install it from the browser (address bar
 or menu → *Install*) and it works without a connection for individual work.
 
 - A service worker precaches the suite and every app, so after the first visit
@@ -394,17 +398,17 @@ Nextcloud. Full guide: [docs/nextcloud.md](docs/nextcloud.md).
 
 ### Nextcloud for administrators: CORS
 
-Unless Words Online is served from the Nextcloud address, the browser needs
+Unless Ofimeo is served from the Nextcloud address, the browser needs
 Nextcloud to allow its origin (CORS). Options:
 
 1. **Same address (recommended)**: copy `dist/` to e.g.
    `https://cloud.school.org/office/` (nginx: `location ^~ /office/ { alias
    /var/www/words-online/; }`; Apache: `Alias /office /var/www/words-online`).
    No CORS needed; everything works, including the login flow.
-2. **The Nextcloud app "WebAppPassword"**: add the Words Online origin to its
+2. **The Nextcloud app "WebAppPassword"**: add the Ofimeo origin to its
    allowed WebDAV origins. Covers WebDAV (browse, open, save) with app
    passwords; not the login flow, revocation or share-link uploads.
-3. **CORS headers in the web server**, limited to the Words Online origin and
+3. **CORS headers in the web server**, limited to the Ofimeo origin and
    to `remote.php/dav`, `public.php/dav|webdav`, `ocs/v2.php/core/apppassword`
    and `login/v2`, answering the `OPTIONS` preflight, allowing the
    `Authorization`, `Depth`, `Destination`, `If-Match`, `If-None-Match`
@@ -415,7 +419,7 @@ Nextcloud to allow its origin (CORS). Options:
 # 1) In the http { } block (e.g. /etc/nginx/conf.d/words-online-cors.conf)
 map $http_origin $wo_origin {
     default "";
-    "https://office.example.org" $http_origin;   # where Words Online runs (one line per site)
+    "https://office.example.org" $http_origin;   # where Ofimeo runs (one line per site)
 }
 map $request_uri $wo_cors_path {
     default 0;
@@ -588,9 +592,16 @@ src/
     idb.ts           Small IndexedDB key-value store (signed logs)
     formats.ts       Format helpers: XML, colors, units, images
     i18n.ts          UI language, t() translations; locales/ holds the es, gl, fr and de catalogs
-  ui/                Shared UI so every app looks the same
-    shell.ts         App frame: app bar, menu bar, toolbar row, status bar
-    chrome.ts        Title, presence, connection status, share dialog + QR, hand in
+  ui/                Shared UI so every app looks the same (the "app frame")
+    shell.ts         App frame markup: app bar, menu bar, toolbar row, status bar
+    frame.ts         mountFrame(): standard menus, keys, toolbar and status bar for an app
+    menus.ts         File / Edit / Help menus in one standard order
+    shortcuts.ts     Common keys (Ctrl+O/S/P/F/H, Ctrl+/, F1) and the shortcuts dialog
+    toolbar.ts       One-row toolbar with a "⋯" overflow menu
+    statusbar.ts     Status bar: info · language · save state · zoom; zoom.ts: zoom control
+    about.ts         About Ofimeo, Document details; brand.ts: the Ofimeo mark
+    chrome.ts        Title, save state, presence, connection status, share dialog + QR, hand in
+    tokens.css       Design tokens (colors, spacing, radii, type, layers) and the themes
     versions.ts      Make a copy / Save version / Version history (File menu items)
     nextcloud.ts     Nextcloud dialogs: account, CORS help, file browser, save, status, hand in
     widgets.ts       Menus, context menus, popovers, color palette, dialogs, toasts

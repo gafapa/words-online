@@ -21,6 +21,8 @@ export interface FormatActions {
   renamePage(name: string): void
   // Replaces the diagram options shown when nothing is selected (e.g. slide options).
   emptySection?: () => HTMLElement
+  // More rows for the diagram options (page background, page view…).
+  diagramOptions?: () => HTMLElement[]
 }
 
 const FONTS = ['Helvetica', 'Arial', 'Verdana', 'Tahoma', 'Trebuchet MS', 'Georgia', 'Times New Roman', 'Garamond', 'Courier New', 'Comic Sans MS', 'Lucida Console']
@@ -137,6 +139,7 @@ export class FormatPanel {
     return section(t('Diagram'),
       row(t('Page name'), name),
       checkbox(t('Grid'), this.actions.isGridVisible(), (on) => this.actions.setGridVisible(on)),
+      ...(this.actions.diagramOptions?.() ?? []),
       el('p', { class: 'fmt-hint', textContent: t('Drag shapes from the left panel, or click one to insert it. Hover a shape and drag from its blue points to connect it.') }),
     )
   }

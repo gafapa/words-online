@@ -130,7 +130,7 @@ export async function exportDocx(data: DocumentData): Promise<Blob> {
   })
   const doc = new Document({
     title: data.title,
-    creator: 'Words Online',
+    creator: 'Ofimeo',
     styles: {
       default: {
         document: { run: { font: DEFAULT_FONT, size: DEFAULT_FONT_SIZE_PT * 2, language: data.lang ? { value: data.lang } : undefined }, paragraph: { spacing: { after: 120 } } },

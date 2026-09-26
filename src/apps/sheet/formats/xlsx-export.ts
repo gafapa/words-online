@@ -162,7 +162,7 @@ function cellText(cell: ICellData): string | undefined {
 
 export async function exportXlsx(data: IWorkbookData): Promise<Blob> {
   const wb = new ExcelJS.Workbook()
-  wb.creator = 'Words Online'
+  wb.creator = 'Ofimeo'
   wb.created = new Date()
   const styles = data.styles || {}
   const resolve = (s: StyleRef): IStyleData | undefined => (typeof s === 'string' ? styles[s] || undefined : s || undefined)

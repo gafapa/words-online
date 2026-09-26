@@ -63,3 +63,15 @@ export function patternRule(patterns: Pattern[]): Rule['check'] {
 export function wordSet(words: string): Set<string> {
   return new Set(words.split(/\s+/).filter(Boolean).map((s) => s.toLowerCase()))
 }
+
+// A capitalized word in the middle of a sentence is taken for a name
+// ("Pueblo Nuevo", "Julio"): rules about common words skip it.
+export function capitalizedMidSentence(word: string, before: string): boolean {
+  if (!/^\p{Lu}/u.test(word)) return false
+  const prev = before.trimEnd()
+  return prev !== '' && !/[.!?¿¡:"«“—–(-]$/u.test(prev)
+}
+
+// Text before a match, for `unless` checks.
+export const before = (m: RegExpExecArray, text: string): string => text.slice(0, m.index)
+export const after = (m: RegExpExecArray, text: string): string => text.slice(m.index + m[0].length)

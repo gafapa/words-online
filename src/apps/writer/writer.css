@@ -175,7 +175,7 @@
 .status-mode.suggesting { background: var(--success-bg); color: var(--success-fg); }
 .status-comments { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-pill); padding: 1px 8px; font-size: var(--fs-s); }
 @media (min-width: 761px) { .status-comments { display: none; } }
-.toolbar .tb-review .tb-mode { width: 118px; }
+.toolbar .tb-review .tb-mode { width: 108px; }
 .tb-access { align-self: center; padding: 0 8px; color: var(--muted); font-size: 13px; }
 
 .contrib-table { width: 100%; border-collapse: collapse; font-size: 14px; }

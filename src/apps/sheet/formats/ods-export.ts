@@ -864,7 +864,7 @@ function metaXml(): string {
   return (
     `<?xml version="1.0" encoding="UTF-8"?>` +
     `<office:document-meta ${NS} office:version="1.3"><office:meta>` +
-    `<meta:generator>Words Online</meta:generator>` +
+    `<meta:generator>Ofimeo</meta:generator>` +
     `<meta:creation-date>${new Date().toISOString().slice(0, 19)}</meta:creation-date>` +
     `</office:meta></office:document-meta>`
   )

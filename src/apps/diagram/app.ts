@@ -14,8 +14,9 @@ import { createMenuBar, el, icon, promptText, showContextMenu, showDialog, toast
 import { createDiagramEditor, mod, showShortcuts } from './editor'
 import { renderSvg, svgToPng, svgToString } from './export'
 import { DiagramSync } from './sync'
+import { createPageSettings, type PageSettings } from './page'
 
-export const DIAGRAM_ACCEPT = '.drawio,.xml'
+export const DIAGRAM_ACCEPT = '.drawio,.xml,.vsdx,.vssx'
 
 const formats = () => import('./formats/drawio')
 
@@ -44,23 +45,31 @@ export function mountDiagram(session: Session, root: HTMLElement): void {
   }
   const print = () => {
     graph.clearSelection()
-    printArea.replaceChildren(renderSvg(graph, { border: 0 }))
+    printArea.replaceChildren(renderSvg(graph, { border: 0, background: page?.background() ?? '#ffffff' }))
     window.print()
     printArea.replaceChildren()
   }
 
+  let page: PageSettings | undefined
   const editor = createDiagramEditor(session, {
     canvas,
+    diagramOptions: () => page?.formatRows() ?? [],
     // Links with view or comment access open the diagram read-only.
     readOnly: !session.canEdit,
     openFile: (file) => void openFile(file),
     print,
-    onPagesChange: () => renderTabs(),
+    onPagesChange: () => {
+      renderTabs()
+      page?.update()
+    },
+    onPageShown: () => page?.update(),
   })
   const { graph, sync, readOnly } = editor
   // "Hand in" → print uses the same page rendering.
   session.hooks.print = print
   const editable = editor.editable
+  page = createPageSettings(editor, canvas)
+  const background = () => page!.background() ?? '#ffffff'
 
   // ---------- Files ----------
 
@@ -73,7 +82,7 @@ export function mountDiagram(session: Session, root: HTMLElement): void {
     const { serializeDrawio } = await formats()
     download(new Blob([serializeDrawio(DiagramSync.readPages(session.doc))], { type: 'application/vnd.jgraph.mxfile' }), 'drawio')
   }
-  const exportSvg = () => renderSvg(graph, { cells: editor.hasSelection() ? editor.selection() : undefined })
+  const exportSvg = () => renderSvg(graph, { cells: editor.hasSelection() ? editor.selection() : undefined, background: background() })
   const downloadSvg = () => download(new Blob([svgToString(exportSvg())], { type: 'image/svg+xml' }), 'svg')
   const downloadPng = async () => {
     try {
@@ -90,8 +99,8 @@ export function mountDiagram(session: Session, root: HTMLElement): void {
   // Formats for "Save to Nextcloud" (the whole current page for images).
   session.hooks.exportFormats = () => [
     { ext: 'drawio', label: t('draw.io diagram (.drawio)'), build: async () => new Blob([(await formats()).serializeDrawio(DiagramSync.readPages(session.doc))], { type: 'application/vnd.jgraph.mxfile' }) },
-    { ext: 'svg', label: t('SVG image (current page)'), build: async () => new Blob([svgToString(renderSvg(graph))], { type: 'image/svg+xml' }) },
-    { ext: 'png', label: t('PNG image (current page)'), build: () => svgToPng(renderSvg(graph)) },
+    { ext: 'svg', label: t('SVG image (current page)'), build: async () => new Blob([svgToString(renderSvg(graph, { background: background() }))], { type: 'image/svg+xml' }) },
+    { ext: 'png', label: t('PNG image (current page)'), build: () => svgToPng(renderSvg(graph, { background: background() })) },
   ]
 
   // ---------- Pages ----------
@@ -103,7 +112,7 @@ export function mountDiagram(session: Session, root: HTMLElement): void {
   }
   const duplicatePage = () => {
     const current = sync.pageList().find((p) => p.id === sync.page)!
-    const id = sync.addPage(`${current.name} (copy)`, sync.pageRecords(sync.page))
+    const id = sync.addPage(`${current.name} (copy)`, sync.pageRecords(sync.page), sync.pageAttrs(sync.page))
     sync.showPage(id)
   }
   const renamePage = async (id = sync.page) => {
@@ -161,6 +170,8 @@ export function mountDiagram(session: Session, root: HTMLElement): void {
     '-',
     { label: t('Move page left'), run: () => movePage(-1), enabled: editable() },
     { label: t('Move page right'), run: () => movePage(1), enabled: editable() },
+    '-',
+    ...page!.menu(() => pageTabs),
   ]
 
   // ---------- Menus ----------
@@ -170,7 +181,7 @@ export function mountDiagram(session: Session, root: HTMLElement): void {
       label: t('File'),
       items: [
         { label: t('New diagram'), run: () => window.open(newDocPath('diagram'), '_blank') },
-        { label: t('Open file (.drawio)…'), run: () => fileInput.click() },
+        { label: t('Open file (.drawio, .vsdx)…'), run: () => fileInput.click() },
         { label: t('All documents'), run: () => (location.href = homePath()) },
         { label: t('Share…'), run: () => document.getElementById('btn-share')!.click() },
         '-',
@@ -184,7 +195,7 @@ export function mountDiagram(session: Session, root: HTMLElement): void {
       ],
     },
     { label: t('Edit'), items: editor.editMenu() },
-    { label: t('View'), items: [...editor.panelMenu(), '-', ...editor.zoomMenu()] },
+    { label: t('View'), items: [...editor.panelMenu(), ...page.viewMenu(), '-', ...editor.zoomMenu()] },
     { label: t('Arrange'), items: editor.arrangeMenu() },
     { label: t('Page'), items: pageMenu() },
     { label: t('Help'), items: [{ label: t('Keyboard shortcuts'), run: () => showShortcuts() }] },

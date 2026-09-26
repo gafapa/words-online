@@ -1,0 +1,45 @@
+{
+  "_help": "Owner data for the legal pages (docs/legal) and /.well-known/security.txt. Fill in every empty value before publishing; empty values are shown as highlighted [placeholders]. Build with LEGAL_STRICT=1 to fail while any remains. See docs/legal/README.md.",
+  "siteName": "Ofimeo",
+  "siteUrl": "",
+  "lastUpdated": "",
+  "owner": {
+    "_help": "Titular of the website (LSSI-CE art. 10) and data controller (GDPR art. 13.1.a): a person, company, school or public body.",
+    "name": "",
+    "nif": "",
+    "address": "",
+    "email": "",
+    "phone": "",
+    "registry": ""
+  },
+  "dpo": {
+    "_help": "Data Protection Officer (GDPR arts. 37-39, LOPDGDD art. 34). Mandatory for public bodies and schools; leave both empty if none is designated and the paragraph is left out.",
+    "name": "",
+    "email": ""
+  },
+  "privacyEmail": "",
+  "jurisdiction": "",
+  "hosting": {
+    "_help": "Who serves the static files. Defaults describe GitHub Pages; change them for a school or Consellería server.",
+    "provider": "GitHub, Inc. (GitHub Pages)",
+    "country": "Estados Unidos / United States",
+    "transfers": "EU-U.S. Data Privacy Framework",
+    "privacyUrl": "https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement"
+  },
+  "accessibility": {
+    "_help": "Accessibility statement (RD 1112/2018). status: 'partial' until an audit says otherwise ('full' or 'none' are the other values).",
+    "status": "partial",
+    "preparedOn": "",
+    "reviewedOn": "",
+    "method": "",
+    "contactEmail": "",
+    "complaintBody": ""
+  },
+  "security": {
+    "_help": "security.txt (RFC 9116). contact: a mailto: or https: URI. expires: ISO date; empty = build date + 180 days.",
+    "contact": "",
+    "expires": "",
+    "policy": "",
+    "languages": "es, gl, en"
+  }
+}

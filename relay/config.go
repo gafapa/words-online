@@ -50,11 +50,11 @@ type Config struct {
 	// CredentialTTL is how long TURN credentials handed out by /ofimeo/config last.
 	CredentialTTL Duration `json:"credential_ttl"`
 	// Limits.
-	MaxClients         int `json:"max_clients"`
-	MaxSubscriptions   int `json:"max_subscriptions"`
-	MaxEventBytes      int `json:"max_event_bytes"`
-	EventsPerMinute    int `json:"events_per_minute"`
-	MaxAllocations     int `json:"max_allocations"`
+	MaxClients          int `json:"max_clients"`
+	MaxSubscriptions    int `json:"max_subscriptions"`
+	MaxEventBytes       int `json:"max_event_bytes"`
+	EventsPerMinute     int `json:"events_per_minute"`
+	MaxAllocations      int `json:"max_allocations"`
 	MaxAllocationsPerIP int `json:"max_allocations_per_ip"`
 	// LogFile: also write the log to this file ("" = standard error only).
 	LogFile string `json:"log_file"`
@@ -76,8 +76,8 @@ func defaultConfig() Config {
 		MaxSubscriptions:    64,
 		MaxEventBytes:       64 * 1024,
 		EventsPerMinute:     600,
-		MaxAllocations:      2000,
-		MaxAllocationsPerIP: 64,
+		MaxAllocations:      16000,
+		MaxAllocationsPerIP: 600,
 	}
 }
 

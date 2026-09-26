@@ -6,10 +6,9 @@ import { NodeSelection } from '@tiptap/pm/state'
 import { Bold, Italic, Underline, TextAlignStart, TextAlignCenter, TextAlignEnd, Hash } from 'lucide'
 import { headerFooterExtensions } from './editor/extensions'
 import { PAGE_SIZES_MM, type PageSettings, type PageSize } from './formats/types'
-import * as store from '../../core/store'
-import { colorPalette, el, icon, promptText, shortcutLabel, showDialog, toast } from '../../ui/widgets'
+import { colorPalette, el, icon, promptText, showDialog, toast } from '../../ui/widgets'
 import type { WriterContext } from './app'
-import { locale, t } from '../../core/i18n'
+import { t } from '../../core/i18n'
 
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform)
 const mod = isMac ? '⌘' : 'Ctrl+'
@@ -22,48 +21,8 @@ export async function pasteHint(): Promise<void> {
   )
 }
 
-export async function about(): Promise<void> {
-  await showDialog(
-    'Words Online',
-    el(
-      'div',
-      {},
-      el('p', { textContent: t('A collaborative word processor that runs entirely in your browser.') }),
-      el('p', {
-        class: 'hint',
-        textContent:
-          t('Documents are stored in this browser. Collaborators connect directly (WebRTC); public Nostr relays are only used to find each other.'),
-      }),
-    ),
-    [{ label: t('Close'), value: 'ok', primary: true }],
-  )
-}
-
-export async function shortcuts(): Promise<void> {
-  const rows: [string, string][] = [
-    [t('Bold / Italic / Underline'), `${mod}B / ${mod}I / ${mod}U`],
-    [t('Strikethrough'), `${mod}Shift+S`],
-    [t('Superscript / Subscript'), `${mod}. / ${mod},`],
-    [t('Headings 1–6'), `${mod}Alt+1 … 6`],
-    [t('Normal text'), `${mod}Alt+0`],
-    [t('Align left / center / right / justify'), `${mod}Shift+L / E / R / J`],
-    [t('Bulleted / numbered / checklist'), `${mod}Shift+8 / 7 / 9`],
-    [t('Indent / outdent'), 'Tab / Shift+Tab'],
-    [t('Line break in paragraph'), 'Shift+Enter'],
-    [t('Page break'), `${mod}Enter`],
-    [t('Insert link'), `${mod}K`],
-    [t('Insert footnote'), `${mod}Alt+F`],
-    [t('Find / replace'), `${mod}F / ${mod}H`],
-    [t('Spelling and grammar'), 'F7'],
-    [t('Undo / redo'), `${mod}Z / ${mod}Y`],
-    [t('Clear formatting'), `${mod}\\`],
-    [t('Open file'), `${mod}O`],
-    [t('Print'), `${mod}P`],
-  ]
-  const table = el('table', { class: 'shortcuts' })
-  for (const [label, keys] of rows) table.append(el('tr', {}, el('td', { textContent: label }), el('td', {}, el('kbd', { textContent: shortcutLabel(keys) }))))
-  await showDialog(t('Keyboard shortcuts'), table, [{ label: t('Close'), value: 'ok', primary: true }], true)
-}
+// Kept for callers of the old writer API; the dialog lives in the shared frame.
+export { aboutDialog as about } from '../../ui/about'
 
 export async function wordCount(ctx: WriterContext): Promise<void> {
   const { editor } = ctx
@@ -174,27 +133,6 @@ export async function specialCharacters(ctx: WriterContext): Promise<void> {
     grid.append(b)
   }
   await showDialog(t('Special characters'), grid, [{ label: t('Close'), value: 'ok', primary: true }])
-}
-
-export async function openDocuments(ctx: WriterContext): Promise<void> {
-  const list = el('ul', { class: 'doc-list' })
-  const render = () => {
-    list.replaceChildren(
-      ...store.listDocs().filter((d) => d.type === 'writer').map((d) => {
-        const link = el('a', { href: ctx.openUrl(d.id, d.key), textContent: d.title || t('Untitled document') })
-        if (d.id === ctx.session.docId) link.classList.add('current')
-        const del = el('button', { type: 'button', textContent: t('Delete'), disabled: d.id === ctx.session.docId })
-        del.addEventListener('click', async () => {
-          if (!confirm(t('Delete “{title}” from this browser?', { title: link.textContent ?? '' }))) return
-          await store.deleteDoc(d.id)
-          render()
-        })
-        return el('li', {}, link, el('small', { textContent: new Date(d.updated).toLocaleString(locale) }), del)
-      }),
-    )
-  }
-  render()
-  await showDialog(t('Documents in this browser'), list, [{ label: t('Close'), value: 'ok', primary: true }], true)
 }
 
 export async function pageSetup(ctx: WriterContext): Promise<void> {

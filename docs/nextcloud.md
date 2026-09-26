@@ -1,8 +1,8 @@
 # Nextcloud
 
-Words Online can open documents from a Nextcloud server and save them back,
+Ofimeo can open documents from a Nextcloud server and save them back,
 and students can hand in their work to a teacher's Nextcloud upload link.
-There is no Words Online server in between: the browser talks directly to
+There is no Ofimeo server in between: the browser talks directly to
 Nextcloud (WebDAV and a few OCS / login endpoints).
 
 ## For users
@@ -11,9 +11,9 @@ Nextcloud (WebDAV and a few OCS / login endpoints).
   any app. Enter the address you open Nextcloud with (e.g.
   `https://cloud.school.org`), then either
   - **Log in with Nextcloud** (Login Flow v2): a Nextcloud tab opens, you log
-    in and grant access, and Words Online receives an app password; or
+    in and grant access, and Ofimeo receives an app password; or
   - **use an app password**: in Nextcloud, *your picture → Personal settings →
-    Security → Devices & sessions*, type a name ("Words Online") and click
+    Security → Devices & sessions*, type a name ("Ofimeo") and click
     *Create new app password*; copy the user name and the app password into the
     form. Never use your main password.
 - **Open**: home screen → *Open from Nextcloud…* or *File → Open from
@@ -65,7 +65,7 @@ address, a server that cannot be reached, a page on https talking to plain
 http, maintenance mode and wrong credentials: `status.php` answers every
 origin, so when it works but WebDAV does not, CORS is the cause.)
 
-What Words Online calls:
+What Ofimeo calls:
 
 | Endpoint | Used for |
 | --- | --- |
@@ -79,9 +79,9 @@ Requests carry `Authorization: Basic` (app password) and never cookies
 (`credentials: 'omit'`), so `Access-Control-Allow-Credentials` is not needed
 and must not be set to `true` with a wildcard.
 
-### A. Serve Words Online from the Nextcloud address (recommended)
+### A. Serve Ofimeo from the Nextcloud address (recommended)
 
-Build Words Online (`npm run build`) and copy `dist/` into a folder served by
+Build Ofimeo (`npm run build`) and copy `dist/` into a folder served by
 the same web server and host name as Nextcloud, e.g.
 `https://cloud.school.org/office/`. Same origin means no CORS at all, and the
 Login Flow works. The build uses relative paths, so any subfolder works.
@@ -99,18 +99,18 @@ Apache: `Alias /office /var/www/words-online` (and a `<Directory>` granting acce
 ### B. The Nextcloud app "WebAppPassword"
 
 Install [WebAppPassword](https://apps.nextcloud.com/apps/webapppassword) and
-add the origin of Words Online (scheme, host and port, e.g.
+add the origin of Ofimeo (scheme, host and port, e.g.
 `https://office.example.org`) to its allowed WebDAV origins (*Administration
 settings → WebAppPassword*, or `'webapppassword.origins' => ['https://office.example.org']`
 in `config.php`). It answers the preflight and adds CORS headers to WebDAV
 (`remote.php/dav`), so browsing, opening and saving work with an **app
 password**. It does not cover the Login Flow, app password revocation or
-public share uploads (use A or C for those); Words Online detects this and
+public share uploads (use A or C for those); Ofimeo detects this and
 suggests the app password.
 
 ### C. CORS headers in the web server
 
-Allow only the origin(s) where Words Online runs, only on the endpoints
+Allow only the origin(s) where Ofimeo runs, only on the endpoints
 above, and answer the browser's `OPTIONS` preflight in the web server (a
 preflight never carries credentials, and Nextcloud would answer it with 401).
 Replace `https://office.example.org` and reload the web server.
@@ -123,7 +123,7 @@ stop the server-level ones from being inherited):
 # 1) In the http { } block (e.g. /etc/nginx/conf.d/words-online-cors.conf)
 map $http_origin $wo_origin {
     default "";
-    "https://office.example.org" $http_origin;   # where Words Online runs (one line per site)
+    "https://office.example.org" $http_origin;   # where Ofimeo runs (one line per site)
 }
 map $request_uri $wo_cors_path {
     default 0;

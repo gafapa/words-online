@@ -41,7 +41,18 @@ export interface CellRecord {
   data?: string
 }
 
-export interface PageRecord {
+// Page settings kept with each page (draw.io's mxGraphModel attributes).
+export interface PageAttrs {
+  // Page background color ("none" or absent: transparent / white).
+  background?: string
+  // Page size for the page view and printing, in px (draw.io default 850×1100).
+  pageWidth?: number
+  pageHeight?: number
+}
+
+export const PAGE_ATTRS = ['background', 'pageWidth', 'pageHeight'] as const
+
+export interface PageRecord extends PageAttrs {
   id: string
   name: string
   cells: CellRecord[]

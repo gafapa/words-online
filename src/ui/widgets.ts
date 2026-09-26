@@ -461,7 +461,7 @@ export async function promptText(title: string, label: string, value = '', multi
 }
 
 // Themed replacement for window.confirm(): resolves true when confirmed.
-//   if (!(await confirmDialog(t('Delete “{title}”?', { title }), t('This cannot be undone.'), { confirmLabel: t('Delete'), danger: true }))) return
+//   if (!(await confirmDialog(title, question, { confirmLabel: deleteLabel, danger: true }))) return
 export async function confirmDialog(
   title: string,
   text = '',
