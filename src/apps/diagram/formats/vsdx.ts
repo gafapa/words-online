@@ -98,7 +98,7 @@ function resolvePath(base: string, target: string): string {
 async function readPart(zip: JSZip, path: string): Promise<Part | null> {
   const file = zip.file(path)
   if (!file) return null
-  const doc = new DOMParser().parseFromString((await file.async('text')).replace(/^﻿/, ''), 'application/xml')
+  const doc = new DOMParser().parseFromString((await file.async('text')).replace(/^\uFEFF/, ''), 'application/xml')
   const rels = new Map<string, string>()
   const relsFile = zip.file(path.replace(/([^/]+)$/, '_rels/$1.rels'))
   if (relsFile) {
@@ -881,7 +881,7 @@ function textLabel(sheet: Sheet): { html: string; style: string } {
   const walk = (node: Node) => {
     for (const child of [...node.childNodes]) {
       if (child.nodeType === 3) {
-        const parts = (child.textContent ?? '').replace(/\r\n?/g, '\n').split(/[\n  ]/)
+        const parts = (child.textContent ?? '').replace(/\r\n?/g, '\n').split(/[\n\u2028\u2029]/)
         parts.forEach((part, i) => {
           if (i > 0) paragraphs.push({ row: paragraphs.at(-1)!.row, runs: [] })
           if (part) paragraphs.at(-1)!.runs.push({ text: part, row: charRow })

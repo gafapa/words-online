@@ -268,6 +268,7 @@ function report(r: Results): string {
     for (const row of section.rows) lines.push(`[${row.state === 'pending' ? '…' : STATE_LABEL[row.state]()}] ${row.label}: ${row.detail}`)
     lines.push('')
   }
+  lines.push(`ICE servers: ${iceServers().flatMap((s) => [s.urls].flat()).join(', ')}`)
   if (r.ice) lines.push(`ICE: host=${r.ice.host} srflx=${r.ice.srflx} relay=${r.ice.relay}${r.ice.relayUrls.length ? ` (${r.ice.relayUrls.join(', ')})` : ''}`)
   if (r.loopback) lines.push(`TURN loopback: ${r.loopback.state}${r.loopback.ms ? ` ${r.loopback.ms} ms` : ''}${r.loopback.path ? ` via ${r.loopback.path}` : ''}${r.loopback.error ? ` (${r.loopback.error})` : ''}`)
   for (const p of r.peers ?? []) lines.push(`Peer ${p.result.id.slice(0, 8)}: ${p.result.path} local=${p.result.local ?? '-'} remote=${p.result.remote ?? '-'} rtt=${p.result.rttMs ?? '-'}ms`)
