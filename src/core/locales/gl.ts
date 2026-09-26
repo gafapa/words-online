@@ -930,6 +930,7 @@ const gl: Record<string, string> = {
   'Automatic version': 'Versión automática',
   'Version': 'Versión',
   'Version history': 'Historial de versións',
+  'Ctrl': 'Ctrl',
   'Shift': 'Maiús',
   'Enter': 'Intro',
   'Wheel': 'Roda',

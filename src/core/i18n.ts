@@ -3,12 +3,14 @@
 // The catalog of the language is loaded (top-level await) before any module that
 // imports this one runs, so t() can be used anywhere, even at module level.
 
-export type Language = 'en' | 'es' | 'gl'
+export type Language = 'en' | 'es' | 'gl' | 'fr' | 'de'
 
 export const languages: { code: Language; name: string }[] = [
   { code: 'es', name: 'Español' },
   { code: 'gl', name: 'Galego' },
   { code: 'en', name: 'English' },
+  { code: 'fr', name: 'Français' },
+  { code: 'de', name: 'Deutsch' },
 ]
 
 const STORAGE_KEY = 'words-online:language'
@@ -16,21 +18,22 @@ const STORAGE_KEY = 'words-online:language'
 function saved(): Language | null {
   try {
     const value = localStorage.getItem(STORAGE_KEY)
-    return value === 'en' || value === 'es' || value === 'gl' ? value : null
+    return languages.some((l) => l.code === value) ? (value as Language) : null
   } catch {
     return null
   }
 }
 
 // Galician for gl, Spanish for any Spanish locale and the other languages of
-// Spain (Catalan, Basque), otherwise English.
+// Spain (Catalan, Basque), French and German for any of their regional variants
+// (fr-BE, fr-CA, de-AT, de-CH…), otherwise English.
 export function detectLanguage(): Language {
   const list = navigator.languages?.length ? navigator.languages : [navigator.language || 'en']
   for (const tag of list) {
     const code = tag.toLowerCase().split(/[-_]/)[0]
     if (code === 'gl') return 'gl'
     if (code === 'es' || code === 'ca' || code === 'eu' || code === 'ast' || code === 'an') return 'es'
-    if (code === 'en') return 'en'
+    if (code === 'fr' || code === 'de' || code === 'en') return code
   }
   return 'en'
 }
@@ -38,10 +41,15 @@ export function detectLanguage(): Language {
 export const language: Language = saved() ?? detectLanguage()
 
 // Locale for Intl formatting (dates, numbers) and third-party editors.
-export const locale = { en: 'en', es: 'es-ES', gl: 'gl-ES' }[language]
+export const locale = { en: 'en', es: 'es-ES', gl: 'gl-ES', fr: 'fr-FR', de: 'de-DE' }[language]
 
-const catalog: Record<string, string> =
-  language === 'es' ? (await import('./locales/es')).default : language === 'gl' ? (await import('./locales/gl')).default : {}
+const catalogs: Record<Exclude<Language, 'en'>, () => Promise<{ default: Record<string, string> }>> = {
+  es: () => import('./locales/es'),
+  gl: () => import('./locales/gl'),
+  fr: () => import('./locales/fr'),
+  de: () => import('./locales/de'),
+}
+const catalog: Record<string, string> = language === 'en' ? {} : (await catalogs[language]()).default
 
 document.documentElement.lang = language
 

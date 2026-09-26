@@ -190,10 +190,10 @@ export function showContextMenu(x: number, y: number, items: MenuEntry[]): void 
   if (previous instanceof HTMLButtonElement) focusRow(panel, 0)
 }
 
-// Key names as printed on the user's keyboard (Shift → Mayús, Enter → Intro…).
+// Key names as printed on the user's keyboard (Shift → Mayús, Enter → Intro, Ctrl → Strg…).
 export function shortcutLabel(shortcut: string): string {
-  const names: Record<string, string> = { Shift: t('Shift'), Enter: t('Enter'), Del: t('Del'), Arrow: t('Arrow'), Wheel: t('Wheel') }
-  return shortcut.replace(/\b(Shift|Enter|Del|Arrow|Wheel)\b/g, (k) => names[k])
+  const names: Record<string, string> = { Ctrl: t('Ctrl'), Shift: t('Shift'), Enter: t('Enter'), Del: t('Del'), Arrow: t('Arrow'), Wheel: t('Wheel') }
+  return shortcut.replace(/\b(Ctrl|Shift|Enter|Del|Arrow|Wheel)\b/g, (k) => names[k])
 }
 
 function renderItems(items: MenuEntry[], close: () => void, beforeRun = () => {}, parentRow?: HTMLElement): HTMLElement {

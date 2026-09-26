@@ -16,7 +16,7 @@ import { SheetSync } from './sync'
 import { createSpreadsheet } from './univer'
 
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform)
-const mod = (k: string) => (isMac ? `⌘${k}` : `Ctrl+${k}`)
+const mod = (k: string) => (isMac ? `⌘${k}` : shortcutLabel(`Ctrl+${k}`))
 
 // Live workbook access of each open session (for hand in).
 export const sheetHandles = new WeakMap<Session, { snapshot: () => IWorkbookData; activeSheetId: () => string }>()

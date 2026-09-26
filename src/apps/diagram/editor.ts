@@ -31,7 +31,7 @@ import { ShapeSidebar } from './sidebar'
 import { DiagramSync } from './sync'
 
 export const isMac = /Mac|iPhone|iPad/.test(navigator.platform)
-export const mod = (k: string) => (isMac ? `⌘${k}` : `Ctrl+${k}`)
+export const mod = (k: string) => (isMac ? `⌘${k}` : shortcutLabel(`Ctrl+${k}`))
 const ZOOMS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4]
 const MIN_ZOOM = 0.1
 const MAX_ZOOM = 8

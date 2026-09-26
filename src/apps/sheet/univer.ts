@@ -50,9 +50,10 @@ export function emptyWorkbook(): Partial<IWorkbookData> {
   }
 }
 
-// Univer's interface in Spanish for Spanish and Galician (Univer has no Galician), else English.
-async function spanishLocale() {
-  const parts = await Promise.all([
+// Univer's interface in the suite's language, loaded on demand (Univer has no
+// Galician: Spanish for gl). English is always bundled as the fallback.
+const univerLocales = {
+  es: () => [
     import('@univerjs/preset-sheets-core/locales/es-ES'),
     import('@univerjs/preset-sheets-filter/locales/es-ES'),
     import('@univerjs/preset-sheets-sort/locales/es-ES'),
@@ -63,16 +64,47 @@ async function spanishLocale() {
     import('@univerjs/preset-sheets-note/locales/es-ES'),
     import('@univerjs/preset-sheets-drawing/locales/es-ES'),
     import('@univerjs/preset-sheets-table/locales/es-ES'),
-  ])
-  return mergeLocales(...parts.map((m) => m.default))
+  ],
+  fr: () => [
+    import('@univerjs/preset-sheets-core/locales/fr-FR'),
+    import('@univerjs/preset-sheets-filter/locales/fr-FR'),
+    import('@univerjs/preset-sheets-sort/locales/fr-FR'),
+    import('@univerjs/preset-sheets-conditional-formatting/locales/fr-FR'),
+    import('@univerjs/preset-sheets-data-validation/locales/fr-FR'),
+    import('@univerjs/preset-sheets-find-replace/locales/fr-FR'),
+    import('@univerjs/preset-sheets-hyper-link/locales/fr-FR'),
+    import('@univerjs/preset-sheets-note/locales/fr-FR'),
+    import('@univerjs/preset-sheets-drawing/locales/fr-FR'),
+    import('@univerjs/preset-sheets-table/locales/fr-FR'),
+  ],
+  de: () => [
+    import('@univerjs/preset-sheets-core/locales/de-DE'),
+    import('@univerjs/preset-sheets-filter/locales/de-DE'),
+    import('@univerjs/preset-sheets-sort/locales/de-DE'),
+    import('@univerjs/preset-sheets-conditional-formatting/locales/de-DE'),
+    import('@univerjs/preset-sheets-data-validation/locales/de-DE'),
+    import('@univerjs/preset-sheets-find-replace/locales/de-DE'),
+    import('@univerjs/preset-sheets-hyper-link/locales/de-DE'),
+    import('@univerjs/preset-sheets-note/locales/de-DE'),
+    import('@univerjs/preset-sheets-drawing/locales/de-DE'),
+    import('@univerjs/preset-sheets-table/locales/de-DE'),
+  ],
+}
+const univerLocaleType = { es: LocaleType.ES_ES, fr: LocaleType.FR_FR, de: LocaleType.DE_DE }
+
+async function uiLocale() {
+  const lang = language === 'gl' ? 'es' : language
+  if (lang === 'en') return null
+  const parts = await Promise.all(univerLocales[lang]())
+  return { type: univerLocaleType[lang], data: mergeLocales(...parts.map((m) => m.default)) }
 }
 
 export async function createSpreadsheet(container: HTMLElement) {
   const english = mergeLocales(coreEnUS, filterEnUS, sortEnUS, cfEnUS, dvEnUS, findEnUS, linkEnUS, noteEnUS, drawingEnUS, tableEnUS)
-  const spanish = language === 'en' ? null : await spanishLocale()
+  const ui = await uiLocale()
   return createUniver({
-    locale: spanish ? LocaleType.ES_ES : LocaleType.EN_US,
-    locales: spanish ? { [LocaleType.ES_ES]: spanish, [LocaleType.EN_US]: english } : { [LocaleType.EN_US]: english },
+    locale: ui ? ui.type : LocaleType.EN_US,
+    locales: ui ? { [ui.type]: ui.data, [LocaleType.EN_US]: english } : { [LocaleType.EN_US]: english },
     presets: [
       UniverSheetsCorePreset({ container }),
       UniverSheetsFilterPreset(),

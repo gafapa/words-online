@@ -930,6 +930,7 @@ const es: Record<string, string> = {
   'Automatic version': 'Versión automática',
   'Version': 'Versión',
   'Version history': 'Historial de versiones',
+  'Ctrl': 'Ctrl',
   'Shift': 'Mayús',
   'Enter': 'Intro',
   'Wheel': 'Rueda',
