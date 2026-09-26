@@ -306,6 +306,10 @@ export function createGraph(container: HTMLElement): EditorGraph {
 
   richTextEditing(graph)
   InternalEvent.disableContextMenu(container)
+  // Keep text being typed in a label when the page is hidden or closed.
+  const commitEditing = () => graph.isEditing() && graph.stopEditing(false)
+  window.addEventListener('pagehide', commitEditing)
+  document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && commitEditing())
   return graph
 }
 
