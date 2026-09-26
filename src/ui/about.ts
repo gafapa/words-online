@@ -6,6 +6,7 @@ import type { Session } from '../core/session'
 import * as store from '../core/store'
 import { listVersions } from '../core/versions'
 import * as Y from 'yjs'
+import { legalLinksNav } from '../legal/links'
 import { accessLabel } from './chrome'
 import { el, showDialog } from './widgets'
 
@@ -20,6 +21,7 @@ export async function aboutDialog(): Promise<void> {
         class: 'hint',
         textContent: t('Documents are stored in this browser. Collaborators connect directly (WebRTC); public Nostr relays are only used to find each other.'),
       }),
+      legalLinksNav({ newTab: true }),
     ),
     [{ label: t('Close'), value: 'ok', primary: true }],
   )

@@ -86,7 +86,8 @@ export interface TableElement extends Box {
   border: string
 }
 
-export type SlideElement = TextElement | ImageElement | LineElement | TableElement
+// `cell`: the top-level cell of the slide the element comes from (animations).
+export type SlideElement = (TextElement | ImageElement | LineElement | TableElement) & { cell?: string }
 
 export interface SlideContent {
   slide: SlideData
@@ -110,7 +111,11 @@ export async function slideContents(data: PresentationData, renderer: SlideRende
     // Laid out (and themed) by the offscreen graph.
     renderer.render({ cells: slide.cells, background }, data.width, data.height)
     const elements: SlideElement[] = []
-    for (const cell of renderer.topCells()) await collect(renderer.graph, cell, elements)
+    for (const cell of renderer.topCells()) {
+      const start = elements.length
+      await collect(renderer.graph, cell, elements)
+      for (let i = start; i < elements.length; i++) elements[i].cell = cell.getId() ?? undefined
+    }
     out.push({ slide, background, elements })
   }
   return out

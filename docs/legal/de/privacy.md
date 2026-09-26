@@ -43,6 +43,7 @@ Die Anwendung speichert die für ihren Betrieb nötigen Informationen im Speiche
 | Ihre Identität in der Anwendung | Der Name, den Sie eingeben, und eine Farbe | Sie und Ihre Mitwirkenden |
 | Einstellungen | Sprache, Barrierefreiheit, Rechtschreibung, persönliches Wörterbuch, Zoom | Nur Sie |
 | Nextcloud-Zugangsdaten (optional) | Serveradresse, Benutzername und App-Passwort | Nur Sie; sie werden nur an diesen Server gesendet |
+| Sicherungen (optional) | `.ofimeo-backup`-Dateien, die Sie herunterladen, optional mit Passwort verschlüsselt, oder bei aktivierter automatischer Sicherung in Ihrer Nextcloud | Wer die Datei (und bei Verschlüsselung das Passwort) hat |
 | Anwendungs-Cache | Programmdateien für die Offline-Nutzung | Enthält keine personenbezogenen Daten |
 
 Bei persönlicher oder familiärer Nutzung führen Sie diese Verarbeitung selbst auf Ihrem Gerät durch. Bei schulischer Nutzung liegt sie in der Verantwortung der Schule oder Bildungsbehörde (Abschnitt 12).

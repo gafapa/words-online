@@ -65,7 +65,7 @@ Unverbindliches Muster für das Verzeichnis nach Artikel 30 DSGVO und Artikel 31
 
 | Risiko | Empfohlene Maßnahmen |
 | --- | --- |
-| Dritte sehen IP-Adressen und Verbindungszeiten | Relay und TURN-Server der Schule sowie den Parameter `?relays=` in Links verwenden |
+| Dritte sehen IP-Adressen und Verbindungszeiten | Relay und TURN-Server der Schule sowie den Parameter `?relay=` in Links verwenden |
 | Ein Link gelangt an Unbefugte | Links über offizielle Kanäle (Lernplattform) teilen; Schülerinnen und Schülern Ansichts- oder Kommentarlinks geben, wenn das genügt; bei einem Leck *Datei → Kopie erstellen* und das Original nicht mehr verwenden |
 | Verlust nur im Browser gespeicherter Arbeiten | Nextcloud der Schule, die Funktion *Abgeben* und regelmäßige Downloads nutzen; die Anwendung installieren |
 | Gemeinsam genutzte Geräte (Computerräume, Laptopwagen) | Individuelle Konten oder Browserprofile; Dokumente entfernen und von Nextcloud abmelden, wenn die Arbeit beendet ist |
@@ -78,7 +78,7 @@ Der DSB sollte prüfen, ob eine Datenschutz-Folgenabschätzung erforderlich ist 
 ## 6. Empfohlene Konfiguration
 
 1. **Eigener Server.** {{siteName}} auf einem Server der Schule oder Behörde veröffentlichen (idealerweise unter derselben Adresse wie Nextcloud) und die Rechtstexte dieser Installation anpassen (Datei `legal.config.json`).
-2. **Relay der Schule.** Das Relay von {{siteName}} (Nostr + STUN/TURN) im Schulnetz installieren und Links mit `?relays=wss://relay.schule.example` verwenden, um nicht von öffentlichen Relays abzuhängen.
+2. **Relay der Schule.** Das Relay von {{siteName}} (Nostr + STUN/TURN) im Schulnetz installieren und Links mit `?relay=https://relay.schule.example` verwenden, um nicht von öffentlichen Relays abzuhängen.
 3. **Nextcloud der Schule** zum Öffnen, Speichern und Abgeben von Arbeiten.
 4. **LanguageTool ausgeschaltet** oder auf einen Server der Schule bzw. Behörde gerichtet.
 5. **KI-Assistenten (WebMCP) ausgeschaltet.** Falls genutzt, nur mit von der Behörde beauftragten Anbietern, ohne personenbezogene Daten von Schülerinnen und Schülern und mit den Vorsichtsmaßnahmen aus dem [Hinweis zu künstlicher Intelligenz](ai.md).

@@ -347,7 +347,7 @@ export async function restoreBackup(backup: OpenedBackup, onProgress?: (done: nu
   onProgress?.(done, docs.length)
   const templates = await backup.zip.file('templates.json')?.async('string')
   if (templates) {
-    for (const tpl of JSON.parse(templates) as (Omit<TemplateRecord, 'state'> & { state: string })[]) {
+    for (const tpl of JSON.parse(templates) as { id: string; state: string }[]) {
       if (await dbGet('templates', tpl.id)) continue
       await dbPut('templates', { ...tpl, state: fromBase64(tpl.state) })
       report.templates++

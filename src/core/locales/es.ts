@@ -1236,6 +1236,15 @@ const es: Record<string, string> = {
   'Test again': 'Volver a probar',
   'Guide: Ofimeo Relay for schools': 'Guía: Ofimeo Relay para centros educativos',
   'Report copied. Paste it in a message to your IT department.': 'Informe copiado. Pégalo en un mensaje al departamento de informática.',
+  'Legal notice': 'Aviso legal',
+  'Privacy': 'Privacidad',
+  'Cookies and local storage': 'Cookies y almacenamiento local',
+  'Terms of use': 'Condiciones de uso',
+  'Accessibility statement': 'Declaración de accesibilidad',
+  'Information for schools': 'Información para centros educativos',
+  'Artificial intelligence': 'Inteligencia artificial',
+  'Third-party licenses': 'Licencias de terceros',
+  'Legal information': 'Información legal',
 }
 
 export default es

@@ -698,6 +698,23 @@ relay/               Ofimeo Relay (Go): Nostr relay + STUN/TURN + status page fo
 
 Each app and each converter is a separate chunk, loaded only when used.
 
+## Legal
+
+Legal notice, privacy policy, cookies and local storage, terms of use,
+accessibility statement, information for schools (data flows, record of
+processing template, text for families) and a note on AI, in Spanish
+(authoritative), Galician, English, French and German. Sources in
+[docs/legal/](docs/legal/README.md); the owner's data live only in
+`legal.config.json` and are injected by `scripts/build-legal.mjs` (part of
+`npm run legal`, run by `dev` and `build`), which writes static pages to
+`public/legal/` (precached, so they work offline) and
+`public/.well-known/security.txt`. The home screen footer and *Help → About*
+link to them in the interface language. `scripts/third-party-notices.mjs`
+writes `THIRD_PARTY_NOTICES.md` (also served as `legal/licenses.html`) from the
+production dependencies and fails the build when one has no license. The texts
+are templates to be reviewed by a lawyer / DPO; the project's own license is
+not decided yet (options in [docs/legal/README.md](docs/legal/README.md)).
+
 ## Development
 
 `npm run dev` and `npm run build` first run `npm run prepare:assets`, which

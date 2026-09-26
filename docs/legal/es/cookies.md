@@ -15,8 +15,11 @@ Todo el almacenamiento es propio (no hay almacenamiento de terceros), se guarda 
 | Documentos | IndexedDB `words-online:<id>` y `words-online:<id>:comments` | Contenido de cada documento, comentarios, historial de versiones y autoría |
 | Registro de cambios firmados | IndexedDB `words-online-kv` | Permite reenviar a otros participantes los cambios de documentos abiertos con enlaces de lectura o de comentario |
 | Índice de documentos | localStorage `words-online:docs` | Lista de tus documentos: título, fecha, claves de acceso y archivo vinculado en Nextcloud |
+| Organización local | localStorage `words-online:library`; IndexedDB `words-online-library` | Carpetas y etiquetas de tus documentos, índice para buscar en su texto y tus propias plantillas |
+| Copias de seguridad | localStorage `words-online:backup` | Fecha de la última copia, recordatorio y copia automática en Nextcloud, si la activas |
+| Relay del centro | localStorage `words-online:school-relay` | Dirección del relay del centro y configuración de conexión que este facilita |
 | Identidad | localStorage `words-online:user`, `words-online:writer-user-id` | Nombre y color que ven tus colaboradores; identificador técnico para la autoría |
-| Preferencias | localStorage `words-online:language`, `words-online:a11y`, `words-online:spelling`, `words-online:spelling-dictionary:<idioma>`, `words-online:zoom`, `wo-template-lang`, `diagram-libraries` | Idioma, accesibilidad, ortografía y diccionario personal, zoom, idioma de las plantillas y bibliotecas de formas elegidas |
+| Preferencias | localStorage `words-online:language`, `words-online:a11y`, `words-online:spelling`, `words-online:spelling-dictionary:<idioma>`, `words-online:zoom`, `words-online:home-view`, `wo-template-lang`, `diagram-libraries` | Idioma, accesibilidad, ortografía y diccionario personal, zoom, idioma de las plantillas y bibliotecas de formas elegidas |
 | Nextcloud (solo si lo configuras) | localStorage `words-online:nextcloud`, `words-online:nextcloud-server`, `words-online:nextcloud-folder`, `words-online:nextcloud-format`, `words-online:nextcloud-share` | Servidor, usuario y contraseña de aplicación, última carpeta y formato usados |
 | Funcionamiento sin conexión | Service worker y Cache Storage `workbox-precache-*`, `excalidraw-fonts`, `spelling`, `diagram-libs-*` | Archivos de la aplicación, tipos de letra, diccionarios y formas para usarla sin conexión |
 

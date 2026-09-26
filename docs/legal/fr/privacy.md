@@ -43,6 +43,7 @@ L’application enregistre dans le stockage de votre navigateur (IndexedDB, loca
 | Votre identité dans l’application | Le nom que vous saisissez et une couleur | Vous et vos collaborateurs |
 | Préférences | Langue, accessibilité, orthographe, dictionnaire personnel, zoom | Vous seul |
 | Identifiants Nextcloud (facultatif) | Adresse du serveur, nom d’utilisateur et mot de passe d’application | Vous seul ; envoyés uniquement à ce serveur |
+| Sauvegardes (facultatif) | Fichiers `.ofimeo-backup` que vous téléchargez, éventuellement chiffrés par mot de passe, ou enregistrés dans votre Nextcloud si vous activez la sauvegarde automatique | Toute personne disposant du fichier (et, s’il est chiffré, du mot de passe) |
 | Cache de l’application | Fichiers du programme pour l’utiliser hors ligne | Aucune donnée personnelle |
 
 Dans le cadre d’un usage personnel ou domestique, ce traitement est effectué par vous sur votre propre appareil. En milieu scolaire, il relève de l’établissement ou de l’administration de l’éducation (section 12).

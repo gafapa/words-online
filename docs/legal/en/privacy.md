@@ -43,6 +43,7 @@ The application stores the information it needs to work in your browser's storag
 | Your identity in the application | The name you type and a colour | You and your collaborators |
 | Preferences | Language, accessibility, spelling, personal dictionary, zoom | Only you |
 | Nextcloud credentials (optional) | Server address, user name and app password | Only you; sent only to that server |
+| Backups (optional) | `.ofimeo-backup` files you download, optionally encrypted with a password, or saved to your Nextcloud if you turn on automatic backup | Whoever has the file (and, if encrypted, the password) |
 | Application cache | Program files for offline use | Contains no personal data |
 
 In personal or household use, this processing is carried out by you on your own device. In school use, it is the responsibility of the school or education authority (section 12).

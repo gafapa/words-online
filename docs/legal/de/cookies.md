@@ -15,8 +15,11 @@ Die gesamte Speicherung ist eigene Speicherung (keine Speicherung Dritter), lieg
 | Dokumente | IndexedDB `words-online:<id>` und `words-online:<id>:comments` | Inhalt jedes Dokuments, Kommentare, Versionsverlauf und Urheberschaft |
 | Protokoll signierter Änderungen | IndexedDB `words-online-kv` | Ermöglicht die Weitergabe von Änderungen an Dokumenten, die über Ansichts- oder Kommentarlinks geöffnet wurden, an andere Beteiligte |
 | Dokumentenverzeichnis | localStorage `words-online:docs` | Liste Ihrer Dokumente: Titel, Datum, Zugriffsschlüssel und verknüpfte Nextcloud-Datei |
+| Lokale Ordnung | localStorage `words-online:library`; IndexedDB `words-online-library` | Ordner und Schlagwörter Ihrer Dokumente, Index für die Volltextsuche und Ihre eigenen Vorlagen |
+| Sicherungen | localStorage `words-online:backup` | Datum der letzten Sicherung, Erinnerung und automatische Sicherung in Nextcloud, falls aktiviert |
+| Relay der Schule | localStorage `words-online:school-relay` | Adresse des Schul-Relays und die von ihm bereitgestellten Verbindungseinstellungen |
 | Identität | localStorage `words-online:user`, `words-online:writer-user-id` | Name und Farbe, die Ihre Mitwirkenden sehen; technische Kennung für die Urheberschaft |
-| Einstellungen | localStorage `words-online:language`, `words-online:a11y`, `words-online:spelling`, `words-online:spelling-dictionary:<Sprache>`, `words-online:zoom`, `wo-template-lang`, `diagram-libraries` | Sprache, Barrierefreiheit, Rechtschreibung und persönliches Wörterbuch, Zoom, Sprache der Vorlagen und gewählte Formenbibliotheken |
+| Einstellungen | localStorage `words-online:language`, `words-online:a11y`, `words-online:spelling`, `words-online:spelling-dictionary:<Sprache>`, `words-online:zoom`, `words-online:home-view`, `wo-template-lang`, `diagram-libraries` | Sprache, Barrierefreiheit, Rechtschreibung und persönliches Wörterbuch, Zoom, Sprache der Vorlagen und gewählte Formenbibliotheken |
 | Nextcloud (nur wenn eingerichtet) | localStorage `words-online:nextcloud`, `words-online:nextcloud-server`, `words-online:nextcloud-folder`, `words-online:nextcloud-format`, `words-online:nextcloud-share` | Server, Benutzername und App-Passwort, zuletzt verwendeter Ordner und Format |
 | Offline-Betrieb | Service Worker und Cache Storage `workbox-precache-*`, `excalidraw-fonts`, `spelling`, `diagram-libs-*` | Dateien der Anwendung, Schriftarten, Wörterbücher und Formen für die Offline-Nutzung |
 

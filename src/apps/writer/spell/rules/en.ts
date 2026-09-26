@@ -10,7 +10,8 @@ export const enConfusions: Rule = {
   check: patternRule([
     { re: w("(could|should|would|must|might)(n['’]t)? of"), fix: (m) => [`${m[1]}${m[2] ?? ''} have`] },
     { re: w('alot'), fix: () => ['a lot'] },
-    { re: w('your welcome'), fix: () => ["you're welcome"] },
+    // At the start of a sentence ("Thanks for your welcome." is right).
+    { re: w('(?<=(?:^|[.!?"“]\\s*))your welcome(?=\\s*[.!,]|\\s*$)'), fix: () => ["you're welcome"] },
     { re: w('(more|less|better|worse|rather|other|bigger|smaller|greater|fewer) then'), fix: (m) => [`${m[1]} than`] },
   ]),
 }

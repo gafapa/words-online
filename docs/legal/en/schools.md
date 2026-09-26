@@ -65,7 +65,7 @@ An indicative model for the record required by Article 30 GDPR and Article 31 LO
 
 | Risk | Recommended measures |
 | --- | --- |
-| Third parties see IP addresses and connection times | Use the school relay and TURN server and the `?relays=` parameter in links |
+| Third parties see IP addresses and connection times | Use the school relay and TURN server and the `?relay=` parameter in links |
 | A link reaches unauthorised people | Share links through official channels (virtual classroom); give pupils view or comment links when sufficient; if one leaks, *File → Make a copy* and stop using the original |
 | Loss of work stored only in the browser | Use the school's Nextcloud, the *Hand in* feature and regular downloads; install the application |
 | Shared devices (computer rooms, laptop trolleys) | Individual accounts or browser profiles; remove documents and sign out of Nextcloud when finished |
@@ -78,7 +78,7 @@ The DPO should assess whether a data protection impact assessment is needed (Art
 ## 6. Recommended configuration
 
 1. **Own server.** Publish {{siteName}} on a server of the school or regional ministry (ideally at the same address as Nextcloud) and adapt the legal texts of that installation (`legal.config.json` file).
-2. **School relay.** Install the {{siteName}} relay (Nostr + STUN/TURN) on the school network and use links with `?relays=wss://relay.school.example`, so as not to depend on public relays.
+2. **School relay.** Install the {{siteName}} relay (Nostr + STUN/TURN) on the school network and use links with `?relay=https://relay.school.example`, so as not to depend on public relays.
 3. **The school's Nextcloud** to open, save and hand in work.
 4. **LanguageTool off**, or pointing to a server of the school or authority.
 5. **AI assistants (WebMCP) off.** If used, only with providers contracted by the authority, without pupils' personal data and with the precautions in the [Note on artificial intelligence](ai.md).

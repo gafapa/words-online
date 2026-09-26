@@ -54,6 +54,22 @@ export function describe(found: FoundIssue): string {
     case 'de-seit-seid': return t('“seit” (since) and “seid” (you are) are different')
     case 'de-als-wie': return t('After a comparative, use “als”')
     case 'de-fixed': return t('Standard spelling: “{fix}”', v)
+    case 'es-diacritic':
+    case 'gl-diacritic': return t('Diacritic accent: “{word}” and “{fix}” are different words', v)
+    case 'es-interrogative': return t('Question and exclamation words take an accent: “{fix}”', v)
+    case 'es-contraction': return t('“de el” and “a el” are written “del” and “al” (“de él”, “a él” for the pronoun)')
+    case 'es-agreement': return t('The article does not agree with the noun: “{fix}”', v)
+    case 'es-queismo': return t('This construction takes “de que”')
+    case 'es-laismo': return t('Laísmo: the indirect object is “le” / “les”')
+    case 'es-le-lo': return t('Before “lo”, “la”, “los” and “las”, the indirect object is “se”')
+    case 'es-en-base-a': return t('Style: “en base a” is better written “con base en”, “sobre la base de” or “según”')
+    case 'es-a-nivel-de': return t('Style: “a nivel de” is right for levels (“a nivel del mar”); elsewhere, try “en cuanto a” or “en el ámbito de”')
+    case 'lowercase-month-day': return t('Months and days of the week are written in lowercase')
+    case 'en-capital-month-day': return t('In English, days and months start with a capital letter')
+    case 'en-its-your': return t('Commonly confused: “its” / “it’s”, “your” / “you’re”, “their” / “there”')
+    case 'gl-contraction': return t('In Galician, the preposition and the article contract: “{fix}”', v)
+    case 'de-einzigste': return t('“einzig” has no superlative: “{fix}”', v)
+    case 'de-wider-wieder': return t('“wider” (against) and “wieder” (again) are different')
     default: return t('Commonly confused words: check the suggestion')
   }
 }

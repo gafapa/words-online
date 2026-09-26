@@ -65,7 +65,7 @@ Modelo orientativo para o rexistro previsto no artigo 30 do RXPD e no artigo 31 
 
 | Risco | Medidas recomendadas |
 | --- | --- |
-| Terceiros ven os enderezos IP e os horarios de conexión | Usar o relay e o servidor TURN do centro e o parámetro `?relays=` nas ligazóns |
+| Terceiros ven os enderezos IP e os horarios de conexión | Usar o relay e o servidor TURN do centro e o parámetro `?relay=` nas ligazóns |
 | Unha ligazón chega a persoas non autorizadas | Compartir ligazóns polas canles oficiais (aula virtual); darlle ao alumnado ligazóns de ver ou comentar cando abonde; se se filtra, *Arquivo → Facer unha copia* e deixar de usar o orixinal |
 | Perda de traballos gardados só no navegador | Usar o Nextcloud do centro, a función *Entregar* e descargas periódicas; instalar a aplicación |
 | Dispositivos compartidos (aulas de informática, carros de portátiles) | Contas ou perfís de navegador individuais; quitar os documentos e pechar a sesión de Nextcloud ao rematar |
@@ -78,7 +78,7 @@ O DPD debe valorar se é necesaria unha avaliación de impacto (art. 35 RXPD e l
 ## 6. Configuración recomendada
 
 1. **Servidor propio.** Publicar {{siteName}} nun servidor do centro ou da Consellería (idealmente no mesmo enderezo que Nextcloud) e adaptar os textos legais desa instalación (ficheiro `legal.config.json`).
-2. **Relay do centro.** Instalar o relay de {{siteName}} (Nostr + STUN/TURN) na rede do centro e usar ligazóns con `?relays=wss://relay.centro.example`, para non depender de relays públicos.
+2. **Relay do centro.** Instalar o relay de {{siteName}} (Nostr + STUN/TURN) na rede do centro e usar ligazóns con `?relay=https://relay.centro.example`, para non depender de relays públicos.
 3. **Nextcloud do centro** para abrir, gardar e entregar traballos.
 4. **LanguageTool desactivado**, ou apuntando a un servidor do centro ou da Administración.
 5. **Asistentes de IA (WebMCP) desactivados.** Se se usan, só con provedores contratados pola Administración, sen datos persoais do alumnado e coas precaucións da [Nota sobre intelixencia artificial](ai.md).

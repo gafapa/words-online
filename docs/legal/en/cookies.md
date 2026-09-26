@@ -15,8 +15,11 @@ All storage is first-party (there is no third-party storage), is kept only in yo
 | Documents | IndexedDB `words-online:<id>` and `words-online:<id>:comments` | Content of each document, comments, version history and authorship |
 | Signed change log | IndexedDB `words-online-kv` | Allows passing on to other participants the changes of documents opened with view or comment links |
 | Document index | localStorage `words-online:docs` | List of your documents: title, date, access keys and linked Nextcloud file |
+| Local organisation | localStorage `words-online:library`; IndexedDB `words-online-library` | Folders and tags of your documents, index for searching their text and your own templates |
+| Backups | localStorage `words-online:backup` | Date of the last backup, reminder and automatic backup to Nextcloud, if you enable it |
+| School relay | localStorage `words-online:school-relay` | Address of the school relay and the connection settings it provides |
 | Identity | localStorage `words-online:user`, `words-online:writer-user-id` | Name and colour your collaborators see; technical identifier for authorship |
-| Preferences | localStorage `words-online:language`, `words-online:a11y`, `words-online:spelling`, `words-online:spelling-dictionary:<language>`, `words-online:zoom`, `wo-template-lang`, `diagram-libraries` | Language, accessibility, spelling and personal dictionary, zoom, template language and chosen shape libraries |
+| Preferences | localStorage `words-online:language`, `words-online:a11y`, `words-online:spelling`, `words-online:spelling-dictionary:<language>`, `words-online:zoom`, `words-online:home-view`, `wo-template-lang`, `diagram-libraries` | Language, accessibility, spelling and personal dictionary, zoom, template language and chosen shape libraries |
 | Nextcloud (only if you set it up) | localStorage `words-online:nextcloud`, `words-online:nextcloud-server`, `words-online:nextcloud-folder`, `words-online:nextcloud-format`, `words-online:nextcloud-share` | Server, user name and app password, last folder and format used |
 | Offline use | Service worker and Cache Storage `workbox-precache-*`, `excalidraw-fonts`, `spelling`, `diagram-libs-*` | Application files, fonts, dictionaries and shapes for offline use |
 

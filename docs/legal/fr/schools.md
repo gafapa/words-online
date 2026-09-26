@@ -65,7 +65,7 @@ Modèle indicatif pour le registre prévu à l’article 30 du RGPD et à l’ar
 
 | Risque | Mesures recommandées |
 | --- | --- |
-| Des tiers voient les adresses IP et les heures de connexion | Utiliser le relais et le serveur TURN de l’établissement ainsi que le paramètre `?relays=` dans les liens |
+| Des tiers voient les adresses IP et les heures de connexion | Utiliser le relais et le serveur TURN de l’établissement ainsi que le paramètre `?relay=` dans les liens |
 | Un lien parvient à des personnes non autorisées | Partager les liens par les canaux officiels (ENT) ; donner aux élèves des liens de lecture ou de commentaire lorsque cela suffit ; en cas de fuite, *Fichier → Faire une copie* et cesser d’utiliser l’original |
 | Perte de travaux enregistrés uniquement dans le navigateur | Utiliser le Nextcloud de l’établissement, la fonction *Rendre* et des téléchargements réguliers ; installer l’application |
 | Appareils partagés (salles informatiques, chariots d’ordinateurs portables) | Comptes ou profils de navigateur individuels ; retirer les documents et se déconnecter de Nextcloud à la fin |
@@ -78,7 +78,7 @@ Le DPD doit évaluer si une analyse d’impact relative à la protection des don
 ## 6. Configuration recommandée
 
 1. **Serveur propre.** Publier {{siteName}} sur un serveur de l’établissement ou de l’administration (idéalement à la même adresse que Nextcloud) et adapter les textes juridiques de cette installation (fichier `legal.config.json`).
-2. **Relais de l’établissement.** Installer le relais de {{siteName}} (Nostr + STUN/TURN) sur le réseau de l’établissement et utiliser des liens avec `?relays=wss://relay.etablissement.example`, pour ne pas dépendre de relais publics.
+2. **Relais de l’établissement.** Installer le relais de {{siteName}} (Nostr + STUN/TURN) sur le réseau de l’établissement et utiliser des liens avec `?relay=https://relay.etablissement.example`, pour ne pas dépendre de relais publics.
 3. **Le Nextcloud de l’établissement** pour ouvrir, enregistrer et rendre les travaux.
 4. **LanguageTool désactivé**, ou pointant vers un serveur de l’établissement ou de l’administration.
 5. **Assistants d’IA (WebMCP) désactivés.** S’ils sont utilisés, uniquement avec des fournisseurs sous contrat avec l’administration, sans données personnelles des élèves et avec les précautions de la [Note sur l’intelligence artificielle](ai.md).

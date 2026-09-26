@@ -43,6 +43,7 @@ La aplicación guarda en el almacenamiento de tu navegador (IndexedDB, localStor
 | Tu identidad en la aplicación | El nombre que escribes y un color | Tú y tus colaboradores |
 | Preferencias | Idioma, accesibilidad, ortografía, diccionario personal, zoom | Solo tú |
 | Credenciales de Nextcloud (opcional) | Dirección del servidor, usuario y contraseña de aplicación | Solo tú; se envían únicamente a ese servidor |
+| Copias de seguridad (opcional) | Archivos `.ofimeo-backup` que descargas, opcionalmente cifrados con contraseña, o que se guardan en tu Nextcloud si activas la copia automática | Quien tenga el archivo (y, si está cifrado, la contraseña) |
 | Caché de la aplicación | Archivos del programa para usarlo sin conexión | No contiene datos personales |
 
 En el uso personal o doméstico, este tratamiento lo realizas tú en tu propio dispositivo. En el uso escolar, corresponde al centro o a la Administración educativa (apartado 12).

@@ -26,6 +26,9 @@ jobs:
         with:
           path: node_modules/.cache/draw-*.war
           key: drawio-war-${{ hashFiles('scripts/drawio.json') }}
+      # Fails when a production dependency has no license (also run by the build).
+      - name: Third-party licenses
+        run: node scripts/third-party-notices.mjs --check
       - name: Type check
         run: npm run typecheck
       - name: Unit tests (grammar rules)

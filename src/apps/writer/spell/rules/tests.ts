@@ -115,6 +115,7 @@ export const CASES: Case[] = [
   ['de', 'Er ist so groß wie ich.', none],
   ['de', 'Das ist das selbe Auto.', [['de-fixed', 'dasselbe']]],
   // ---------- English ----------
+  ['en', 'Your welcome! Thanks for your welcome.', [['en-confusion', "You're welcome"]]],
   ['en', 'You should of told me.', [['en-confusion', 'should have']]],
   ['en', 'It is bigger then that.', [['en-confusion', 'bigger than']]],
   ['en', 'We ate, and then we slept.', none],

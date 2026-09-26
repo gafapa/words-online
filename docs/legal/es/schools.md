@@ -65,7 +65,7 @@ Modelo orientativo para el registro previsto en el artículo 30 del RGPD y el ar
 
 | Riesgo | Medidas recomendadas |
 | --- | --- |
-| Terceros ven las direcciones IP y los horarios de conexión | Usar el relay y el servidor TURN del centro y el parámetro `?relays=` en los enlaces |
+| Terceros ven las direcciones IP y los horarios de conexión | Usar el relay y el servidor TURN del centro y el parámetro `?relay=` en los enlaces |
 | Un enlace llega a personas no autorizadas | Compartir enlaces por los canales oficiales (aula virtual); dar al alumnado enlaces de ver o comentar cuando baste; si se filtra, *Archivo → Hacer una copia* y dejar de usar el original |
 | Pérdida de trabajos guardados solo en el navegador | Usar Nextcloud del centro, la función *Entregar* y descargas periódicas; instalar la aplicación |
 | Dispositivos compartidos (aulas de informática, carros de portátiles) | Cuentas o perfiles de navegador individuales; quitar los documentos y cerrar la sesión de Nextcloud al terminar |
@@ -78,7 +78,7 @@ El DPD debe valorar si es necesaria una evaluación de impacto (art. 35 RGPD y l
 ## 6. Configuración recomendada
 
 1. **Servidor propio.** Publicar {{siteName}} en un servidor del centro o de la Consellería (idealmente en la misma dirección que Nextcloud) y adaptar los textos legales de esa instalación (archivo `legal.config.json`).
-2. **Relay del centro.** Instalar el relay de {{siteName}} (Nostr + STUN/TURN) en la red del centro y usar enlaces con `?relays=wss://relay.centro.example`, para no depender de relays públicos.
+2. **Relay del centro.** Instalar el relay de {{siteName}} (Nostr + STUN/TURN) en la red del centro y usar enlaces con `?relay=https://relay.centro.example`, para no depender de relays públicos.
 3. **Nextcloud del centro** para abrir, guardar y entregar trabajos.
 4. **LanguageTool desactivado**, o apuntando a un servidor del centro o de la Administración.
 5. **Asistentes de IA (WebMCP) desactivados.** Si se usan, solo con proveedores contratados por la Administración, sin datos personales del alumnado y con las precauciones de la [Nota sobre inteligencia artificial](ai.md).

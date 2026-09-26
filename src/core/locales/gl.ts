@@ -1236,6 +1236,15 @@ const gl: Record<string, string> = {
   'Test again': 'Volver probar',
   'Guide: Ofimeo Relay for schools': 'Guía: Ofimeo Relay para centros educativos',
   'Report copied. Paste it in a message to your IT department.': 'Informe copiado. Pégao nunha mensaxe ao departamento de informática.',
+  'Legal notice': 'Aviso legal',
+  'Privacy': 'Privacidade',
+  'Cookies and local storage': 'Cookies e almacenamento local',
+  'Terms of use': 'Condicións de uso',
+  'Accessibility statement': 'Declaración de accesibilidade',
+  'Information for schools': 'Información para centros educativos',
+  'Artificial intelligence': 'Intelixencia artificial',
+  'Third-party licenses': 'Licenzas de terceiros',
+  'Legal information': 'Información legal',
 }
 
 export default gl
