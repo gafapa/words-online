@@ -58,6 +58,11 @@ export function t(text: string, vars?: Record<string, string | number>): string 
   return vars ? out.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m)) : out
 }
 
+// Quotation marks and the colon of the language (French: no-break spaces).
+const QUOTES: Record<Language, [string, string]> = { en: ['“', '”'], es: ['«', '»'], gl: ['«', '»'], fr: ['«\u00a0', '\u00a0»'], de: ['„', '“'] }
+export const quote = (text: string): string => QUOTES[language][0] + text + QUOTES[language][1]
+export const colon = language === 'fr' ? '\u00a0: ' : ': '
+
 // Count-dependent text: tn(n, '{n} word', '{n} words'); {n} is filled in.
 export function tn(n: number, one: string, other: string, vars?: Record<string, string | number>): string {
   return t(n === 1 ? one : other, { n: n.toLocaleString(locale), ...vars })

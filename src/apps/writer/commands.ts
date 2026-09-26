@@ -540,7 +540,7 @@ export function buildToolbar(ctx: WriterContext, container: HTMLElement): void {
 
   // Review tools stay available to commenters.
   const review = el('div', { class: 'tb-group tb-review' })
-  const commentButton = button(MessageSquarePlus, `${t('Comment')} (${isMac ? '⌥⌘M' : 'Ctrl+Alt+M'})`, () => ctx.review.startComment())
+  const commentButton = button(MessageSquarePlus, `${t('Comment')} (${isMac ? '⌥⌘M' : mod('Alt+M')})`, () => ctx.review.startComment())
   commentButton.disabled = ctx.access === 'view'
   review.append(commentButton)
   if (ctx.access === 'edit') {

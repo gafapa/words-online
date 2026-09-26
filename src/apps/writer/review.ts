@@ -10,7 +10,7 @@ import { Plugin, PluginKey, type EditorState } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import { Check, EllipsisVertical, RotateCcw, X } from 'lucide'
 import type { Session } from '../../core/session'
-import { locale, t } from '../../core/i18n'
+import { colon, locale, quote, t } from '../../core/i18n'
 import { el, icon, showContextMenu, toast } from '../../ui/widgets'
 import { commentsMapOf, PENDING_COMMENTS, userIdOf, type Access } from './collab'
 import { collectSuggestions, type Suggestion } from './editor/suggestions'
@@ -437,8 +437,8 @@ export class Review {
     const own = comment.authorId === this.userId || (this.canEdit && comment.authorId.startsWith('import:'))
     if (own && this.canComment) head.append(this.iconButton(EllipsisVertical, t('More'), (e) => this.ownMenu(e, comment, card)))
     card.append(head)
-    if (!th.range || th.range.from >= th.range.to) card.append(el('div', { class: 'rv-quote', textContent: `${t('Text deleted')}: “${comment.quote ?? ''}”` }))
-    else if (window.innerWidth <= NARROW && comment.quote) card.append(el('div', { class: 'rv-quote', textContent: `“${comment.quote}”` }))
+    if (!th.range || th.range.from >= th.range.to) card.append(el('div', { class: 'rv-quote', textContent: `${t('Text deleted')}${colon}${quote(comment.quote ?? '')}` }))
+    else if (window.innerWidth <= NARROW && comment.quote) card.append(el('div', { class: 'rv-quote', textContent: quote(comment.quote) }))
     card.append(el('div', { class: 'rv-text', textContent: comment.text }))
     for (const r of th.replies) {
       const reply = el('div', { class: 'rv-reply' }, el('div', { class: 'rv-head' }, this.header(r.author, r.color, r.time, r.edited)))
@@ -522,13 +522,13 @@ export class Review {
         this.iconButton(X, t('Reject'), () => group.forEach((g) => editor.commands.rejectSuggestion(g.id))),
       )
     }
-    const clip = (text: string) => `“${text.length > 120 ? `${text.slice(0, 120)}…` : text}”`
+    const clip = (text: string) => quote(text.length > 120 ? `${text.slice(0, 120)}…` : text)
     const body = el('div', { class: 'rv-text' })
     const del = group.find((g) => g.kind === 'deletion')
     const ins = group.find((g) => g.kind === 'insertion')
-    if (del && ins) body.append(el('b', { textContent: t('Replace') }), ': ', el('del', { textContent: clip(del.text) }), ` ${t('with')} `, el('ins', { textContent: clip(ins.text) }))
-    else if (ins) body.append(el('b', { textContent: t('Add') }), ': ', el('ins', { textContent: clip(ins.text) }))
-    else if (del) body.append(el('b', { textContent: t('Delete') }), ': ', el('del', { textContent: clip(del.text) }))
+    if (del && ins) body.append(el('b', { textContent: t('Replace') }), colon, el('del', { textContent: clip(del.text) }), ` ${t('with')} `, el('ins', { textContent: clip(ins.text) }))
+    else if (ins) body.append(el('b', { textContent: t('Add') }), colon, el('ins', { textContent: clip(ins.text) }))
+    else if (del) body.append(el('b', { textContent: t('Delete') }), colon, el('del', { textContent: clip(del.text) }))
     card.append(head, body)
     return card
   }
