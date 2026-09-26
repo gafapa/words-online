@@ -1280,6 +1280,21 @@ const fr: Record<string, string> = {
   'Keep the selected tool active': 'Garder l’outil sélectionné actif',
   'All drawing shortcuts…': 'Tous les raccourcis de dessin…',
   'Bring forward / send backward': 'Avancer / reculer',
+  'Diacritic accent: “{word}” and “{fix}” are different words': 'Accent diacritique : « {word} » et « {fix} » sont des mots différents',
+  'Question and exclamation words take an accent: “{fix}”': 'Les mots interrogatifs et exclamatifs prennent un accent : « {fix} »',
+  '“de el” and “a el” are written “del” and “al” (“de él”, “a él” for the pronoun)': '« de el » et « a el » s’écrivent « del » et « al » (« de él », « a él » pour le pronom)',
+  'The article does not agree with the noun: “{fix}”': 'L’article ne s’accorde pas avec le nom : « {fix} »',
+  'This construction takes “de que”': 'Cette construction demande « de que »',
+  'Laísmo: the indirect object is “le” / “les”': 'Laísmo : le complément d’objet indirect est « le » / « les »',
+  'Before “lo”, “la”, “los” and “las”, the indirect object is “se”': 'Devant « lo », « la », « los » et « las », le complément d’objet indirect est « se »',
+  'Style: “en base a” is better written “con base en”, “sobre la base de” or “según”': 'Style : au lieu de « en base a », préférez « con base en », « sobre la base de » ou « según »',
+  'Style: “a nivel de” is right for levels (“a nivel del mar”); elsewhere, try “en cuanto a” or “en el ámbito de”': 'Style : « a nivel de » convient pour des niveaux (« a nivel del mar ») ; ailleurs, essayez « en cuanto a » ou « en el ámbito de »',
+  'Months and days of the week are written in lowercase': 'Les mois et les jours de la semaine s’écrivent en minuscules',
+  'In English, days and months start with a capital letter': 'En anglais, les jours et les mois prennent une majuscule',
+  'Commonly confused: “its” / “it’s”, “your” / “you’re”, “their” / “there”': 'Confusion fréquente : « its » / « it’s », « your » / « you’re », « their » / « there »',
+  'In Galician, the preposition and the article contract: “{fix}”': 'En galicien, la préposition et l’article se contractent : « {fix} »',
+  '“einzig” has no superlative: “{fix}”': '« einzig » n’a pas de superlatif : « {fix} »',
+  '“wider” (against) and “wieder” (again) are different': '« wider » (contre) et « wieder » (de nouveau) sont des mots différents',
 }
 
 export default fr

@@ -1280,6 +1280,21 @@ const de: Record<string, string> = {
   'Keep the selected tool active': 'Ausgewähltes Werkzeug aktiv lassen',
   'All drawing shortcuts…': 'Alle Zeichen-Tastenkombinationen…',
   'Bring forward / send backward': 'Nach vorne / nach hinten',
+  'Diacritic accent: “{word}” and “{fix}” are different words': 'Diakritischer Akzent: „{word}“ und „{fix}“ sind verschiedene Wörter',
+  'Question and exclamation words take an accent: “{fix}”': 'Frage- und Ausrufewörter tragen einen Akzent: „{fix}“',
+  '“de el” and “a el” are written “del” and “al” (“de él”, “a él” for the pronoun)': '„de el“ und „a el“ werden „del“ und „al“ geschrieben („de él“, „a él“ beim Pronomen)',
+  'The article does not agree with the noun: “{fix}”': 'Der Artikel stimmt nicht mit dem Nomen überein: „{fix}“',
+  'This construction takes “de que”': 'Diese Konstruktion verlangt „de que“',
+  'Laísmo: the indirect object is “le” / “les”': 'Laísmo: Das indirekte Objekt ist „le“ / „les“',
+  'Before “lo”, “la”, “los” and “las”, the indirect object is “se”': 'Vor „lo“, „la“, „los“ und „las“ ist das indirekte Objekt „se“',
+  'Style: “en base a” is better written “con base en”, “sobre la base de” or “según”': 'Stil: Statt „en base a“ besser „con base en“, „sobre la base de“ oder „según“',
+  'Style: “a nivel de” is right for levels (“a nivel del mar”); elsewhere, try “en cuanto a” or “en el ámbito de”': 'Stil: „a nivel de“ passt bei Ebenen („a nivel del mar“); sonst besser „en cuanto a“ oder „en el ámbito de“',
+  'Months and days of the week are written in lowercase': 'Monate und Wochentage werden kleingeschrieben',
+  'In English, days and months start with a capital letter': 'Im Englischen werden Tage und Monate großgeschrieben',
+  'Commonly confused: “its” / “it’s”, “your” / “you’re”, “their” / “there”': 'Häufige Verwechslung: „its“ / „it’s“, „your“ / „you’re“, „their“ / „there“',
+  'In Galician, the preposition and the article contract: “{fix}”': 'Im Galicischen verschmelzen Präposition und Artikel: „{fix}“',
+  '“einzig” has no superlative: “{fix}”': '„einzig“ hat keinen Superlativ: „{fix}“',
+  '“wider” (against) and “wieder” (again) are different': '„wider“ (gegen) und „wieder“ (erneut) sind verschiedene Wörter',
 }
 
 export default de

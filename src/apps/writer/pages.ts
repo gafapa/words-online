@@ -131,7 +131,7 @@ export function relayout(view: EditorView): void {
 
 // The current layout of a view (pages and their positions).
 export function currentLayout(view: EditorView): Layout {
-  return paginationKey.getState(view.state)?.layout ?? EMPTY_LAYOUT
+  return views.get(view)?.latest ?? EMPTY_LAYOUT
 }
 
 // Sections of the document: the first from the options, then one per top-level section break.
@@ -161,6 +161,7 @@ class PaginationView {
   private measurer: HTMLElement
   private passes = 0
   private lastSignature = ''
+  latest: Layout = EMPTY_LAYOUT
 
   constructor(
     private view: EditorView,
@@ -216,6 +217,7 @@ class PaginationView {
   private measure() {
     const { view } = this
     if (!view.dom.isConnected) return
+    const t0 = performance.now()
     const first = this.options.firstSection()
     const sections = sectionsOf(view.state.doc, first)
     const width = Math.max(...sections.map((s) => pageGeometry(s.page).width))
@@ -238,8 +240,10 @@ class PaginationView {
     const signature = layoutSignature(layout, places)
     const changed = signature !== this.lastSignature
     this.lastSignature = signature
-    if (changed) view.dispatch(view.state.tr.setMeta(paginationKey, { layout, places }).setMeta('addToHistory', false))
+    if (changed || unplaced) view.dispatch(view.state.tr.setMeta(paginationKey, { layout, places }).setMeta('addToHistory', false))
+    this.latest = layout
     this.options.onLayout(layout)
+    ;((window as any).__pm ??= []).push(Math.round(performance.now() - t0))
     // Blocks measured before they had their final width need a second pass.
     if ((changed || unplaced) && this.passes++ < 3) this.measure()
   }
@@ -280,7 +284,6 @@ interface Unit {
 function collectUnits(view: EditorView): Unit[] {
   const units: Unit[] = []
   const root = view.dom
-  const state = paginationKey.getState(view.state)
   let section = 0
   const insets = (dom: HTMLElement) => {
     let l = 0
@@ -336,7 +339,7 @@ function collectUnits(view: EditorView): Unit[] {
       insetR,
       notes,
       heading: node.type.name === 'heading',
-      fresh: !state?.places.has(pos),
+      fresh: dom.style.position !== 'absolute',
     }
     const subs = [...dom.children].filter((c): c is HTMLElement => c instanceof HTMLElement && c.hasAttribute('data-page-unit'))
     if (subs.length) {
@@ -620,7 +623,8 @@ function applySubUnits(units: Unit[], places: Map<number, Placement>) {
 function layoutSignature(layout: Layout, places: Map<number, Placement>): string {
   const pages = layout.pages.map((p) => `${p.x},${p.y},${p.geo.width}x${p.geo.height},${p.notes.join('\u0001')},${p.firstNote},${p.lines.map((l) => `${l.x}:${l.top}:${l.bottom}`).join(';')}`)
   const parts: string[] = []
-  for (const [pos, p] of places) parts.push(`${pos}:${Math.round(p.top - p.mt)}:${Math.round(p.left + p.insetL)}:${Math.round(p.width - p.insetL - p.insetR)}`)
+  // By order, not position: typing shifts positions but mapped decorations stay right.
+  for (const p of places.values()) parts.push(`${Math.round(p.top - p.mt)}:${Math.round(p.left + p.insetL)}:${Math.round(p.width - p.insetL - p.insetR)}`)
   return `${layout.width}|${pages.join('|')}|${parts.join(',')}`
 }
 

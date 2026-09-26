@@ -179,9 +179,19 @@ replicas the same log order, so replaying it always yields the same workbook.
 
 - Built on [Excalidraw](https://github.com/excalidraw/excalidraw) (MIT): shapes,
   arrows that bind to shapes, freehand, text, images, frames, libraries, hand-drawn
-  or clean style, light/dark theme.
+  or clean style.
+- On the shared Ofimeo frame: our menu bar (File, Edit, View, Insert, Tools,
+  Help), common keys (Ctrl+O/S/P/F, F1), Print, status bar with selection,
+  save state and zoom. Excalidraw keeps its tool island and property panel; its
+  main menu and zoom buttons are hidden. Its theme follows ours (dark and high
+  contrast) and its colors, font and radii come from our tokens (`draw.css`).
+- Excalidraw 0.18 has no undo/redo or clipboard API: Edit ▸ Undo/Redo, Select
+  all, Duplicate and Delete send its own keys to the canvas; Paste reads the
+  clipboard and hands it over as a paste event. The canvas background is shared
+  in the document (`draw-settings` map).
 - Collaborators' pointers and selections, live.
-- Open and download `.excalidraw`; download PNG and SVG.
+- Open and download `.excalidraw`; download PNG and SVG; Excalidraw's export
+  image dialog (File ▸ Export image…).
 - Sync: each element is a value in a shared `Y.Map` (deleted elements stay as
   tombstones); local edits are detected with Excalidraw's per-element version and
   remote edits never enter the local undo history. Fonts are served locally.

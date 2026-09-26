@@ -1280,6 +1280,21 @@ const gl: Record<string, string> = {
   'Keep the selected tool active': 'Manter activa a ferramenta seleccionada',
   'All drawing shortcuts…': 'Todos os atallos de debuxo…',
   'Bring forward / send backward': 'Traer adiante / enviar atrás',
+  'Diacritic accent: “{word}” and “{fix}” are different words': 'Til diacrítico: «{word}» e «{fix}» son palabras distintas',
+  'Question and exclamation words take an accent: “{fix}”': 'Os interrogativos e exclamativos levan til: «{fix}»',
+  '“de el” and “a el” are written “del” and “al” (“de él”, “a él” for the pronoun)': '«de el» e «a el» escríbense «del» e «al» («de él», «a él» se é o pronome)',
+  'The article does not agree with the noun: “{fix}”': 'O artigo non concorda co substantivo: «{fix}»',
+  'This construction takes “de que”': 'Esta construción leva «de que»',
+  'Laísmo: the indirect object is “le” / “les”': 'Laísmo: o complemento indirecto é «le» / «les»',
+  'Before “lo”, “la”, “los” and “las”, the indirect object is “se”': 'Diante de «lo», «la», «los» e «las», o complemento indirecto é «se»',
+  'Style: “en base a” is better written “con base en”, “sobre la base de” or “según”': 'Estilo: en lugar de «en base a», mellor «con base en», «sobre la base de» ou «según»',
+  'Style: “a nivel de” is right for levels (“a nivel del mar”); elsewhere, try “en cuanto a” or “en el ámbito de”': 'Estilo: «a nivel de» é correcto cando hai niveis («a nivel del mar»); noutros casos, proba «en cuanto a» ou «en el ámbito de»',
+  'Months and days of the week are written in lowercase': 'Os meses e os días da semana escríbense con minúscula',
+  'In English, days and months start with a capital letter': 'En inglés, os días e os meses escríbense con maiúscula inicial',
+  'Commonly confused: “its” / “it’s”, “your” / “you’re”, “their” / “there”': 'Confusión frecuente: «its» / «it’s», «your» / «you’re», «their» / «there»',
+  'In Galician, the preposition and the article contract: “{fix}”': 'En galego, a preposición e o artigo contraen: «{fix}»',
+  '“einzig” has no superlative: “{fix}”': '«einzig» non ten superlativo: «{fix}»',
+  '“wider” (against) and “wieder” (again) are different': '«wider» (contra) e «wieder» (de novo) son palabras distintas',
 }
 
 export default gl

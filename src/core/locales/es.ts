@@ -1280,6 +1280,21 @@ const es: Record<string, string> = {
   'Keep the selected tool active': 'Mantener activa la herramienta seleccionada',
   'All drawing shortcuts…': 'Todos los atajos de dibujo…',
   'Bring forward / send backward': 'Traer adelante / enviar atrás',
+  'Diacritic accent: “{word}” and “{fix}” are different words': 'Tilde diacrítica: «{word}» y «{fix}» son palabras distintas',
+  'Question and exclamation words take an accent: “{fix}”': 'Los interrogativos y exclamativos llevan tilde: «{fix}»',
+  '“de el” and “a el” are written “del” and “al” (“de él”, “a él” for the pronoun)': '«de el» y «a el» se escriben «del» y «al» («de él», «a él» si es el pronombre)',
+  'The article does not agree with the noun: “{fix}”': 'El artículo no concuerda con el sustantivo: «{fix}»',
+  'This construction takes “de que”': 'Esta construcción lleva «de que»',
+  'Laísmo: the indirect object is “le” / “les”': 'Laísmo: el complemento indirecto es «le» / «les»',
+  'Before “lo”, “la”, “los” and “las”, the indirect object is “se”': 'Delante de «lo», «la», «los» y «las», el complemento indirecto es «se»',
+  'Style: “en base a” is better written “con base en”, “sobre la base de” or “según”': 'Estilo: en lugar de «en base a», mejor «con base en», «sobre la base de» o «según»',
+  'Style: “a nivel de” is right for levels (“a nivel del mar”); elsewhere, try “en cuanto a” or “en el ámbito de”': 'Estilo: «a nivel de» es correcto cuando hay niveles («a nivel del mar»); en otros casos, prueba «en cuanto a» o «en el ámbito de»',
+  'Months and days of the week are written in lowercase': 'Los meses y los días de la semana se escriben con minúscula',
+  'In English, days and months start with a capital letter': 'En inglés, los días y los meses se escriben con mayúscula inicial',
+  'Commonly confused: “its” / “it’s”, “your” / “you’re”, “their” / “there”': 'Confusión frecuente: «its» / «it’s», «your» / «you’re», «their» / «there»',
+  'In Galician, the preposition and the article contract: “{fix}”': 'En gallego, la preposición y el artículo se contraen: «{fix}»',
+  '“einzig” has no superlative: “{fix}”': '«einzig» no tiene superlativo: «{fix}»',
+  '“wider” (against) and “wieder” (again) are different': '«wider» (contra) y «wieder» (de nuevo) son palabras distintas',
 }
 
 export default es
