@@ -6,14 +6,6 @@
 import JSZip from 'jszip'
 import { timeline, type Animation, type Direction } from '../animations'
 
-export interface SlideAnimations {
-  // Shape ids (<p:cNvPr id>) of each animated cell's shapes.
-  shapes: Map<string, number[]>
-  animations: Animation[]
-  transition?: string
-  transitionDuration?: number
-}
-
 // Object indexes (in the order pptxgenjs added them) → shape ids, read from the slide XML.
 export function shapeIds(xml: string): { ids: number[]; text: Set<number> } {
   const doc = new DOMParser().parseFromString(xml, 'application/xml')
@@ -68,6 +60,8 @@ function timingXml(anims: Animation[], shapes: Map<string, number[]>, text: Set<
   const steps: string[] = []
   const built = new Set<number>()
   tl.steps.forEach((step, si) => {
+    // Ids in document order.
+    const stepId = next()
     const effects: string[] = []
     step.effects.forEach(({ anim, start }, ei) => {
       const nodeType = ei === 0 ? (anim.trigger === 'after' ? 'afterEffect' : anim.trigger === 'with' ? 'withEffect' : 'clickEffect') : anim.trigger === 'after' ? 'afterEffect' : 'withEffect'
@@ -77,7 +71,7 @@ function timingXml(anims: Animation[], shapes: Map<string, number[]>, text: Set<
       }
     })
     const cond = si === 0 && tl.auto ? '<p:cond delay="indefinite"/><p:cond evt="onBegin" delay="0"><p:tn val="2"/></p:cond>' : '<p:cond delay="indefinite"/>'
-    steps.push(`<p:par><p:cTn id="${next()}" fill="hold"><p:stCondLst>${cond}</p:stCondLst><p:childTnLst>${effects.join('')}</p:childTnLst></p:cTn></p:par>`)
+    steps.push(`<p:par><p:cTn id="${stepId}" fill="hold"><p:stCondLst>${cond}</p:stCondLst><p:childTnLst>${effects.join('')}</p:childTnLst></p:cTn></p:par>`)
   })
   const bld = built.size ? `<p:bldLst>${[...built].map((spid) => `<p:bldP spid="${spid}" grpId="0"/>`).join('')}</p:bldLst>` : ''
   return (
@@ -90,6 +84,7 @@ function timingXml(anims: Animation[], shapes: Map<string, number[]>, text: Set<
 }
 
 function effectXml(a: Animation, spid: number, nodeType: string, next: () => number, isText: boolean): string {
+  const outer = next()
   const dur = Math.max(1, Math.round(a.duration))
   const tgt = `<p:tgtEl><p:spTgt spid="${spid}"/></p:tgtEl>`
   const set = (value: 'visible' | 'hidden', delay = 0) =>
@@ -155,5 +150,5 @@ function effectXml(a: Animation, spid: number, nodeType: string, next: () => num
     }
   }
   const grp = isText && a.kind !== 'emphasis' ? ' grpId="0"' : ''
-  return `<p:par><p:cTn id="${next()}" presetID="${presetID}" presetClass="${cls}" presetSubtype="${subtype}" fill="hold"${grp} nodeType="${nodeType}"><p:stCondLst><p:cond delay="0"/></p:stCondLst><p:childTnLst>${body}</p:childTnLst></p:cTn></p:par>`
+  return `<p:par><p:cTn id="${outer}" presetID="${presetID}" presetClass="${cls}" presetSubtype="${subtype}" fill="hold"${grp} nodeType="${nodeType}"><p:stCondLst><p:cond delay="0"/></p:stCondLst><p:childTnLst>${body}</p:childTnLst></p:cTn></p:par>`
 }
