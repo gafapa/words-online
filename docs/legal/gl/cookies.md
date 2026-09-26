@@ -1,43 +1,43 @@
-# Política de cookies y almacenamiento local
+# Política de cookies e almacenamento local
 
-{{siteName}} no utiliza cookies ni ninguna tecnología de seguimiento, analítica o publicidad. Solo guarda en tu navegador la información estrictamente necesaria para que la aplicación funcione, y esa información no se envía al titular.
+{{siteName}} non utiliza cookies nin ningunha tecnoloxía de seguimento, analítica ou publicidade. Só garda no teu navegador a información estritamente necesaria para que a aplicación funcione, e esa información non se envía ao titular.
 
-## 1. Qué son las cookies y el almacenamiento local
+## 1. Que son as cookies e o almacenamento local
 
-Las cookies y otras tecnologías de almacenamiento (localStorage, IndexedDB, Cache Storage) permiten a un sitio web guardar información en el dispositivo de la persona usuaria. El artículo 22.2 de la Ley 34/2002 (LSSI-CE) exige informar y obtener el consentimiento para usarlas, salvo cuando sean estrictamente necesarias para prestar un servicio expresamente solicitado por la persona usuaria.
+As cookies e outras tecnoloxías de almacenamento (localStorage, IndexedDB, Cache Storage) permítenlle a un sitio web gardar información no dispositivo da persoa usuaria. O artigo 22.2 da Lei 34/2002 (LSSI-CE) esixe informar e obter o consentimento para usalas, agás cando sexan estritamente necesarias para prestar un servizo expresamente solicitado pola persoa usuaria.
 
-## 2. Qué almacenamiento utiliza {{siteName}}
+## 2. Que almacenamento utiliza {{siteName}}
 
-Todo el almacenamiento es propio (no hay almacenamiento de terceros), se guarda solo en tu navegador y dura hasta que lo borres.
+Todo o almacenamento é propio (non hai almacenamento de terceiros), gárdase só no teu navegador e dura ata que o borres.
 
-| Categoría | Nombre técnico | Finalidad |
+| Categoría | Nome técnico | Finalidade |
 | --- | --- | --- |
-| Documentos | IndexedDB `words-online:<id>` y `words-online:<id>:comments` | Contenido de cada documento, comentarios, historial de versiones y autoría |
-| Registro de cambios firmados | IndexedDB `words-online-kv` | Permite reenviar a otros participantes los cambios de documentos abiertos con enlaces de lectura o de comentario |
-| Índice de documentos | localStorage `words-online:docs` | Lista de tus documentos: título, fecha, claves de acceso y archivo vinculado en Nextcloud |
-| Identidad | localStorage `words-online:user`, `words-online:writer-user-id` | Nombre y color que ven tus colaboradores; identificador técnico para la autoría |
-| Preferencias | localStorage `words-online:language`, `words-online:a11y`, `words-online:spelling`, `words-online:spelling-dictionary:<idioma>`, `words-online:zoom`, `wo-template-lang`, `diagram-libraries` | Idioma, accesibilidad, ortografía y diccionario personal, zoom, idioma de las plantillas y bibliotecas de formas elegidas |
-| Nextcloud (solo si lo configuras) | localStorage `words-online:nextcloud`, `words-online:nextcloud-server`, `words-online:nextcloud-folder`, `words-online:nextcloud-format`, `words-online:nextcloud-share` | Servidor, usuario y contraseña de aplicación, última carpeta y formato usados |
-| Funcionamiento sin conexión | Service worker y Cache Storage `workbox-precache-*`, `excalidraw-fonts`, `spelling`, `diagram-libs-*` | Archivos de la aplicación, tipos de letra, diccionarios y formas para usarla sin conexión |
+| Documentos | IndexedDB `words-online:<id>` e `words-online:<id>:comments` | Contido de cada documento, comentarios, historial de versións e autoría |
+| Rexistro de cambios asinados | IndexedDB `words-online-kv` | Permite reenviar a outros participantes os cambios de documentos abertos con ligazóns de lectura ou de comentario |
+| Índice de documentos | localStorage `words-online:docs` | Lista dos teus documentos: título, data, claves de acceso e ficheiro vinculado en Nextcloud |
+| Identidade | localStorage `words-online:user`, `words-online:writer-user-id` | Nome e cor que ven os teus colaboradores; identificador técnico para a autoría |
+| Preferencias | localStorage `words-online:language`, `words-online:a11y`, `words-online:spelling`, `words-online:spelling-dictionary:<idioma>`, `words-online:zoom`, `wo-template-lang`, `diagram-libraries` | Idioma, accesibilidade, ortografía e dicionario persoal, zoom, idioma dos modelos e bibliotecas de formas escollidas |
+| Nextcloud (só se o configuras) | localStorage `words-online:nextcloud`, `words-online:nextcloud-server`, `words-online:nextcloud-folder`, `words-online:nextcloud-format`, `words-online:nextcloud-share` | Servidor, usuario e contrasinal de aplicación, último cartafol e formato usados |
+| Funcionamento sen conexión | Service worker e Cache Storage `workbox-precache-*`, `excalidraw-fonts`, `spelling`, `diagram-libs-*` | Ficheiros da aplicación, tipos de letra, dicionarios e formas para usala sen conexión |
 
-Los nombres técnicos pueden cambiar entre versiones; las categorías y finalidades se mantienen. Las claves `words-online` provienen del nombre técnico del proyecto.
+Os nomes técnicos poden cambiar entre versións; as categorías e finalidades mantéñense. As claves `words-online` proveñen do nome técnico do proxecto.
 
-## 3. Por qué no hay aviso de cookies
+## 3. Por que non hai aviso de cookies
 
-Todo este almacenamiento es estrictamente necesario para prestar el servicio que solicitas (editar, guardar y compartir tus documentos, recordar tus preferencias y usar la aplicación sin conexión) y está exento de consentimiento según el artículo 22.2 de la LSSI-CE y la Guía sobre el uso de las cookies de la Agencia Española de Protección de Datos. No se usa para analítica, publicidad ni perfiles, y no se comparte con el titular ni con terceros.
+Todo este almacenamento é estritamente necesario para prestar o servizo que solicitas (editar, gardar e compartir os teus documentos, lembrar as túas preferencias e usar a aplicación sen conexión) e está exento de consentimento segundo o artigo 22.2 da LSSI-CE e a Guía sobre o uso das cookies da Axencia Española de Protección de Datos. Non se usa para analítica, publicidade nin perfís, e non se comparte co titular nin con terceiros.
 
-El servidor de alojamiento no instala cookies en este sitio. Si en el futuro se incorporase algún almacenamiento no exento, se solicitaría tu consentimiento antes de utilizarlo.
+O servidor de aloxamento non instala cookies neste sitio. Se no futuro se incorporase algún almacenamento non exento, solicitaríase o teu consentimento antes de utilizalo.
 
-## 4. Cómo consultar y borrar el almacenamiento
+## 4. Como consultar e borrar o almacenamento
 
-- **Un documento:** en la pantalla de inicio, abre el menú ⋮ del documento y elige *Quitar de este navegador*. Se borra de este navegador; las copias de tus colaboradores no se ven afectadas.
-- **Credenciales de Nextcloud:** en la cuenta de Nextcloud, *Cerrar sesión*.
-- **Todo:** en la configuración del navegador, borra los datos del sitio (en Chrome y Edge, *Configuración → Privacidad y seguridad → Cookies y datos de sitios*; en Firefox, *Ajustes → Privacidad y seguridad → Cookies y datos del sitio*; en Safari, *Ajustes → Privacidad → Gestionar datos de sitios web*).
+- **Un documento:** na pantalla de inicio, abre o menú ⋮ do documento e escolle *Quitar deste navegador*. Bórrase deste navegador; as copias dos teus colaboradores non se ven afectadas.
+- **Credenciais de Nextcloud:** na conta de Nextcloud, *Pechar sesión*.
+- **Todo:** na configuración do navegador, borra os datos do sitio (en Chrome e Edge, *Configuración → Privacidade e seguranza → Cookies e datos de sitios*; en Firefox, *Axustes → Privacidade e seguranza → Cookies e datos do sitio*; en Safari, *Axustes → Privacidade → Xestionar datos de sitios web*).
 
-Atención: borrar los datos del sitio elimina tus documentos de este dispositivo de forma irreversible. Descárgalos o guárdalos en Nextcloud antes.
+Atención: borrar os datos do sitio elimina os teus documentos deste dispositivo de forma irreversible. Descárgaos ou gárdaos en Nextcloud antes.
 
-En la navegación privada o de incógnito, el navegador borra todo este almacenamiento al cerrar la ventana.
+Na navegación privada ou de incógnito, o navegador borra todo este almacenamento ao pechar a xanela.
 
-## 5. Más información
+## 5. Máis información
 
-Consulta la [Política de privacidad](privacy.md) para saber qué datos existen y quién puede tratarlos.
+Consulta a [Política de privacidade](privacy.md) para saber que datos existen e quen pode tratalos.

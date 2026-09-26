@@ -1,63 +1,63 @@
-# Condiciones de uso
+# Terms of use
 
-Estas condiciones regulan el uso de {{siteName}}, una suite ofimática colaborativa gratuita que funciona en el navegador, pensada especialmente para centros educativos. Al utilizarla aceptas estas condiciones y el [Aviso legal](notice.md).
+These terms govern the use of {{siteName}}, a free collaborative office suite that runs in the browser and is designed especially for schools. By using it you accept these terms and the [Legal notice](notice.md).
 
-## 1. Qué ofrece {{siteName}}
+## 1. What {{siteName}} offers
 
-- Aplicaciones para crear documentos, hojas de cálculo, dibujos, diagramas y presentaciones, abrir y descargar archivos en formatos habituales y colaborar en tiempo real.
-- No hay cuentas ni un servidor central con copias de los documentos: se guardan en el navegador de cada persona y se sincronizan directamente entre quienes colaboran cuando coinciden conectados.
-- El uso es gratuito y no requiere registro.
+- Applications to create documents, spreadsheets, drawings, diagrams and presentations, open and download files in common formats and collaborate in real time.
+- There are no accounts and no central server with copies of the documents: they are stored in each person's browser and synchronised directly between collaborators when they are online at the same time.
+- Use is free of charge and requires no registration.
 
-## 2. Uso aceptable
+## 2. Acceptable use
 
-Te comprometes a utilizar {{siteName}} de forma lícita y respetuosa y, en particular, a no:
+You undertake to use {{siteName}} lawfully and respectfully and, in particular, not to:
 
-- crear o difundir contenidos ilícitos, violentos, discriminatorios, que inciten al odio o que atenten contra la dignidad, la intimidad o la propia imagen de otras personas;
-- acosar, amenazar o humillar a otras personas (incluido el ciberacoso entre alumnado);
-- incluir datos personales o imágenes de otras personas sin su autorización o la de sus representantes legales, o datos especialmente sensibles (por ejemplo, de salud) en documentos compartidos;
-- infringir derechos de propiedad intelectual o industrial de terceros;
-- introducir programas maliciosos, eludir los permisos de los enlaces (editar, comentar, ver) o interferir en el funcionamiento de la aplicación, de los servidores de señalización o de los equipos de otras personas;
-- utilizar la aplicación para enviar publicidad no solicitada.
+- create or spread content that is unlawful, violent, discriminatory, incites hatred or violates the dignity, privacy or image of other people;
+- harass, threaten or humiliate other people (including cyberbullying among pupils);
+- include personal data or images of other people without their permission or that of their legal representatives, or particularly sensitive data (for example, health data) in shared documents;
+- infringe third parties' intellectual or industrial property rights;
+- introduce malicious software, circumvent link permissions (edit, comment, view) or interfere with the operation of the application, the signalling servers or other people's devices;
+- use the application to send unsolicited advertising.
 
-En el ámbito escolar se aplican además las normas de convivencia y de uso de medios digitales del centro y las indicaciones del profesorado.
+In schools, the school's rules on behaviour and digital media and the teachers' instructions also apply.
 
-## 3. Tus contenidos
+## 3. Your content
 
-- Los documentos que creas son tuyos o, si los creas con otras personas, de todas ellas conforme a la Ley de Propiedad Intelectual (obra en colaboración). En el ámbito escolar, el centro puede establecer reglas sobre el uso de los trabajos del alumnado.
-- El titular no adquiere ningún derecho sobre tus contenidos, no tiene acceso a ellos y no los supervisa. Eres responsable de lo que escribes y compartes.
-- Quien tiene un enlace para compartir puede acceder al documento con el permiso que ese enlace otorga, y conserva su copia aunque dejes de compartir. Comparte los enlaces solo con quien deba tenerlos. Si un enlace llega a quien no debía, crea una copia del documento (*Archivo → Hacer una copia*), que tendrá claves nuevas, y deja de usar el original.
-- El historial de versiones y la autoría (quién escribió cada parte) se guardan en el propio documento y los ven todas las personas con acceso a él.
+- The documents you create are yours or, if you create them with other people, belong to all of them as a joint work under Spanish intellectual property law. In schools, the school may set rules on the use of pupils' work.
+- The owner acquires no rights over your content, has no access to it and does not monitor it. You are responsible for what you write and share.
+- Whoever has a sharing link can access the document with the permission that link grants, and keeps their copy even if you stop sharing. Share links only with those who should have them. If a link reaches someone who should not have it, make a copy of the document (*File → Make a copy*), which will have new keys, and stop using the original.
+- The version history and authorship (who wrote each part) are stored in the document itself and are visible to everyone with access to it.
 
-## 4. Disponibilidad y ausencia de garantías
+## 4. Availability and no warranty
 
-{{siteName}} se ofrece gratuitamente y «tal cual», sin garantía de disponibilidad, continuidad, ausencia de errores o idoneidad para un fin concreto. En particular:
+{{siteName}} is offered free of charge and "as is", without any warranty of availability, continuity, absence of errors or fitness for a particular purpose. In particular:
 
-- la colaboración depende de servidores de terceros (relays Nostr, STUN/TURN) y de que las redes permitan conexiones directas entre navegadores;
-- las conversiones de formato (Word, OpenDocument, Excel, PowerPoint, draw.io, etc.) pueden no conservar todos los elementos del archivo original;
-- el titular puede modificar, suspender o dejar de ofrecer la aplicación en cualquier momento.
+- collaboration depends on third-party servers (Nostr relays, STUN/TURN) and on networks allowing direct connections between browsers;
+- format conversions (Word, OpenDocument, Excel, PowerPoint, draw.io, etc.) may not keep every element of the original file;
+- the owner may change, suspend or stop offering the application at any time.
 
-## 5. Copias de seguridad
+## 5. Backups
 
-Los documentos se guardan solo en los navegadores de quienes los usan. **Hacer copias de seguridad es responsabilidad tuya.** Los documentos pueden perderse si borras los datos del navegador, usas la navegación privada, cambias de dispositivo o el navegador libera espacio (algunos navegadores, como Safari, borran los datos de sitios no utilizados durante un tiempo si la aplicación no está instalada).
+Documents are stored only in the browsers of the people who use them. **Making backups is your responsibility.** Documents may be lost if you clear your browser data, use private browsing, change device or the browser frees up space (some browsers, such as Safari, delete the data of sites not used for a while if the application is not installed).
 
-Te recomendamos instalar la aplicación, descargar tus documentos con regularidad (*Archivo → Descargar* o *Entregar*) o guardarlos en el Nextcloud de tu centro.
+We recommend installing the application, downloading your documents regularly (*File → Download* or *Hand in*) or saving them to your school's Nextcloud.
 
-## 6. Servicios de terceros
+## 6. Third-party services
 
-Algunas funciones usan servicios de terceros: relays y servidores STUN/TURN para la colaboración y, si los activas, Nextcloud, un servidor LanguageTool, asistentes de inteligencia artificial mediante WebMCP y el reconocimiento o la síntesis de voz del navegador. Estos servicios se rigen por sus propias condiciones y políticas de privacidad, y el titular no responde de ellos. Consulta la [Política de privacidad](privacy.md) y la [Nota sobre inteligencia artificial](ai.md).
+Some features use third-party services: relays and STUN/TURN servers for collaboration and, if you enable them, Nextcloud, a LanguageTool server, artificial intelligence assistants via WebMCP and the browser's speech recognition or synthesis. These services are governed by their own terms and privacy policies, and the owner is not liable for them. See the [Privacy policy](privacy.md) and the [Note on artificial intelligence](ai.md).
 
-## 7. Responsabilidad
+## 7. Liability
 
-El titular no responde de los daños derivados del uso de la aplicación, de la pérdida de documentos, de los contenidos creados o compartidos por las personas usuarias ni de los servicios de terceros, salvo en los casos en que la ley no permita excluir o limitar la responsabilidad (en particular, dolo o culpa grave) y sin perjuicio de los derechos de las personas consumidoras.
+The owner is not liable for damage arising from the use of the application, the loss of documents, content created or shared by users or third-party services, except where the law does not allow liability to be excluded or limited (in particular, wilful misconduct or gross negligence) and without prejudice to consumers' rights.
 
-## 8. Propiedad intelectual del programa
+## 8. Intellectual property in the program
 
-El programa, su diseño y sus componentes están protegidos por derechos de propiedad intelectual, según se indica en el [Aviso legal](notice.md) y en [Licencias de software de terceros](../../THIRD_PARTY_NOTICES.md).
+The program, its design and its components are protected by intellectual property rights, as set out in the [Legal notice](notice.md) and in [Third-party software licenses](../../THIRD_PARTY_NOTICES.md).
 
-## 9. Modificación de las condiciones
+## 9. Changes to the terms
 
-El titular puede modificar estas condiciones. La versión vigente es la publicada en esta página, con su fecha de actualización.
+The owner may change these terms. The version in force is the one published on this page, with its update date.
 
-## 10. Ley aplicable y jurisdicción
+## 10. Applicable law and jurisdiction
 
-Estas condiciones se rigen por la legislación española, en los términos indicados en el [Aviso legal](notice.md).
+These terms are governed by Spanish law, as set out in the [Legal notice](notice.md).

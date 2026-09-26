@@ -2,6 +2,8 @@
 
 import type { Issue } from '../types'
 import { patternRule, w, type Rule } from './util'
+import { esAccentRules } from './es-accents'
+import { esGrammarRules } from './es-grammar'
 
 type Found = Omit<Issue, 'kind' | 'rule'>
 
@@ -126,8 +128,15 @@ export const dequeismo: Rule = {
   kind: 'grammar',
   check: patternRule([
     {
-      re: w('(pienso|piensas|piensa|pensamos|pensáis|piensan|creo|crees|cree|creemos|creéis|creen|opino|opinas|opina|opinamos|opinan|considero|consideras|considera|consideramos|consideran|supongo|supones|supone|imagino|resulta|dijo|dije|dijeron|digo|dice|dicen) de que'),
+      re: w(
+        '(pienso|piensas|piensa|pensamos|pensáis|piensan|pensaba|pensé|pensó|creo|crees|cree|creemos|creéis|creen|creía|creí|creyó|opino|opinas|opina|opinamos|opinan|opinaba|' +
+          'considero|consideras|considera|consideramos|consideran|consideró|supongo|supones|supone|suponemos|suponen|imagino|imaginas|imagina|' +
+          'dijo|dije|dijeron|dijimos|digo|dice|dicen|decía|comentó|comenté|comentaron|afirmó|afirma|afirman|explicó|expliqué|explicaron|anunció|anunciaron|' +
+          'reconoció|reconozco|reconoce|mencionó|confesó|sugirió|sugiero|parece|parecía|es posible|es probable|es necesario|es importante|es seguro|es evidente|es obvio|es verdad|es cierto) de que',
+      ),
       fix: (m) => [`${m[1]} que`],
+      // "¿Qué piensas de que venga?": "pensar de" asks for an opinion.
+      unless: (m, text) => /(?:^|[^\p{L}])qu[ée]\s+$/iu.test(text.slice(0, m.index)),
     },
   ]),
 }
@@ -218,4 +227,4 @@ export const questionMarks: Rule = {
   },
 }
 
-export const esRules: Rule[] = [aVerHaber, echoHecho, hallaHaya, sinoSiNo, ahiHay, aHa, tuboTuvo, porQue, dequeismo, joined, preteriteS, questionMarks]
+export const esRules: Rule[] = [aVerHaber, echoHecho, hallaHaya, sinoSiNo, ahiHay, aHa, tuboTuvo, porQue, dequeismo, joined, preteriteS, questionMarks, ...esAccentRules, ...esGrammarRules]

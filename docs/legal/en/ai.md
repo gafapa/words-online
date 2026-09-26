@@ -1,30 +1,30 @@
-# Nota sobre inteligencia artificial
+# Note on artificial intelligence
 
-{{siteName}} no incluye sistemas de inteligencia artificial. Esta nota explica, a efectos de transparencia y del Reglamento (UE) 2024/1689 de Inteligencia Artificial, qué funciones podrían confundirse con IA y cómo funciona la conexión opcional con asistentes externos mediante WebMCP.
+{{siteName}} does not include any artificial intelligence systems. For transparency and for the purposes of Regulation (EU) 2024/1689 (Artificial Intelligence Act), this note explains which features might be mistaken for AI and how the optional connection with external assistants via WebMCP works.
 
-## 1. {{siteName}} no incorpora IA
+## 1. {{siteName}} does not include AI
 
-- **Ortografía y gramática:** diccionarios Hunspell y reglas escritas a mano que se ejecutan en tu navegador; para el inglés, además, Harper, un corrector gramatical basado en reglas. No se usan modelos de aprendizaje automático ni se envía texto a ningún servidor (salvo que actives un servidor LanguageTool).
-- **Plantillas:** se generan con código fijo, sin IA.
-- **Lectura en voz alta y dictado:** usan las funciones de voz del navegador. Algunos navegadores emplean para ello servicios de reconocimiento o síntesis de voz de su fabricante, que pueden basarse en IA; esos servicios los presta el fabricante del navegador bajo sus propias condiciones.
-- {{siteName}} no genera contenidos, no evalúa al alumnado, no elabora perfiles ni toma decisiones automatizadas.
+- **Spelling and grammar:** Hunspell dictionaries and hand-written rules that run in your browser; for English, also Harper, a rule-based grammar checker. No machine learning models are used and no text is sent to any server (unless you enable a LanguageTool server).
+- **Templates:** generated with fixed code, without AI.
+- **Read aloud and dictation:** use the browser's speech features. Some browsers use speech recognition or synthesis services of their maker for this, which may be based on AI; those services are provided by the browser maker under its own terms.
+- {{siteName}} does not generate content, assess pupils, profile people or make automated decisions.
 
-## 2. Asistentes externos mediante WebMCP (opcional)
+## 2. External assistants via WebMCP (optional)
 
-WebMCP es una forma estándar de que una página web ofrezca «herramientas» a un asistente de IA que funciona en el navegador (por ejemplo, una extensión o un agente elegido por la persona usuaria). Cuando esta función está disponible y la activas expresamente (está **desactivada por defecto**), el asistente que tú elijas puede leer el documento abierto y proponer o realizar cambios en él a través de esas herramientas.
+WebMCP is a standard way for a web page to offer "tools" to an AI assistant running in the browser (for example, an extension or an agent chosen by the user). When this feature is available and you expressly enable it (it is **off by default**), the assistant you choose can read the open document and propose or make changes to it through those tools.
 
-- {{siteName}} no elige, no incluye ni recomienda ningún asistente. El proveedor del asistente es el proveedor del sistema de IA a efectos del Reglamento de IA y trata el contenido que lee conforme a sus propias condiciones y política de privacidad.
-- Quien decide usar un asistente (la persona usuaria o, en el ámbito escolar, el centro) puede tener la consideración de responsable del despliegue, con las obligaciones que correspondan (por ejemplo, alfabetización en IA, art. 4, y transparencia, art. 50).
-- Los cambios que realiza un asistente se registran como sugerencias o con su propia autoría, de modo que las demás personas pueden distinguirlos, revisarlos y aceptarlos o rechazarlos. El historial de versiones permite volver a un estado anterior.
-- Desactiva la función cuando no la uses. Puedes desactivarla en cualquier momento.
+- {{siteName}} does not choose, include or recommend any assistant. The assistant's provider is the provider of the AI system for the purposes of the AI Act and processes the content it reads under its own terms and privacy policy.
+- Whoever decides to use an assistant (the user or, in schools, the school) may be considered a deployer, with the corresponding obligations (for example, AI literacy, Art. 4, and transparency, Art. 50).
+- Changes made by an assistant are recorded as suggestions or under its own authorship, so that other people can tell them apart, review them and accept or reject them. The version history allows returning to an earlier state.
+- Turn the feature off when you are not using it. You can turn it off at any time.
 
-## 3. Recomendaciones para el uso educativo
+## 3. Recommendations for educational use
 
-- Seguir las normas del centro y de la Administración educativa sobre el uso de IA, especialmente en tareas evaluables.
-- No proporcionar a los asistentes datos personales del alumnado ni documentos con información sensible.
-- Con menores, usar asistentes solo con la supervisión del profesorado o de la familia y, para menores de 14 años, cuando el servicio lo requiera, con el consentimiento de sus madres, padres o tutores (art. 7 LOPDGDD).
-- Indicar claramente qué partes de un trabajo se han elaborado con ayuda de IA.
+- Follow the rules of the school and the education authority on the use of AI, especially in assessed work.
+- Do not give assistants pupils' personal data or documents with sensitive information.
+- With minors, use assistants only under the supervision of teachers or the family and, for children under 14, where the service requires it, with the consent of their parents or guardians (Art. 7 LOPDGDD).
+- State clearly which parts of a piece of work were produced with the help of AI.
 
-## 4. Más información
+## 4. More information
 
-Consulta la [Política de privacidad](privacy.md) y la [Información para centros educativos](schools.md).
+See the [Privacy policy](privacy.md) and the [Information for schools](schools.md).

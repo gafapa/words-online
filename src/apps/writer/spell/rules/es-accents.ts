@@ -44,8 +44,8 @@ const last = (re: RegExp, fix: string, unless?: Pattern['unless']): Pattern => (
 const EL_VERBS =
   'es|era|fue|será|sería|está|estaba|estuvo|estará|tiene|tenía|tuvo|tendrá|dijo|dice|decía|hizo|hace|hacía|puede|podía|pudo|podrá|' +
   'quiere|quería|quiso|sabe|sabía|supo|vive|vivía|viene|venía|va|iba|ha|había|habrá|habría|cree|creía|piensa|pensaba|llegó|llega|' +
-  'estudia|trabaja|trabajaba|juega|habla|hablaba|vio|ve|sigue|necesita|conoce|prefiere|parece|dijera|debe|debía|' +
-  'me|se|lo|la|le|les|los|las|nos|también|tampoco'
+  'estudia|trabaja|trabajaba|juega|hablaba|vio|ve|sigue|necesita|conoce|prefiere|parece|dijera|debía|' +
+  'me|se|lo|le|les|los|las|nos|también|tampoco'
 const TU_VERBS =
   'eres|estás|tienes|sabes|puedes|quieres|has|vas|dices|crees|piensas|haces|serás|fuiste|estabas|tenías|eras|podrías|deberías|debes|' +
   'también|tampoco|me|te|lo|la|le|nos|les|los|las|ya|sí'
@@ -58,16 +58,15 @@ export const esDiacritic: Rule = {
   check: patternRule([
     // él: an article is never followed by a verb, a pronoun or punctuation.
     word(w(`el${PUNCT}`, 'gu'), 'él'),
-    last(w(`(?:${EL_VERBS}|)(?:^|(?<=[.!?¿¡—–"«“]\\s*))El(?= (?:${EL_VERBS})(?![\\p{L}]))`, 'gu'), 'Él'),
-    { ...last(w(`el(?= (?:${EL_VERBS})(?![\\p{L}'’-]))`, 'gu'), 'él') },
+    word(w(`[Ee]l(?= (?:${EL_VERBS})(?![\\p{L}'’-]))`, 'gu'), 'él'),
     last(w('(?:con|para|por|sin|contra|según|entre|hacia|sobre|ante|tras|desde|hasta) el(?= (?:y|o|ni|pero|porque|mientras|también|tampoco)(?![\\p{L}]))', 'giu'), 'él'),
     // tú
     word(w(`tu${PUNCT}`, 'giu'), 'tú'),
-    { ...word(w(`tu(?= (?:${TU_VERBS})(?![\\p{L}'’-]))`, 'giu'), 'tú') },
+    word(w(`tu(?= (?:${TU_VERBS})(?![\\p{L}'’-]))`, 'giu'), 'tú'),
     word(w('tu(?= (?:mismo|misma)(?:\\s*[.,;:!?]| (?:lo|la|los|las|le|les|te|me|has|puedes|sabes|dices|eres|debes|tienes)(?![\\p{L}])))', 'giu'), 'tú'),
     last(w('entre tu(?= y (?:yo|él|ella)(?![\\p{L}]))', 'giu'), 'tú'),
     // mí
-    word(w(`mi${PUNCT}`, 'giu'), 'mí', (m, text) => /(?:^|[^\p{L}])(?:do|re|fa|sol|la|si)\s*,?\s*$/iu.test(before(m, text)) || /^\s*,?\s*(?:fa|sol|re|do)(?![\p{L}])/iu.test(after(m, text)) || /(?:^|[^\p{L}])(?:en|nota)\s*$/iu.test(before(m, text))),
+    word(w(`mi${PUNCT}`, 'giu'), 'mí', (m, text) => /(?:^|[^\p{L}])(?:do|re|fa|sol|la|si)\s*,?\s*$/iu.test(before(m, text)) || /^\s*,?\s*(?:fa|sol|re|do)(?![\p{L}])/iu.test(after(m, text)) || /(?:^|[^\p{L}])nota\s*$/iu.test(before(m, text))),
     last(w('(?:a|para|de|por|sin|contra|ante|hacia|según|sobre|entre|tras) mi(?= (?:me|también|tampoco|no me|no nos|no)(?![\\p{L}]))', 'giu'), 'mí'),
     last(w('(?:a|para|de|por|sin|contra|ante|hacia|según|sobre|entre|tras) mi(?= (?:mismo|misma)(?:\\s*[.,;:!?]| me(?![\\p{L}])))', 'giu'), 'mí'),
     // sé (from saber)
@@ -79,18 +78,18 @@ export const esDiacritic: Rule = {
       (m, text) => /^ (?:mujer|lugar|mar|placer|hogar|ayer|azar|bar|par|militar|popular|particular|familiar|ser)(?![\p{L}])/iu.test(after(m, text)),
     ),
     // té (the drink)
-    last(w('(?:taza|tazas|bolsita|bolsitas|hoja|hojas|tetera|teteras|un|del) de te(?![\\p{L}])|(?:taza|tazas|bolsita|bolsitas|hoja|hojas|tetera) de te', 'giu'), 'té'),
+    last(w('(?:taza|tazas|bolsita|bolsitas|hoja|hojas|tetera|teteras) de te', 'giu'), 'té'),
     word(w('te(?= (?:verde|negro|rojo|blanco|helado|chai|matcha|con leche|con limón|de menta|de manzanilla)(?![\\p{L}]))', 'giu'), 'té'),
-    last(w(`(?:un|del|el) te(?=\\s*[.,;!?]| (?:verde|negro|rojo|blanco|caliente|frío|helado|con limón|con leche)(?![\\p{L}]))`, 'giu'), 'té'),
+    last(w(`(?:un|del) te(?=\\s*[.,;!?]| (?:verde|negro|rojo|blanco|caliente|frío|helado|con limón|con leche)(?![\\p{L}]))`, 'giu'), 'té'),
     // más
     last(
-      w('(?:lo|los|las|la|el|sin|de|cada vez|mucho|mucha|muchos|muchas|poco|algo|nada|aún|todavía|es|son|cuanto|qué|uno|una|nadie|alguien|ya no|no|un poco|mucho|bastante|cada día|y) mas', 'gu'),
+      w('(?:lo|los|las|la|el|sin|de|cada vez|mucho|mucha|muchos|muchas|poco|algo|nada|aún|todavía|es|son|cuanto|qué|uno|una|nadie|alguien|ya no|no|un poco|bastante|cada día) mas', 'giu'),
       'más',
-      (m, text) => /^\s*(?:,|$)/u.test(after(m, text)) && /(?:^|[^\p{L}])y mas$/u.test(m[0]),
+      (m) => !m[0].endsWith('mas'),
     ),
-    word(w('mas(?= (?:o menos|que nunca|tarde|temprano|pronto|bien|allá|adelante|arriba|abajo|lejos|cerca|grande|pequeño|pequeña|importante|de lo que|de la cuenta|veces|que nada|información|datos)(?![\\p{L}]))', 'gu'), 'más'),
+    word(w('mas(?= (?:o menos|que nunca|tarde|temprano|pronto|bien|allá|adelante|arriba|abajo|lejos|cerca|grande|pequeño|pequeña|importante|de lo que|de la cuenta|veces|que nada|información|datos)(?![\\p{L}]))', 'giu'), 'más'),
     // sí
-    last(w('(?:eso|esto|claro que|claro|ya lo creo que|a que) si(?=\\s*[.,;!?…])', 'giu'), 'sí'),
+    last(w('(?:eso|esto|claro que|ya lo creo que|a que) si(?=\\s*[.,;!?…])', 'giu'), 'sí'),
     last(w('(?:creo que|dijo que|dice que|decir que|contestó que|respondió que|parece que|pienso que|digo que) si(?=\\s*[.!?…])', 'giu'), 'sí'),
     {
       re: w('(de|en|por|para|entre|sobre|a|consigo) si (mismo|misma|mismos|mismas)', 'giu'),

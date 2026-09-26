@@ -1,58 +1,58 @@
-# Declaración de accesibilidad
+# Accessibility statement
 
-{{owner.name}} se compromete a hacer accesible {{siteName}} de conformidad con el Real Decreto 1112/2018, de 7 de septiembre, sobre accesibilidad de los sitios web y aplicaciones para dispositivos móviles del sector público, que transpone la Directiva (UE) 2016/2102.
+{{owner.name}} is committed to making {{siteName}} accessible in accordance with Spanish Royal Decree 1112/2018 of 7 September on the accessibility of public sector websites and mobile applications, which transposes Directive (EU) 2016/2102.
 
-Esta declaración se aplica al sitio web y aplicación {{siteName}} ({{siteUrl}}) y a las instalaciones que se publiquen sin modificaciones. {{#if accessibility.complaintBody}}{{else}}El titular no forma parte del sector público, por lo que el Real Decreto 1112/2018 no le es de aplicación obligatoria: esta declaración se ofrece voluntariamente y sigue su modelo. Cuando un centro educativo o una Administración pública publica su propia instalación, debe elaborar su propia declaración a partir de esta.{{/if}}
+This statement applies to the {{siteName}} website and application ({{siteUrl}}) and to installations published without changes. {{#if accessibility.complaintBody}}{{else}}The owner is not part of the public sector, so Royal Decree 1112/2018 is not mandatory for it: this statement is provided voluntarily and follows its model. When a school or a public administration publishes its own installation, it must draw up its own statement based on this one.{{/if}}
 
-## Situación de cumplimiento
+## Compliance status
 
-{{#if accessibility.status=full}}Este sitio web es **plenamente conforme** con el Real Decreto 1112/2018.{{/if}}{{#if accessibility.status=partial}}Este sitio web es **parcialmente conforme** con el Real Decreto 1112/2018 y con la norma UNE-EN 301 549:2022 (que incorpora el nivel AA de las Pautas WCAG 2.1) debido a la falta de conformidad de los aspectos que se indican a continuación.{{/if}}{{#if accessibility.status=none}}Este sitio web **no es conforme** con el Real Decreto 1112/2018. Los aspectos no accesibles se indican a continuación.{{/if}}
+{{#if accessibility.status=full}}This website is **fully compliant** with Royal Decree 1112/2018.{{/if}}{{#if accessibility.status=partial}}This website is **partially compliant** with Royal Decree 1112/2018 and with standard EN 301 549 (UNE-EN 301 549:2022, which incorporates level AA of WCAG 2.1) due to the non-compliances listed below.{{/if}}{{#if accessibility.status=none}}This website is **not compliant** with Royal Decree 1112/2018. The non-accessible aspects are listed below.{{/if}}
 
-La relación siguiente procede de una revisión preliminar y está pendiente de confirmar mediante una auditoría completa con la metodología de la norma UNE-EN 301 549.
+The following list comes from a preliminary review and is pending confirmation by a full audit following the EN 301 549 methodology.
 
-## Contenido no accesible
+## Non-accessible content
 
-### Falta de conformidad con el Real Decreto 1112/2018
+### Non-compliance with Royal Decree 1112/2018
 
-- **Hoja de cálculo.** La cuadrícula se dibuja en un lienzo (canvas): los lectores de pantalla no pueden recorrer las celdas como una tabla, y la ortografía del navegador no está disponible en el editor de celdas (WCAG 1.3.1, 4.1.2).
-- **Dibujo.** El editor de dibujo funciona sobre un lienzo: las formas no se exponen a las tecnologías de apoyo, no tienen alternativa textual y su creación y edición requieren un dispositivo apuntador (WCAG 1.1.1, 2.1.1, 4.1.2).
-- **Diagramas y presentaciones.** Las formas y conectores son gráficos SVG sin nombre accesible completo; mover, conectar y redimensionar formas depende principalmente del ratón o de la pantalla táctil (WCAG 1.1.1, 2.1.1, 4.1.2).
-- **Procesador de textos.** Las marcas de ortografía y gramática, la autoría por colores y los cursores de otras personas se muestran solo visualmente y no se anuncian a los lectores de pantalla (WCAG 1.3.1, 1.4.1, 4.1.3).
-- **Colaboración.** La llegada de colaboradores, sus selecciones y los cambios que realizan en tiempo real no se comunican mediante mensajes de estado accesibles (WCAG 4.1.3).
-- **Editor de ecuaciones y teclado virtual** (componente de terceros): algunos controles no tienen nombre accesible en todos los idiomas (WCAG 4.1.2).
-- **Archivos generados.** Los PDF creados con la función de imprimir del navegador pueden no estar etiquetados, y las imágenes exportadas no incluyen texto alternativo (WCAG 1.1.1, 1.3.1).
-- **Dictado y lectura en voz alta.** Dependen de las funciones de voz del navegador y no están disponibles en todos los navegadores ni idiomas.
+- **Spreadsheet.** The grid is drawn on a canvas: screen readers cannot move through cells as a table, and the browser's spell checker is not available in the cell editor (WCAG 1.3.1, 4.1.2).
+- **Drawing.** The drawing editor works on a canvas: shapes are not exposed to assistive technologies, have no text alternative, and creating and editing them requires a pointing device (WCAG 1.1.1, 2.1.1, 4.1.2).
+- **Diagrams and presentations.** Shapes and connectors are SVG graphics without a complete accessible name; moving, connecting and resizing shapes relies mainly on a mouse or touch screen (WCAG 1.1.1, 2.1.1, 4.1.2).
+- **Word processor.** Spelling and grammar marks, colour-coded authorship and other people's cursors are shown only visually and are not announced to screen readers (WCAG 1.3.1, 1.4.1, 4.1.3).
+- **Collaboration.** Collaborators joining, their selections and the changes they make in real time are not communicated through accessible status messages (WCAG 4.1.3).
+- **Equation editor and virtual keyboard** (third-party component): some controls lack an accessible name in every language (WCAG 4.1.2).
+- **Generated files.** PDFs created with the browser's print function may not be tagged, and exported images include no text alternative (WCAG 1.1.1, 1.3.1).
+- **Dictation and read aloud.** They depend on the browser's speech features and are not available in every browser or language.
 
-### Carga desproporcionada
+### Disproportionate burden
 
-No se invoca.
+Not invoked.
 
-### Contenido que no entra en el ámbito de la legislación aplicable
+### Content outside the scope of the applicable legislation
 
-- Los documentos creados por las personas usuarias y los archivos que abren, que son contenidos de terceros que no están bajo el control del titular.
-- Los servicios y sitios de terceros enlazados o utilizados opcionalmente (Nextcloud, LanguageTool, asistentes de inteligencia artificial).
+- Documents created by users and the files they open, which are third-party content not under the owner's control.
+- Third-party services and sites linked or optionally used (Nextcloud, LanguageTool, artificial intelligence assistants).
 
-## Preparación de la presente declaración
+## Preparation of this statement
 
-- Fecha de elaboración: {{accessibility.preparedOn}}.
-- Método: {{#if accessibility.method=audit}}auditoría externa{{else}}autoevaluación realizada por el titular{{/if}}.
-{{#if accessibility.reviewedOn}}- Última revisión: {{accessibility.reviewedOn}}.
+- Date prepared: {{accessibility.preparedOn}}.
+- Method: {{#if accessibility.method=audit}}external audit{{else}}self-assessment carried out by the owner{{/if}}.
+{{#if accessibility.reviewedOn}}- Last reviewed: {{accessibility.reviewedOn}}.
 {{/if}}
-## Funciones de accesibilidad disponibles
+## Available accessibility features
 
-El botón *Accesibilidad* (o `Alt+Mayús+A`) permite elegir tipos de letra de lectura (OpenDyslexic, Atkinson Hyperlegible), tamaño del texto, interlineado y espaciado, temas oscuros y de alto contraste, reducción del movimiento, puntero grande, contorno de foco grueso, regla y máscara de lectura, lectura en voz alta y dictado. La interfaz se puede usar con el teclado (`F10` para la barra de menús) e incluye un enlace para saltar al contenido.
+The *Accessibility* button (or `Alt+Shift+A`) lets you choose reading fonts (OpenDyslexic, Atkinson Hyperlegible), text size, line and letter spacing, dark and high-contrast themes, reduced motion, a large pointer, a thick focus outline, a reading ruler and mask, read aloud and dictation. The interface can be used with the keyboard (`F10` for the menu bar) and includes a skip-to-content link.
 
-## Observaciones y datos de contacto
+## Feedback and contact details
 
-Puedes realizar comunicaciones sobre requisitos de accesibilidad (artículo 10.2.a del Real Decreto 1112/2018), por ejemplo:
+You can send communications about accessibility requirements (Article 10(2)(a) of Royal Decree 1112/2018), for example to:
 
-- informar sobre cualquier posible incumplimiento por parte de este sitio web;
-- transmitir otras dificultades de acceso al contenido;
-- formular cualquier otra consulta o sugerencia de mejora;
-- solicitar información accesible sobre contenidos excluidos del ámbito de aplicación o declarados no accesibles,
+- report any possible non-compliance by this website;
+- report other difficulties in accessing content;
+- ask any other question or suggest an improvement;
+- request accessible information about content excluded from the scope or declared non-accessible,
 
-escribiendo a {{accessibility.contactEmail}}. Las comunicaciones se responderán en el plazo máximo de veinte días hábiles.
+by writing to {{accessibility.contactEmail}}. Communications will be answered within twenty working days at most.
 
-## Procedimiento de aplicación
+## Enforcement procedure
 
-{{#if accessibility.complaintBody}}Si, una vez realizada una solicitud de información accesible o una queja, esta hubiera sido desestimada, no se estuviera de acuerdo con la decisión adoptada o la respuesta no cumpliera los requisitos del artículo 12.5 del Real Decreto 1112/2018, la persona interesada podrá iniciar una reclamación ante {{accessibility.complaintBody}}, conforme al artículo 13 del Real Decreto 1112/2018 y a la Ley 39/2015, de 1 de octubre, del Procedimiento Administrativo Común de las Administraciones Públicas.{{else}}Como el titular no forma parte del sector público, no existe un procedimiento administrativo de reclamación frente a él. Si la respuesta no te resulta satisfactoria, puedes volver a dirigirte al titular. Si utilizas {{siteName}} a través de un centro educativo público o de una Administración que publica su propia instalación, puedes presentar la queja o reclamación ante su unidad responsable de accesibilidad (en Galicia, la de la Consellería competente en educación), conforme a los artículos 12 y 13 del Real Decreto 1112/2018.{{/if}} El Observatorio de Accesibilidad Web de la Administración General del Estado ofrece información sobre la accesibilidad del sector público.
+{{#if accessibility.complaintBody}}If, after a request for accessible information or a complaint, it has been rejected, you disagree with the decision taken or the reply does not meet the requirements of Article 12(5) of Royal Decree 1112/2018, you may file a claim with {{accessibility.complaintBody}}, under Article 13 of Royal Decree 1112/2018 and Spanish Law 39/2015 of 1 October on the Common Administrative Procedure of Public Administrations.{{else}}As the owner is not part of the public sector, there is no administrative complaint procedure against it. If you are not satisfied with the reply, you can contact the owner again. If you use {{siteName}} through a public school or a public administration that publishes its own installation, you can file a complaint or claim with its accessibility unit (in Galicia, that of the regional ministry responsible for education), under Articles 12 and 13 of Royal Decree 1112/2018.{{/if}} The Web Accessibility Observatory of the Spanish General State Administration provides information on public sector accessibility.

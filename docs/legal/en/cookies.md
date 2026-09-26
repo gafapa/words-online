@@ -1,43 +1,43 @@
-# Política de cookies y almacenamiento local
+# Cookies and local storage policy
 
-{{siteName}} no utiliza cookies ni ninguna tecnología de seguimiento, analítica o publicidad. Solo guarda en tu navegador la información estrictamente necesaria para que la aplicación funcione, y esa información no se envía al titular.
+{{siteName}} does not use cookies or any tracking, analytics or advertising technology. It only stores in your browser the information strictly necessary for the application to work, and that information is not sent to the owner.
 
-## 1. Qué son las cookies y el almacenamiento local
+## 1. What cookies and local storage are
 
-Las cookies y otras tecnologías de almacenamiento (localStorage, IndexedDB, Cache Storage) permiten a un sitio web guardar información en el dispositivo de la persona usuaria. El artículo 22.2 de la Ley 34/2002 (LSSI-CE) exige informar y obtener el consentimiento para usarlas, salvo cuando sean estrictamente necesarias para prestar un servicio expresamente solicitado por la persona usuaria.
+Cookies and other storage technologies (localStorage, IndexedDB, Cache Storage) allow a website to store information on the user's device. Article 22(2) of Spanish Law 34/2002 (LSSI-CE) requires information and consent to use them, except where they are strictly necessary to provide a service explicitly requested by the user.
 
-## 2. Qué almacenamiento utiliza {{siteName}}
+## 2. What storage {{siteName}} uses
 
-Todo el almacenamiento es propio (no hay almacenamiento de terceros), se guarda solo en tu navegador y dura hasta que lo borres.
+All storage is first-party (there is no third-party storage), is kept only in your browser and lasts until you delete it.
 
-| Categoría | Nombre técnico | Finalidad |
+| Category | Technical name | Purpose |
 | --- | --- | --- |
-| Documentos | IndexedDB `words-online:<id>` y `words-online:<id>:comments` | Contenido de cada documento, comentarios, historial de versiones y autoría |
-| Registro de cambios firmados | IndexedDB `words-online-kv` | Permite reenviar a otros participantes los cambios de documentos abiertos con enlaces de lectura o de comentario |
-| Índice de documentos | localStorage `words-online:docs` | Lista de tus documentos: título, fecha, claves de acceso y archivo vinculado en Nextcloud |
-| Identidad | localStorage `words-online:user`, `words-online:writer-user-id` | Nombre y color que ven tus colaboradores; identificador técnico para la autoría |
-| Preferencias | localStorage `words-online:language`, `words-online:a11y`, `words-online:spelling`, `words-online:spelling-dictionary:<idioma>`, `words-online:zoom`, `wo-template-lang`, `diagram-libraries` | Idioma, accesibilidad, ortografía y diccionario personal, zoom, idioma de las plantillas y bibliotecas de formas elegidas |
-| Nextcloud (solo si lo configuras) | localStorage `words-online:nextcloud`, `words-online:nextcloud-server`, `words-online:nextcloud-folder`, `words-online:nextcloud-format`, `words-online:nextcloud-share` | Servidor, usuario y contraseña de aplicación, última carpeta y formato usados |
-| Funcionamiento sin conexión | Service worker y Cache Storage `workbox-precache-*`, `excalidraw-fonts`, `spelling`, `diagram-libs-*` | Archivos de la aplicación, tipos de letra, diccionarios y formas para usarla sin conexión |
+| Documents | IndexedDB `words-online:<id>` and `words-online:<id>:comments` | Content of each document, comments, version history and authorship |
+| Signed change log | IndexedDB `words-online-kv` | Allows passing on to other participants the changes of documents opened with view or comment links |
+| Document index | localStorage `words-online:docs` | List of your documents: title, date, access keys and linked Nextcloud file |
+| Identity | localStorage `words-online:user`, `words-online:writer-user-id` | Name and colour your collaborators see; technical identifier for authorship |
+| Preferences | localStorage `words-online:language`, `words-online:a11y`, `words-online:spelling`, `words-online:spelling-dictionary:<language>`, `words-online:zoom`, `wo-template-lang`, `diagram-libraries` | Language, accessibility, spelling and personal dictionary, zoom, template language and chosen shape libraries |
+| Nextcloud (only if you set it up) | localStorage `words-online:nextcloud`, `words-online:nextcloud-server`, `words-online:nextcloud-folder`, `words-online:nextcloud-format`, `words-online:nextcloud-share` | Server, user name and app password, last folder and format used |
+| Offline use | Service worker and Cache Storage `workbox-precache-*`, `excalidraw-fonts`, `spelling`, `diagram-libs-*` | Application files, fonts, dictionaries and shapes for offline use |
 
-Los nombres técnicos pueden cambiar entre versiones; las categorías y finalidades se mantienen. Las claves `words-online` provienen del nombre técnico del proyecto.
+Technical names may change between versions; categories and purposes remain the same. The `words-online` keys come from the project's technical name.
 
-## 3. Por qué no hay aviso de cookies
+## 3. Why there is no cookie banner
 
-Todo este almacenamiento es estrictamente necesario para prestar el servicio que solicitas (editar, guardar y compartir tus documentos, recordar tus preferencias y usar la aplicación sin conexión) y está exento de consentimiento según el artículo 22.2 de la LSSI-CE y la Guía sobre el uso de las cookies de la Agencia Española de Protección de Datos. No se usa para analítica, publicidad ni perfiles, y no se comparte con el titular ni con terceros.
+All of this storage is strictly necessary to provide the service you request (editing, saving and sharing your documents, remembering your preferences and using the application offline) and is exempt from consent under Article 22(2) LSSI-CE and the Spanish Data Protection Agency's Guide on the use of cookies. It is not used for analytics, advertising or profiling, and is not shared with the owner or with third parties.
 
-El servidor de alojamiento no instala cookies en este sitio. Si en el futuro se incorporase algún almacenamiento no exento, se solicitaría tu consentimiento antes de utilizarlo.
+The hosting server does not set cookies on this site. If any non-exempt storage were added in the future, your consent would be requested before using it.
 
-## 4. Cómo consultar y borrar el almacenamiento
+## 4. How to view and delete the storage
 
-- **Un documento:** en la pantalla de inicio, abre el menú ⋮ del documento y elige *Quitar de este navegador*. Se borra de este navegador; las copias de tus colaboradores no se ven afectadas.
-- **Credenciales de Nextcloud:** en la cuenta de Nextcloud, *Cerrar sesión*.
-- **Todo:** en la configuración del navegador, borra los datos del sitio (en Chrome y Edge, *Configuración → Privacidad y seguridad → Cookies y datos de sitios*; en Firefox, *Ajustes → Privacidad y seguridad → Cookies y datos del sitio*; en Safari, *Ajustes → Privacidad → Gestionar datos de sitios web*).
+- **One document:** on the home screen, open the document's ⋮ menu and choose *Remove from this browser*. It is deleted from this browser; your collaborators' copies are not affected.
+- **Nextcloud credentials:** in the Nextcloud account, *Sign out*.
+- **Everything:** in your browser settings, clear the site's data (in Chrome and Edge, *Settings → Privacy and security → Cookies and site data*; in Firefox, *Settings → Privacy & Security → Cookies and Site Data*; in Safari, *Settings → Privacy → Manage Website Data*).
 
-Atención: borrar los datos del sitio elimina tus documentos de este dispositivo de forma irreversible. Descárgalos o guárdalos en Nextcloud antes.
+Warning: clearing the site's data irreversibly deletes your documents from this device. Download them or save them to Nextcloud first.
 
-En la navegación privada o de incógnito, el navegador borra todo este almacenamiento al cerrar la ventana.
+In private or incognito browsing, the browser deletes all this storage when the window is closed.
 
-## 5. Más información
+## 5. More information
 
-Consulta la [Política de privacidad](privacy.md) para saber qué datos existen y quién puede tratarlos.
+See the [Privacy policy](privacy.md) to find out what data exist and who may process them.

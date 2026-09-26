@@ -1,43 +1,43 @@
-# Política de cookies y almacenamiento local
+# Politique relative aux cookies et au stockage local
 
-{{siteName}} no utiliza cookies ni ninguna tecnología de seguimiento, analítica o publicidad. Solo guarda en tu navegador la información estrictamente necesaria para que la aplicación funcione, y esa información no se envía al titular.
+{{siteName}} n’utilise ni cookies ni aucune technologie de suivi, de mesure d’audience ou de publicité. Il enregistre uniquement dans votre navigateur les informations strictement nécessaires au fonctionnement de l’application, et ces informations ne sont pas envoyées au titulaire.
 
-## 1. Qué son las cookies y el almacenamiento local
+## 1. Cookies et stockage local : de quoi s’agit-il ?
 
-Las cookies y otras tecnologías de almacenamiento (localStorage, IndexedDB, Cache Storage) permiten a un sitio web guardar información en el dispositivo de la persona usuaria. El artículo 22.2 de la Ley 34/2002 (LSSI-CE) exige informar y obtener el consentimiento para usarlas, salvo cuando sean estrictamente necesarias para prestar un servicio expresamente solicitado por la persona usuaria.
+Les cookies et les autres technologies de stockage (localStorage, IndexedDB, Cache Storage) permettent à un site web d’enregistrer des informations sur l’appareil de l’utilisateur. L’article 22.2 de la loi espagnole 34/2002 (LSSI-CE) impose d’informer l’utilisateur et d’obtenir son consentement pour les utiliser, sauf lorsqu’ils sont strictement nécessaires à la fourniture d’un service expressément demandé par l’utilisateur.
 
-## 2. Qué almacenamiento utiliza {{siteName}}
+## 2. Stockage utilisé par {{siteName}}
 
-Todo el almacenamiento es propio (no hay almacenamiento de terceros), se guarda solo en tu navegador y dura hasta que lo borres.
+Tout le stockage est interne (aucun stockage de tiers), il est conservé uniquement dans votre navigateur et dure jusqu’à ce que vous le supprimiez.
 
-| Categoría | Nombre técnico | Finalidad |
+| Catégorie | Nom technique | Finalité |
 | --- | --- | --- |
-| Documentos | IndexedDB `words-online:<id>` y `words-online:<id>:comments` | Contenido de cada documento, comentarios, historial de versiones y autoría |
-| Registro de cambios firmados | IndexedDB `words-online-kv` | Permite reenviar a otros participantes los cambios de documentos abiertos con enlaces de lectura o de comentario |
-| Índice de documentos | localStorage `words-online:docs` | Lista de tus documentos: título, fecha, claves de acceso y archivo vinculado en Nextcloud |
-| Identidad | localStorage `words-online:user`, `words-online:writer-user-id` | Nombre y color que ven tus colaboradores; identificador técnico para la autoría |
-| Preferencias | localStorage `words-online:language`, `words-online:a11y`, `words-online:spelling`, `words-online:spelling-dictionary:<idioma>`, `words-online:zoom`, `wo-template-lang`, `diagram-libraries` | Idioma, accesibilidad, ortografía y diccionario personal, zoom, idioma de las plantillas y bibliotecas de formas elegidas |
-| Nextcloud (solo si lo configuras) | localStorage `words-online:nextcloud`, `words-online:nextcloud-server`, `words-online:nextcloud-folder`, `words-online:nextcloud-format`, `words-online:nextcloud-share` | Servidor, usuario y contraseña de aplicación, última carpeta y formato usados |
-| Funcionamiento sin conexión | Service worker y Cache Storage `workbox-precache-*`, `excalidraw-fonts`, `spelling`, `diagram-libs-*` | Archivos de la aplicación, tipos de letra, diccionarios y formas para usarla sin conexión |
+| Documents | IndexedDB `words-online:<id>` et `words-online:<id>:comments` | Contenu de chaque document, commentaires, historique des versions et paternité |
+| Journal des modifications signées | IndexedDB `words-online-kv` | Permet de transmettre aux autres participants les modifications des documents ouverts avec des liens de lecture ou de commentaire |
+| Index des documents | localStorage `words-online:docs` | Liste de vos documents : titre, date, clés d’accès et fichier Nextcloud lié |
+| Identité | localStorage `words-online:user`, `words-online:writer-user-id` | Nom et couleur visibles par vos collaborateurs ; identifiant technique pour la paternité |
+| Préférences | localStorage `words-online:language`, `words-online:a11y`, `words-online:spelling`, `words-online:spelling-dictionary:<langue>`, `words-online:zoom`, `wo-template-lang`, `diagram-libraries` | Langue, accessibilité, orthographe et dictionnaire personnel, zoom, langue des modèles et bibliothèques de formes choisies |
+| Nextcloud (uniquement si vous le configurez) | localStorage `words-online:nextcloud`, `words-online:nextcloud-server`, `words-online:nextcloud-folder`, `words-online:nextcloud-format`, `words-online:nextcloud-share` | Serveur, nom d’utilisateur et mot de passe d’application, dernier dossier et format utilisés |
+| Fonctionnement hors ligne | Service worker et Cache Storage `workbox-precache-*`, `excalidraw-fonts`, `spelling`, `diagram-libs-*` | Fichiers de l’application, polices, dictionnaires et formes pour l’utiliser hors ligne |
 
-Los nombres técnicos pueden cambiar entre versiones; las categorías y finalidades se mantienen. Las claves `words-online` provienen del nombre técnico del proyecto.
+Les noms techniques peuvent changer d’une version à l’autre ; les catégories et les finalités restent les mêmes. Les clés `words-online` proviennent du nom technique du projet.
 
-## 3. Por qué no hay aviso de cookies
+## 3. Pourquoi il n’y a pas de bandeau cookies
 
-Todo este almacenamiento es estrictamente necesario para prestar el servicio que solicitas (editar, guardar y compartir tus documentos, recordar tus preferencias y usar la aplicación sin conexión) y está exento de consentimiento según el artículo 22.2 de la LSSI-CE y la Guía sobre el uso de las cookies de la Agencia Española de Protección de Datos. No se usa para analítica, publicidad ni perfiles, y no se comparte con el titular ni con terceros.
+Tout ce stockage est strictement nécessaire à la fourniture du service que vous demandez (modifier, enregistrer et partager vos documents, mémoriser vos préférences et utiliser l’application hors ligne) et est exempté de consentement en vertu de l’article 22.2 de la LSSI-CE et du guide sur l’utilisation des cookies de l’Agence espagnole de protection des données. Il n’est utilisé ni pour la mesure d’audience, ni pour la publicité, ni pour le profilage, et n’est partagé ni avec le titulaire ni avec des tiers.
 
-El servidor de alojamiento no instala cookies en este sitio. Si en el futuro se incorporase algún almacenamiento no exento, se solicitaría tu consentimiento antes de utilizarlo.
+Le serveur d’hébergement ne dépose pas de cookies sur ce site. Si un stockage non exempté devait être ajouté à l’avenir, votre consentement serait demandé avant son utilisation.
 
-## 4. Cómo consultar y borrar el almacenamiento
+## 4. Consulter et supprimer le stockage
 
-- **Un documento:** en la pantalla de inicio, abre el menú ⋮ del documento y elige *Quitar de este navegador*. Se borra de este navegador; las copias de tus colaboradores no se ven afectadas.
-- **Credenciales de Nextcloud:** en la cuenta de Nextcloud, *Cerrar sesión*.
-- **Todo:** en la configuración del navegador, borra los datos del sitio (en Chrome y Edge, *Configuración → Privacidad y seguridad → Cookies y datos de sitios*; en Firefox, *Ajustes → Privacidad y seguridad → Cookies y datos del sitio*; en Safari, *Ajustes → Privacidad → Gestionar datos de sitios web*).
+- **Un document :** sur l’écran d’accueil, ouvrez le menu ⋮ du document et choisissez *Retirer de ce navigateur*. Il est supprimé de ce navigateur ; les copies de vos collaborateurs ne sont pas affectées.
+- **Identifiants Nextcloud :** dans le compte Nextcloud, *Se déconnecter*.
+- **Tout :** dans les paramètres du navigateur, effacez les données du site (dans Chrome et Edge, *Paramètres → Confidentialité et sécurité → Cookies et données des sites* ; dans Firefox, *Paramètres → Vie privée et sécurité → Cookies et données de sites* ; dans Safari, *Réglages → Confidentialité → Gérer les données de sites web*).
 
-Atención: borrar los datos del sitio elimina tus documentos de este dispositivo de forma irreversible. Descárgalos o guárdalos en Nextcloud antes.
+Attention : effacer les données du site supprime définitivement vos documents de cet appareil. Téléchargez-les ou enregistrez-les dans Nextcloud auparavant.
 
-En la navegación privada o de incógnito, el navegador borra todo este almacenamiento al cerrar la ventana.
+En navigation privée, le navigateur supprime tout ce stockage à la fermeture de la fenêtre.
 
-## 5. Más información
+## 5. En savoir plus
 
-Consulta la [Política de privacidad](privacy.md) para saber qué datos existen y quién puede tratarlos.
+Consultez la [Politique de confidentialité](privacy.md) pour savoir quelles données existent et qui peut les traiter.

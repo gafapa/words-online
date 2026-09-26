@@ -1,63 +1,63 @@
-# Condiciones de uso
+# Condicións de uso
 
-Estas condiciones regulan el uso de {{siteName}}, una suite ofimática colaborativa gratuita que funciona en el navegador, pensada especialmente para centros educativos. Al utilizarla aceptas estas condiciones y el [Aviso legal](notice.md).
+Estas condicións regulan o uso de {{siteName}}, unha suite ofimática colaborativa gratuíta que funciona no navegador, pensada especialmente para centros educativos. Ao utilizala aceptas estas condicións e o [Aviso legal](notice.md).
 
-## 1. Qué ofrece {{siteName}}
+## 1. Que ofrece {{siteName}}
 
-- Aplicaciones para crear documentos, hojas de cálculo, dibujos, diagramas y presentaciones, abrir y descargar archivos en formatos habituales y colaborar en tiempo real.
-- No hay cuentas ni un servidor central con copias de los documentos: se guardan en el navegador de cada persona y se sincronizan directamente entre quienes colaboran cuando coinciden conectados.
-- El uso es gratuito y no requiere registro.
+- Aplicacións para crear documentos, follas de cálculo, debuxos, diagramas e presentacións, abrir e descargar ficheiros en formatos habituais e colaborar en tempo real.
+- Non hai contas nin un servidor central con copias dos documentos: gárdanse no navegador de cada persoa e sincronízanse directamente entre quen colabora cando coinciden conectados.
+- O uso é gratuíto e non require rexistro.
 
 ## 2. Uso aceptable
 
-Te comprometes a utilizar {{siteName}} de forma lícita y respetuosa y, en particular, a no:
+Comprométeste a utilizar {{siteName}} de forma lícita e respectuosa e, en particular, a non:
 
-- crear o difundir contenidos ilícitos, violentos, discriminatorios, que inciten al odio o que atenten contra la dignidad, la intimidad o la propia imagen de otras personas;
-- acosar, amenazar o humillar a otras personas (incluido el ciberacoso entre alumnado);
-- incluir datos personales o imágenes de otras personas sin su autorización o la de sus representantes legales, o datos especialmente sensibles (por ejemplo, de salud) en documentos compartidos;
-- infringir derechos de propiedad intelectual o industrial de terceros;
-- introducir programas maliciosos, eludir los permisos de los enlaces (editar, comentar, ver) o interferir en el funcionamiento de la aplicación, de los servidores de señalización o de los equipos de otras personas;
-- utilizar la aplicación para enviar publicidad no solicitada.
+- crear ou difundir contidos ilícitos, violentos, discriminatorios, que inciten ao odio ou que atenten contra a dignidade, a intimidade ou a propia imaxe doutras persoas;
+- acosar, ameazar ou humillar outras persoas (incluído o ciberacoso entre alumnado);
+- incluír datos persoais ou imaxes doutras persoas sen a súa autorización ou a dos seus representantes legais, ou datos especialmente sensibles (por exemplo, de saúde) en documentos compartidos;
+- infrinxir dereitos de propiedade intelectual ou industrial de terceiros;
+- introducir programas maliciosos, eludir os permisos das ligazóns (editar, comentar, ver) ou interferir no funcionamento da aplicación, dos servidores de sinalización ou dos equipos doutras persoas;
+- utilizar a aplicación para enviar publicidade non solicitada.
 
-En el ámbito escolar se aplican además las normas de convivencia y de uso de medios digitales del centro y las indicaciones del profesorado.
+No ámbito escolar aplícanse ademais as normas de convivencia e de uso de medios dixitais do centro e as indicacións do profesorado.
 
-## 3. Tus contenidos
+## 3. Os teus contidos
 
-- Los documentos que creas son tuyos o, si los creas con otras personas, de todas ellas conforme a la Ley de Propiedad Intelectual (obra en colaboración). En el ámbito escolar, el centro puede establecer reglas sobre el uso de los trabajos del alumnado.
-- El titular no adquiere ningún derecho sobre tus contenidos, no tiene acceso a ellos y no los supervisa. Eres responsable de lo que escribes y compartes.
-- Quien tiene un enlace para compartir puede acceder al documento con el permiso que ese enlace otorga, y conserva su copia aunque dejes de compartir. Comparte los enlaces solo con quien deba tenerlos. Si un enlace llega a quien no debía, crea una copia del documento (*Archivo → Hacer una copia*), que tendrá claves nuevas, y deja de usar el original.
-- El historial de versiones y la autoría (quién escribió cada parte) se guardan en el propio documento y los ven todas las personas con acceso a él.
+- Os documentos que creas son teus ou, se os creas con outras persoas, de todas elas conforme á Lei de propiedade intelectual (obra en colaboración). No ámbito escolar, o centro pode establecer regras sobre o uso dos traballos do alumnado.
+- O titular non adquire ningún dereito sobre os teus contidos, non ten acceso a eles e non os supervisa. Es responsable do que escribes e compartes.
+- Quen ten unha ligazón para compartir pode acceder ao documento co permiso que esa ligazón outorga, e conserva a súa copia aínda que deixes de compartir. Comparte as ligazóns só con quen deba telas. Se unha ligazón chega a quen non debía, crea unha copia do documento (*Arquivo → Facer unha copia*), que terá claves novas, e deixa de usar o orixinal.
+- O historial de versións e a autoría (quen escribiu cada parte) gárdanse no propio documento e véno todas as persoas con acceso a el.
 
-## 4. Disponibilidad y ausencia de garantías
+## 4. Dispoñibilidade e ausencia de garantías
 
-{{siteName}} se ofrece gratuitamente y «tal cual», sin garantía de disponibilidad, continuidad, ausencia de errores o idoneidad para un fin concreto. En particular:
+{{siteName}} ofrécese de balde e «tal cal», sen garantía de dispoñibilidade, continuidade, ausencia de erros ou idoneidade para un fin concreto. En particular:
 
-- la colaboración depende de servidores de terceros (relays Nostr, STUN/TURN) y de que las redes permitan conexiones directas entre navegadores;
-- las conversiones de formato (Word, OpenDocument, Excel, PowerPoint, draw.io, etc.) pueden no conservar todos los elementos del archivo original;
-- el titular puede modificar, suspender o dejar de ofrecer la aplicación en cualquier momento.
+- a colaboración depende de servidores de terceiros (relays Nostr, STUN/TURN) e de que as redes permitan conexións directas entre navegadores;
+- as conversións de formato (Word, OpenDocument, Excel, PowerPoint, draw.io etc.) poden non conservar todos os elementos do ficheiro orixinal;
+- o titular pode modificar, suspender ou deixar de ofrecer a aplicación en calquera momento.
 
-## 5. Copias de seguridad
+## 5. Copias de seguranza
 
-Los documentos se guardan solo en los navegadores de quienes los usan. **Hacer copias de seguridad es responsabilidad tuya.** Los documentos pueden perderse si borras los datos del navegador, usas la navegación privada, cambias de dispositivo o el navegador libera espacio (algunos navegadores, como Safari, borran los datos de sitios no utilizados durante un tiempo si la aplicación no está instalada).
+Os documentos gárdanse só nos navegadores de quen os usa. **Facer copias de seguranza é responsabilidade túa.** Os documentos poden perderse se borras os datos do navegador, usas a navegación privada, cambias de dispositivo ou o navegador libera espazo (algúns navegadores, como Safari, borran os datos de sitios non utilizados durante un tempo se a aplicación non está instalada).
 
-Te recomendamos instalar la aplicación, descargar tus documentos con regularidad (*Archivo → Descargar* o *Entregar*) o guardarlos en el Nextcloud de tu centro.
+Recomendámosche instalar a aplicación, descargar os teus documentos con regularidade (*Arquivo → Descargar* ou *Entregar*) ou gardalos no Nextcloud do teu centro.
 
-## 6. Servicios de terceros
+## 6. Servizos de terceiros
 
-Algunas funciones usan servicios de terceros: relays y servidores STUN/TURN para la colaboración y, si los activas, Nextcloud, un servidor LanguageTool, asistentes de inteligencia artificial mediante WebMCP y el reconocimiento o la síntesis de voz del navegador. Estos servicios se rigen por sus propias condiciones y políticas de privacidad, y el titular no responde de ellos. Consulta la [Política de privacidad](privacy.md) y la [Nota sobre inteligencia artificial](ai.md).
+Algunhas funcións usan servizos de terceiros: relays e servidores STUN/TURN para a colaboración e, se os activas, Nextcloud, un servidor LanguageTool, asistentes de intelixencia artificial mediante WebMCP e o recoñecemento ou a síntese de voz do navegador. Estes servizos rexense polas súas propias condicións e políticas de privacidade, e o titular non responde deles. Consulta a [Política de privacidade](privacy.md) e a [Nota sobre intelixencia artificial](ai.md).
 
-## 7. Responsabilidad
+## 7. Responsabilidade
 
-El titular no responde de los daños derivados del uso de la aplicación, de la pérdida de documentos, de los contenidos creados o compartidos por las personas usuarias ni de los servicios de terceros, salvo en los casos en que la ley no permita excluir o limitar la responsabilidad (en particular, dolo o culpa grave) y sin perjuicio de los derechos de las personas consumidoras.
+O titular non responde dos danos derivados do uso da aplicación, da perda de documentos, dos contidos creados ou compartidos polas persoas usuarias nin dos servizos de terceiros, agás nos casos en que a lei non permita excluír ou limitar a responsabilidade (en particular, dolo ou culpa grave) e sen prexuízo dos dereitos das persoas consumidoras.
 
-## 8. Propiedad intelectual del programa
+## 8. Propiedade intelectual do programa
 
-El programa, su diseño y sus componentes están protegidos por derechos de propiedad intelectual, según se indica en el [Aviso legal](notice.md) y en [Licencias de software de terceros](../../THIRD_PARTY_NOTICES.md).
+O programa, o seu deseño e os seus compoñentes están protexidos por dereitos de propiedade intelectual, segundo se indica no [Aviso legal](notice.md) e en [Licenzas de software de terceiros](../../THIRD_PARTY_NOTICES.md).
 
-## 9. Modificación de las condiciones
+## 9. Modificación das condicións
 
-El titular puede modificar estas condiciones. La versión vigente es la publicada en esta página, con su fecha de actualización.
+O titular pode modificar estas condicións. A versión vixente é a publicada nesta páxina, coa súa data de actualización.
 
-## 10. Ley aplicable y jurisdicción
+## 10. Lei aplicable e xurisdición
 
-Estas condiciones se rigen por la legislación española, en los términos indicados en el [Aviso legal](notice.md).
+Estas condicións rexense pola lexislación española, nos termos indicados no [Aviso legal](notice.md).

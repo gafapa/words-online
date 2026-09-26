@@ -1,58 +1,58 @@
-# Declaración de accesibilidad
+# Déclaration d’accessibilité
 
-{{owner.name}} se compromete a hacer accesible {{siteName}} de conformidad con el Real Decreto 1112/2018, de 7 de septiembre, sobre accesibilidad de los sitios web y aplicaciones para dispositivos móviles del sector público, que transpone la Directiva (UE) 2016/2102.
+{{owner.name}} s’engage à rendre {{siteName}} accessible conformément au décret royal espagnol 1112/2018 du 7 septembre relatif à l’accessibilité des sites web et des applications mobiles du secteur public, qui transpose la directive (UE) 2016/2102.
 
-Esta declaración se aplica al sitio web y aplicación {{siteName}} ({{siteUrl}}) y a las instalaciones que se publiquen sin modificaciones. {{#if accessibility.complaintBody}}{{else}}El titular no forma parte del sector público, por lo que el Real Decreto 1112/2018 no le es de aplicación obligatoria: esta declaración se ofrece voluntariamente y sigue su modelo. Cuando un centro educativo o una Administración pública publica su propia instalación, debe elaborar su propia declaración a partir de esta.{{/if}}
+La présente déclaration s’applique au site web et à l’application {{siteName}} ({{siteUrl}}) ainsi qu’aux installations publiées sans modification. {{#if accessibility.complaintBody}}{{else}}Le titulaire ne fait pas partie du secteur public ; le décret royal 1112/2018 ne lui est donc pas obligatoirement applicable : cette déclaration est fournie volontairement et suit son modèle. Lorsqu’un établissement scolaire ou une administration publique publie sa propre installation, il doit établir sa propre déclaration à partir de celle-ci.{{/if}}
 
-## Situación de cumplimiento
+## État de conformité
 
-{{#if accessibility.status=full}}Este sitio web es **plenamente conforme** con el Real Decreto 1112/2018.{{/if}}{{#if accessibility.status=partial}}Este sitio web es **parcialmente conforme** con el Real Decreto 1112/2018 y con la norma UNE-EN 301 549:2022 (que incorpora el nivel AA de las Pautas WCAG 2.1) debido a la falta de conformidad de los aspectos que se indican a continuación.{{/if}}{{#if accessibility.status=none}}Este sitio web **no es conforme** con el Real Decreto 1112/2018. Los aspectos no accesibles se indican a continuación.{{/if}}
+{{#if accessibility.status=full}}Ce site web est **entièrement conforme** au décret royal 1112/2018.{{/if}}{{#if accessibility.status=partial}}Ce site web est **partiellement conforme** au décret royal 1112/2018 et à la norme EN 301 549 (UNE-EN 301 549:2022, qui reprend le niveau AA des WCAG 2.1) en raison des non-conformités énumérées ci-dessous.{{/if}}{{#if accessibility.status=none}}Ce site web **n’est pas conforme** au décret royal 1112/2018. Les aspects non accessibles sont énumérés ci-dessous.{{/if}}
 
-La relación siguiente procede de una revisión preliminar y está pendiente de confirmar mediante una auditoría completa con la metodología de la norma UNE-EN 301 549.
+La liste ci-dessous résulte d’un examen préliminaire et doit être confirmée par un audit complet selon la méthodologie de la norme EN 301 549.
 
-## Contenido no accesible
+## Contenus non accessibles
 
-### Falta de conformidad con el Real Decreto 1112/2018
+### Non-conformités au décret royal 1112/2018
 
-- **Hoja de cálculo.** La cuadrícula se dibuja en un lienzo (canvas): los lectores de pantalla no pueden recorrer las celdas como una tabla, y la ortografía del navegador no está disponible en el editor de celdas (WCAG 1.3.1, 4.1.2).
-- **Dibujo.** El editor de dibujo funciona sobre un lienzo: las formas no se exponen a las tecnologías de apoyo, no tienen alternativa textual y su creación y edición requieren un dispositivo apuntador (WCAG 1.1.1, 2.1.1, 4.1.2).
-- **Diagramas y presentaciones.** Las formas y conectores son gráficos SVG sin nombre accesible completo; mover, conectar y redimensionar formas depende principalmente del ratón o de la pantalla táctil (WCAG 1.1.1, 2.1.1, 4.1.2).
-- **Procesador de textos.** Las marcas de ortografía y gramática, la autoría por colores y los cursores de otras personas se muestran solo visualmente y no se anuncian a los lectores de pantalla (WCAG 1.3.1, 1.4.1, 4.1.3).
-- **Colaboración.** La llegada de colaboradores, sus selecciones y los cambios que realizan en tiempo real no se comunican mediante mensajes de estado accesibles (WCAG 4.1.3).
-- **Editor de ecuaciones y teclado virtual** (componente de terceros): algunos controles no tienen nombre accesible en todos los idiomas (WCAG 4.1.2).
-- **Archivos generados.** Los PDF creados con la función de imprimir del navegador pueden no estar etiquetados, y las imágenes exportadas no incluyen texto alternativo (WCAG 1.1.1, 1.3.1).
-- **Dictado y lectura en voz alta.** Dependen de las funciones de voz del navegador y no están disponibles en todos los navegadores ni idiomas.
+- **Tableur.** La grille est dessinée sur un canevas (canvas) : les lecteurs d’écran ne peuvent pas parcourir les cellules comme un tableau, et le correcteur orthographique du navigateur n’est pas disponible dans l’éditeur de cellule (WCAG 1.3.1, 4.1.2).
+- **Dessin.** L’éditeur de dessin fonctionne sur un canevas : les formes ne sont pas exposées aux technologies d’assistance, n’ont pas d’alternative textuelle et leur création et modification nécessitent un dispositif de pointage (WCAG 1.1.1, 2.1.1, 4.1.2).
+- **Diagrammes et présentations.** Les formes et connecteurs sont des graphiques SVG sans nom accessible complet ; déplacer, connecter et redimensionner des formes repose principalement sur la souris ou l’écran tactile (WCAG 1.1.1, 2.1.1, 4.1.2).
+- **Traitement de texte.** Les marques d’orthographe et de grammaire, la paternité par couleurs et les curseurs des autres personnes sont uniquement visuels et ne sont pas annoncés aux lecteurs d’écran (WCAG 1.3.1, 1.4.1, 4.1.3).
+- **Collaboration.** L’arrivée de collaborateurs, leurs sélections et les modifications qu’ils apportent en temps réel ne sont pas communiquées par des messages d’état accessibles (WCAG 4.1.3).
+- **Éditeur d’équations et clavier virtuel** (composant tiers) : certaines commandes n’ont pas de nom accessible dans toutes les langues (WCAG 4.1.2).
+- **Fichiers générés.** Les PDF créés avec la fonction d’impression du navigateur peuvent ne pas être balisés, et les images exportées ne comportent pas d’alternative textuelle (WCAG 1.1.1, 1.3.1).
+- **Dictée et lecture à voix haute.** Elles dépendent des fonctions vocales du navigateur et ne sont pas disponibles dans tous les navigateurs ni toutes les langues.
 
-### Carga desproporcionada
+### Charge disproportionnée
 
-No se invoca.
+Non invoquée.
 
-### Contenido que no entra en el ámbito de la legislación aplicable
+### Contenus non soumis à la législation applicable
 
-- Los documentos creados por las personas usuarias y los archivos que abren, que son contenidos de terceros que no están bajo el control del titular.
-- Los servicios y sitios de terceros enlazados o utilizados opcionalmente (Nextcloud, LanguageTool, asistentes de inteligencia artificial).
+- Les documents créés par les utilisateurs et les fichiers qu’ils ouvrent, qui sont des contenus de tiers ne relevant pas du contrôle du titulaire.
+- Les services et sites de tiers liés ou utilisés de manière facultative (Nextcloud, LanguageTool, assistants d’intelligence artificielle).
 
-## Preparación de la presente declaración
+## Établissement de la présente déclaration
 
-- Fecha de elaboración: {{accessibility.preparedOn}}.
-- Método: {{#if accessibility.method=audit}}auditoría externa{{else}}autoevaluación realizada por el titular{{/if}}.
-{{#if accessibility.reviewedOn}}- Última revisión: {{accessibility.reviewedOn}}.
+- Date d’établissement : {{accessibility.preparedOn}}.
+- Méthode : {{#if accessibility.method=audit}}audit externe{{else}}auto-évaluation réalisée par le titulaire{{/if}}.
+{{#if accessibility.reviewedOn}}- Dernier réexamen : {{accessibility.reviewedOn}}.
 {{/if}}
-## Funciones de accesibilidad disponibles
+## Fonctions d’accessibilité disponibles
 
-El botón *Accesibilidad* (o `Alt+Mayús+A`) permite elegir tipos de letra de lectura (OpenDyslexic, Atkinson Hyperlegible), tamaño del texto, interlineado y espaciado, temas oscuros y de alto contraste, reducción del movimiento, puntero grande, contorno de foco grueso, regla y máscara de lectura, lectura en voz alta y dictado. La interfaz se puede usar con el teclado (`F10` para la barra de menús) e incluye un enlace para saltar al contenido.
+Le bouton *Accessibilité* (ou `Alt+Maj+A`) permet de choisir des polices de lecture (OpenDyslexic, Atkinson Hyperlegible), la taille du texte, l’interlignage et l’espacement, des thèmes sombres et à contraste élevé, la réduction des animations, un grand pointeur, un contour de focus épais, une règle et un masque de lecture, la lecture à voix haute et la dictée. L’interface est utilisable au clavier (`F10` pour la barre de menus) et comporte un lien d’accès direct au contenu.
 
-## Observaciones y datos de contacto
+## Retour d’information et contact
 
-Puedes realizar comunicaciones sobre requisitos de accesibilidad (artículo 10.2.a del Real Decreto 1112/2018), por ejemplo:
+Vous pouvez adresser des communications relatives aux exigences d’accessibilité (article 10.2.a du décret royal 1112/2018), par exemple pour :
 
-- informar sobre cualquier posible incumplimiento por parte de este sitio web;
-- transmitir otras dificultades de acceso al contenido;
-- formular cualquier otra consulta o sugerencia de mejora;
-- solicitar información accesible sobre contenidos excluidos del ámbito de aplicación o declarados no accesibles,
+- signaler tout éventuel manquement de ce site web ;
+- faire part d’autres difficultés d’accès au contenu ;
+- poser toute autre question ou suggérer une amélioration ;
+- demander des informations accessibles sur des contenus exclus du champ d’application ou déclarés non accessibles,
 
-escribiendo a {{accessibility.contactEmail}}. Las comunicaciones se responderán en el plazo máximo de veinte días hábiles.
+en écrivant à {{accessibility.contactEmail}}. Il sera répondu aux communications dans un délai maximal de vingt jours ouvrables.
 
-## Procedimiento de aplicación
+## Procédure de mise en œuvre
 
-{{#if accessibility.complaintBody}}Si, una vez realizada una solicitud de información accesible o una queja, esta hubiera sido desestimada, no se estuviera de acuerdo con la decisión adoptada o la respuesta no cumpliera los requisitos del artículo 12.5 del Real Decreto 1112/2018, la persona interesada podrá iniciar una reclamación ante {{accessibility.complaintBody}}, conforme al artículo 13 del Real Decreto 1112/2018 y a la Ley 39/2015, de 1 de octubre, del Procedimiento Administrativo Común de las Administraciones Públicas.{{else}}Como el titular no forma parte del sector público, no existe un procedimiento administrativo de reclamación frente a él. Si la respuesta no te resulta satisfactoria, puedes volver a dirigirte al titular. Si utilizas {{siteName}} a través de un centro educativo público o de una Administración que publica su propia instalación, puedes presentar la queja o reclamación ante su unidad responsable de accesibilidad (en Galicia, la de la Consellería competente en educación), conforme a los artículos 12 y 13 del Real Decreto 1112/2018.{{/if}} El Observatorio de Accesibilidad Web de la Administración General del Estado ofrece información sobre la accesibilidad del sector público.
+{{#if accessibility.complaintBody}}Si, après une demande d’information accessible ou une réclamation, celle-ci a été rejetée, si vous êtes en désaccord avec la décision prise ou si la réponse ne satisfait pas aux exigences de l’article 12.5 du décret royal 1112/2018, vous pouvez introduire un recours auprès de {{accessibility.complaintBody}}, conformément à l’article 13 du décret royal 1112/2018 et à la loi espagnole 39/2015 du 1er octobre relative à la procédure administrative commune des administrations publiques.{{else}}Le titulaire ne faisant pas partie du secteur public, il n’existe pas de procédure administrative de réclamation à son encontre. Si la réponse ne vous satisfait pas, vous pouvez vous adresser de nouveau au titulaire. Si vous utilisez {{siteName}} par l’intermédiaire d’un établissement scolaire public ou d’une administration publique qui publie sa propre installation, vous pouvez adresser votre plainte ou votre réclamation à son unité responsable de l’accessibilité (en Galice, celle du département régional chargé de l’éducation), conformément aux articles 12 et 13 du décret royal 1112/2018.{{/if}} L’Observatoire de l’accessibilité web de l’Administration générale de l’État espagnol fournit des informations sur l’accessibilité du secteur public.

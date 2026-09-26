@@ -1,30 +1,30 @@
-# Nota sobre inteligencia artificial
+# Nota sobre intelixencia artificial
 
-{{siteName}} no incluye sistemas de inteligencia artificial. Esta nota explica, a efectos de transparencia y del Reglamento (UE) 2024/1689 de Inteligencia Artificial, qué funciones podrían confundirse con IA y cómo funciona la conexión opcional con asistentes externos mediante WebMCP.
+{{siteName}} non inclúe sistemas de intelixencia artificial. Esta nota explica, para efectos de transparencia e do Regulamento (UE) 2024/1689 de intelixencia artificial, que funcións poderían confundirse con IA e como funciona a conexión opcional con asistentes externos mediante WebMCP.
 
-## 1. {{siteName}} no incorpora IA
+## 1. {{siteName}} non incorpora IA
 
-- **Ortografía y gramática:** diccionarios Hunspell y reglas escritas a mano que se ejecutan en tu navegador; para el inglés, además, Harper, un corrector gramatical basado en reglas. No se usan modelos de aprendizaje automático ni se envía texto a ningún servidor (salvo que actives un servidor LanguageTool).
-- **Plantillas:** se generan con código fijo, sin IA.
-- **Lectura en voz alta y dictado:** usan las funciones de voz del navegador. Algunos navegadores emplean para ello servicios de reconocimiento o síntesis de voz de su fabricante, que pueden basarse en IA; esos servicios los presta el fabricante del navegador bajo sus propias condiciones.
-- {{siteName}} no genera contenidos, no evalúa al alumnado, no elabora perfiles ni toma decisiones automatizadas.
+- **Ortografía e gramática:** dicionarios Hunspell e regras escritas a man que se executan no teu navegador; para o inglés, ademais, Harper, un corrector gramatical baseado en regras. Non se usan modelos de aprendizaxe automática nin se envía texto a ningún servidor (agás que actives un servidor LanguageTool).
+- **Modelos:** xéranse con código fixo, sen IA.
+- **Lectura en voz alta e ditado:** usan as funcións de voz do navegador. Algúns navegadores empregan para iso servizos de recoñecemento ou síntese de voz do seu fabricante, que poden basearse en IA; eses servizos préstaos o fabricante do navegador baixo as súas propias condicións.
+- {{siteName}} non xera contidos, non avalía o alumnado, non elabora perfís nin toma decisións automatizadas.
 
 ## 2. Asistentes externos mediante WebMCP (opcional)
 
-WebMCP es una forma estándar de que una página web ofrezca «herramientas» a un asistente de IA que funciona en el navegador (por ejemplo, una extensión o un agente elegido por la persona usuaria). Cuando esta función está disponible y la activas expresamente (está **desactivada por defecto**), el asistente que tú elijas puede leer el documento abierto y proponer o realizar cambios en él a través de esas herramientas.
+WebMCP é unha forma estándar de que unha páxina web ofreza «ferramentas» a un asistente de IA que funciona no navegador (por exemplo, unha extensión ou un axente escollido pola persoa usuaria). Cando esta función está dispoñible e a activas expresamente (está **desactivada por defecto**), o asistente que ti escollas pode ler o documento aberto e propor ou realizar cambios nel a través desas ferramentas.
 
-- {{siteName}} no elige, no incluye ni recomienda ningún asistente. El proveedor del asistente es el proveedor del sistema de IA a efectos del Reglamento de IA y trata el contenido que lee conforme a sus propias condiciones y política de privacidad.
-- Quien decide usar un asistente (la persona usuaria o, en el ámbito escolar, el centro) puede tener la consideración de responsable del despliegue, con las obligaciones que correspondan (por ejemplo, alfabetización en IA, art. 4, y transparencia, art. 50).
-- Los cambios que realiza un asistente se registran como sugerencias o con su propia autoría, de modo que las demás personas pueden distinguirlos, revisarlos y aceptarlos o rechazarlos. El historial de versiones permite volver a un estado anterior.
-- Desactiva la función cuando no la uses. Puedes desactivarla en cualquier momento.
+- {{siteName}} non escolle, non inclúe nin recomenda ningún asistente. O provedor do asistente é o provedor do sistema de IA para efectos do Regulamento de IA e trata o contido que le conforme ás súas propias condicións e política de privacidade.
+- Quen decide usar un asistente (a persoa usuaria ou, no ámbito escolar, o centro) pode ter a consideración de responsable do despregamento, coas obrigas que correspondan (por exemplo, alfabetización en IA, art. 4, e transparencia, art. 50).
+- Os cambios que realiza un asistente rexístranse como suxestións ou coa súa propia autoría, de modo que as demais persoas poden distinguilos, revisalos e aceptalos ou rexeitalos. O historial de versións permite volver a un estado anterior.
+- Desactiva a función cando non a uses. Podes desactivala en calquera momento.
 
-## 3. Recomendaciones para el uso educativo
+## 3. Recomendacións para o uso educativo
 
-- Seguir las normas del centro y de la Administración educativa sobre el uso de IA, especialmente en tareas evaluables.
-- No proporcionar a los asistentes datos personales del alumnado ni documentos con información sensible.
-- Con menores, usar asistentes solo con la supervisión del profesorado o de la familia y, para menores de 14 años, cuando el servicio lo requiera, con el consentimiento de sus madres, padres o tutores (art. 7 LOPDGDD).
-- Indicar claramente qué partes de un trabajo se han elaborado con ayuda de IA.
+- Seguir as normas do centro e da Administración educativa sobre o uso de IA, especialmente en tarefas avaliables.
+- Non proporcionar aos asistentes datos persoais do alumnado nin documentos con información sensible.
+- Con menores, usar asistentes só coa supervisión do profesorado ou da familia e, para menores de 14 anos, cando o servizo o requira, co consentimento das súas nais, pais ou titores (art. 7 LOPDGDD).
+- Indicar claramente que partes dun traballo se elaboraron con axuda de IA.
 
-## 4. Más información
+## 4. Máis información
 
-Consulta la [Política de privacidad](privacy.md) y la [Información para centros educativos](schools.md).
+Consulta a [Política de privacidade](privacy.md) e a [Información para centros educativos](schools.md).

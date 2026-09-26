@@ -283,6 +283,12 @@ export async function parseVsdx(buffer: ArrayBuffer): Promise<PageRecord[]> {
     const v = kid(c, 'srgbClr')?.getAttribute('val') ?? kid(c, 'sysClr')?.getAttribute('lastClr')
     if (v) pkg.theme[c.localName] = `#${v.toLowerCase()}`
   }
+  // Visio's variant colors (the first variation), for QuickStyle color indexes 100 and up.
+  const variation = theme?.doc.getElementsByTagNameNS('*', 'variationClrScheme')[0]
+  for (const c of kids(variation)) {
+    const v = kid(c, 'srgbClr')?.getAttribute('val')
+    if (v) pkg.theme[c.localName] = `#${v.toLowerCase()}`
+  }
 
   // Masters.
   const mastersPath = [...document.rels.values()].find((p) => /masters\/masters\.xml$/.test(p))
@@ -380,9 +386,16 @@ async function stencilPage(pkg: Pkg): Promise<PageRecord> {
     const f = Math.min(1, (slot - 20) / Math.max(w, h, 1))
     const before = ctx.cells.length
     await addShape(ctx, master.top, null, '1', { height: sheet.num('Height', 1) }, 0, 0, master)
+    // 1-D masters (connectors): a sample line in the slot.
+    if (ctx.edges.length) {
+      addEdges(ctx, new Map())
+      ctx.edges = []
+      const edge = ctx.cells[before]
+      edge.geometry = JSON.stringify({ x: 0, y: 0, width: 0, height: 0, relative: 1, sourcePoint: [x, y + 60], targetPoint: [x + slot - 20, y + 60] })
+    }
     // Moves (and shrinks) the master's cell into its slot.
     const top = ctx.cells[before]
-    if (top?.geometry) {
+    if (top?.vertex && top.geometry) {
       const g = JSON.parse(top.geometry) as { x: number; y: number; width: number; height: number }
       g.x = x + (slot - 20 - g.width * f) / 2
       g.y = y
@@ -465,9 +478,9 @@ async function addShape(ctx: Ctx, el: Element, inherited: Master | null, parent:
   const geometry = { x: round(x), y: round(y), width: round(Math.max(w * CF, 1)), height: round(Math.max(h * CF, 1)) }
 
   const style = await vertexStyle(ctx, sheet, master, w, h)
-  const label = textLabel(sheet)
+  const label = textLabel(sheet, /fillColor=(#[0-9a-f]{6})/i.exec(style.style)?.[1])
   const rotation = -(angle * 180) / Math.PI
-  let full = style.style + label.style
+  let full = label.style + style.style
   if (Math.abs(rotation) > 0.01) full += `rotation=${round(((rotation % 360) + 360) % 360)};`
   if (sheet.value('FlipX') === '1') full += 'flipH=1;'
   if (sheet.value('FlipY') === '1') full += 'flipV=1;'
@@ -514,7 +527,7 @@ const normalizeName = (name: string) => name.replace(/\.\d+$/, '').trim().toLowe
 function paintStyle(ctx: Ctx, sheet: Sheet, noFill: boolean, noLine: boolean): string {
   const out: string[] = []
   const pattern = themedNum(sheet, 'FillPattern', 1)
-  const fg = colorOf(ctx, sheet.value('FillForegnd'), ctx.pkg.theme.accent1 ?? '#5b9bd5')
+  const fg = colorOf(ctx, sheet.value('FillForegnd'), quickFill(ctx, sheet))
   if (noFill || pattern === 0) out.push('fillColor=none')
   else {
     out.push(`fillColor=${fg}`)
@@ -529,7 +542,7 @@ function paintStyle(ctx: Ctx, sheet: Sheet, noFill: boolean, noLine: boolean): s
   const linePattern = themedNum(sheet, 'LinePattern', 1)
   if (noLine || linePattern === 0) out.push('strokeColor=none')
   else {
-    out.push(`strokeColor=${colorOf(ctx, sheet.value('LineColor'), darker(ctx.pkg.theme.accent1 ?? '#5b9bd5'))}`)
+    out.push(`strokeColor=${colorOf(ctx, sheet.value('LineColor'), quickLine(ctx, sheet))}`)
     out.push(...lineWidthAndDash(ctx, sheet, linePattern))
   }
   if (themedNum(sheet, 'ShdwPattern', 0) > 0 && themedNum(sheet, 'ShapeShdwShow', 1) !== 0) out.push('shadow=1')
@@ -539,7 +552,7 @@ function paintStyle(ctx: Ctx, sheet: Sheet, noFill: boolean, noLine: boolean): s
 function lineWidthAndDash(ctx: Ctx, sheet: Sheet, pattern: number): string[] {
   const out: string[] = []
   const width = round(themedNum(sheet, 'LineWeight', 0.01041666) * CF)
-  if (Math.abs(width - 1) > 0.05) out.push(`strokeWidth=${Math.max(0.5, width)}`)
+  if (Math.abs(width - 1) > 0.1) out.push(`strokeWidth=${Math.max(0.5, width)}`)
   if (pattern > 1) {
     out.push('dashed=1')
     if (pattern === 3 || pattern === 10) out.push('dashPattern=1 2')
@@ -556,6 +569,32 @@ function themedNum(sheet: Sheet, name: string, def: number): number {
   const v = sheet.value(name)
   const n = Number(v)
   return v === null || v === '' || v === 'Themed' || !Number.isFinite(n) ? def : n
+}
+
+// Themed colors from the shape's QuickStyle cells (an approximation of Visio's
+// theme matrix): color index 0-7 = dk1, lt1, accent1-6; 100+ = variant colors.
+function quickColor(ctx: Ctx, sheet: Sheet, kind: 'Fill' | 'Line' | 'Font'): string {
+  const th = ctx.pkg.theme
+  const ix = themedNum(sheet, `QuickStyle${kind}Color`, 2)
+  const list = [th.dk1, th.lt1, th.accent1, th.accent2, th.accent3, th.accent4, th.accent5, th.accent6]
+  return (ix >= 100 ? th[`varColor${ix - 99}`] : list[ix]) ?? th.accent1 ?? '#5b9bd5'
+}
+
+function quickFill(ctx: Ctx, sheet: Sheet): string {
+  const matrix = themedNum(sheet, 'QuickStyleFillMatrix', 3)
+  const color = quickColor(ctx, sheet, 'Fill')
+  return matrix <= 1 ? (ctx.pkg.theme.lt1 ?? '#ffffff') : matrix === 2 ? tint(color, 0.8) : color
+}
+
+function quickLine(ctx: Ctx, sheet: Sheet): string {
+  const color = quickColor(ctx, sheet, 'Line')
+  return themedNum(sheet, 'QuickStyleLineMatrix', 3) >= 3 ? darker(color) : color
+}
+
+function tint(hex: string, amount: number): string {
+  const n = parseInt(hex.slice(1), 16)
+  const c = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.round(v + (255 - v) * amount))
+  return `#${c.map((v) => v.toString(16).padStart(2, '0')).join('')}`
 }
 
 function colorOf(ctx: Ctx, value: string | null, themed: string): string {
@@ -874,8 +913,8 @@ interface Run {
   row: string
 }
 
-function textLabel(sheet: Sheet): { html: string; style: string } {
-  const tx = sheet.text()
+function textLabel(sheet: Sheet, fillColor?: string): { html: string; style: string } {
+  const tx = sheet.value('HideText') === '1' ? null : sheet.text()
   const paragraphs: { row: string; runs: Run[] }[] = [{ row: '0', runs: [] }]
   let charRow = '0'
   const walk = (node: Node) => {
@@ -909,12 +948,11 @@ function textLabel(sheet: Sheet): { html: string; style: string } {
       font: font && font !== 'Themed' && !/^\d+$/.test(font) ? font : null,
     }
   }
-  const fill = sheet.value('FillForegnd')
-  const pattern = themedNum(sheet, 'FillPattern', 1)
+  // Themed text is dark, or light on a dark fill.
   const autoColor = (c: string | null) => {
     if (c && c !== 'Themed' && c.startsWith('#')) return c.toLowerCase()
     if (c && /^\d+$/.test(c)) return (sheet.pkg.colors[Number(c)] ?? '#000000').toLowerCase()
-    return pattern > 0 && fill && fill.startsWith('#') && isDark(fill) ? '#ffffff' : '#000000'
+    return fillColor && isDark(fillColor) ? '#ffffff' : '#000000'
   }
   const base = char('0')
   const baseColor = autoColor(base.color)
@@ -1020,7 +1058,7 @@ function addEdges(ctx: Ctx, connects: Map<string, { begin?: Connect; end?: Conne
     const target = c.end ? ctx.ids.get(c.end.to) : undefined
     const style: string[] = ['html=1', 'rounded=0', curved ? 'curved=1' : 'edgeStyle=none']
     const linePattern = themedNum(sheet, 'LinePattern', 1)
-    style.push(`strokeColor=${linePattern === 0 ? 'none' : colorOf(ctx, sheet.value('LineColor'), darker(ctx.pkg.theme.accent1 ?? '#5b9bd5'))}`)
+    style.push(`strokeColor=${linePattern === 0 ? 'none' : colorOf(ctx, sheet.value('LineColor'), quickLine(ctx, sheet))}`)
     style.push(...lineWidthAndDash(ctx, sheet, linePattern))
     const arrow = (id: number, key: 'startArrow' | 'endArrow', sizeCell: string) => {
       const name = ARROWS[id]

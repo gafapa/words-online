@@ -255,6 +255,12 @@ func run(ctx context.Context, cfg Config, banner bool) error {
 	if err != nil {
 		return err
 	}
+	var app *AppFiles
+	if cfg.ServeApp != "" {
+		if app, err = OpenApp(cfg.ServeApp); err != nil {
+			return fmt.Errorf("--serve-app: %w", err)
+		}
+	}
 
 	httpsPort := cfg.HTTPSPort
 	if httpsPort == 0 {
@@ -297,15 +303,6 @@ func run(ctx context.Context, cfg Config, banner bool) error {
 	if err != nil {
 		httpsLn.Close()
 		return err
-	}
-
-	var app *AppFiles
-	if cfg.ServeApp != "" {
-		if app, err = OpenApp(cfg.ServeApp); err != nil {
-			turnSrv.Close()
-			httpsLn.Close()
-			return fmt.Errorf("--serve-app: %w", err)
-		}
 	}
 
 	nostr := NewNostrRelay(&cfg, logger)

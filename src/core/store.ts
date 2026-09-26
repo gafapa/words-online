@@ -25,6 +25,11 @@ export interface DocEntry {
   access?: Access
   // File in Nextcloud this document saves to (only in this browser).
   remote?: RemoteLink
+  // Local organization only (never shared): folder id and tag ids (see library.ts).
+  folder?: string
+  tags?: string[]
+  // Time the document was moved to the trash; its data stays until the trash is emptied.
+  trashed?: number
 }
 
 export interface RemoteLink {
@@ -56,12 +61,16 @@ function randomToken(bytes: number): string {
   return btoa(String.fromCharCode(...data)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
 
+// Every entry, including those in the trash (newest first).
 export function listDocs(): DocEntry[] {
   // Entries written before document types existed are word-processor documents.
   return read<DocEntry[]>(DOCS_KEY, [])
     .map((d) => (DOC_TYPES.includes(d.type) ? d : { ...d, type: 'writer' as const }))
     .sort((a, b) => b.updated - a.updated)
 }
+
+export const activeDocs = () => listDocs().filter((d) => !d.trashed)
+export const trashedDocs = () => listDocs().filter((d) => d.trashed)
 
 export function getDoc(id: string): DocEntry | undefined {
   return listDocs().find((d) => d.id === id)
@@ -74,6 +83,38 @@ export function saveDoc(entry: Omit<DocEntry, 'updated'>): void {
   const docs = all.filter((d) => d.id !== entry.id)
   docs.push({ ...previous, ...entry, updated: Date.now() })
   write(DOCS_KEY, docs)
+  // The first document of this browser: ask for persistent storage (backup.ts).
+  if (!previous && !all.length) void import('./backup').then((m) => m.onFirstDocument())
+}
+
+// Changes organization fields (folder, tags, trash) without touching `updated`.
+export function updateDocs(ids: string[], patch: (entry: DocEntry) => void): void {
+  const docs = listDocs()
+  for (const entry of docs) if (ids.includes(entry.id)) patch(entry)
+  write(DOCS_KEY, docs)
+}
+
+// Adds or replaces an entry as is (restoring a backup).
+export function putDoc(entry: DocEntry): void {
+  write(DOCS_KEY, [...listDocs().filter((d) => d.id !== entry.id), entry])
+}
+
+export const TRASH_DAYS = 30
+
+export function trashDocs(ids: string[]): void {
+  const now = Date.now()
+  updateDocs(ids, (d) => (d.trashed = now))
+}
+
+export function restoreDocs(ids: string[]): void {
+  updateDocs(ids, (d) => delete d.trashed)
+}
+
+// Deletes the documents in the trash for more than 30 days; returns how many.
+export async function purgeExpiredTrash(now = Date.now()): Promise<number> {
+  const expired = trashedDocs().filter((d) => now - d.trashed! > TRASH_DAYS * 86400000)
+  for (const d of expired) await deleteDoc(d.id)
+  return expired.length
 }
 
 // Links a document to a file in Nextcloud (undefined: unlinks it).
@@ -86,12 +127,14 @@ export function setRemoteLink(id: string, remote: RemoteLink | undefined): void 
   write(DOCS_KEY, docs)
 }
 
+// Deletes a document from this browser for good (its IndexedDB data too).
 export async function deleteDoc(id: string): Promise<void> {
   write(DOCS_KEY, listDocs().filter((d) => d.id !== id))
   await clearDocument(dbName(id))
   await clearDocument(commentsDbName(id))
   await kvDelete(signedLogKey(id, 'yjs'))
   await kvDelete(signedLogKey(id, 'cmt'))
+  await import('./library-search').then((m) => m.forgetText(id)).catch(() => undefined)
 }
 
 export function loadUser(): User {
