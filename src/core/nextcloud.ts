@@ -528,6 +528,8 @@ export async function uploadToShare(shareUrl: string, password: string, name: st
       // Servers older than Nextcloud 29 lack the first endpoint.
       if (index === 0 && [404, 405, 501].includes(res.status)) break
       if (res.status === 401) throw new NcError('share-password', undefined, 401)
+      // Nextcloud 31 answers an unknown token with 503 (ShareNotFound inside).
+      if (res.status === 503 && /ShareNotFound/.test(await res.text().catch(() => ''))) throw new NcError('not-found', t('This share link does not exist or has expired.'), 404)
       if (res.status === 404) throw new NcError('not-found', t('This share link does not exist or has expired.'), 404)
       if (res.status === 403) throw new NcError('forbidden', t('This share does not accept uploads.'), 403)
       throw statusError(res)
